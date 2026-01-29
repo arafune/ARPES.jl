@@ -1,0 +1,64 @@
+using Test
+using ARPES
+
+@testset "_parse_waves_declaration basic test" begin
+    decl = "WAVES/D/N=5 testwave"
+    result = ARPES._parse_waves_declaration(decl)
+    @test result[:name] == "testwave"
+    @test result[:n] == 5
+    @test result[:type] == :double_precision
+end
+
+@testset "_parse_waves_declaration single precision, quoted name, shape" begin
+    decl = "WAVES/S/N=(200,2401) 'GrIr111_1'"
+    result = ARPES._parse_waves_declaration(decl)
+    @test result[:name] == "GrIr111_1"
+    @test result[:n] == 200
+    @test result[:type] == :single_precision
+    @test result[:shape] == (200, 2401)
+end
+
+@testset "_parse_waves_declaration default type, unquoted name" begin
+    decl = "WAVES/N=10 mywave"
+    result = ARPES._parse_waves_declaration(decl)
+    @test result[:name] == "mywave"
+    @test result[:n] == 10
+    @test result[:type] == :double_precision
+end
+
+
+#setscale line format:
+@testset "_parse_setscale! basic test" begin
+    line = "X SetScale/I x, -11.44, 12.44, \"deg (theta_y)\", 'GrIr111_1'"
+    wave_info = ARPES._parse_setscale!(line)
+    #@test haskey(:x_scale)
+    #xscale = waves_info[:x_scale]
+    @test wave_info[:min] ≈ -11.44
+    @test wave_info[:max] ≈ 12.44
+    @test wave_info[:unit] == "deg"
+    @test wave_info[:label] == "theta_y"
+end
+
+@testset "_parse_setscale! no label" begin
+    line = "X SetScale/I y, 0, 100, \"eV\", 'wave1'"
+    wave_info = ARPES._parse_setscale!(line)
+    #@test haskey(waves_info, :y_scale)
+    #yscale = waves_info[:y_scale]
+    @test wave_info[:min] == 0
+    @test wave_info[:max] == 100
+    @test wave_info[:unit] == "eV"
+    @test wave_info[:label] == ""
+end
+
+@testset "_parse_setscale! basic test perpoints" begin
+    line = "X SetScale/P y, 5.2, 0.002, \"eV\", 'GrIr111_1'"
+    wave_info = ARPES._parse_setscale!(line)
+    #@test haskey(waves_info, :y_scale)
+    #yscale = waves_info[:y_scale]
+    @test wave_info[:start] ≈ 5.2
+    @test wave_info[:step] ≈ 0.002
+    @test wave_info[:unit] == "eV"
+    @test wave_info[:label] == ""
+end
+
+
