@@ -61,4 +61,33 @@ end
     @test wave_info[:label] == ""
 end
 
+# comment line:
+@testset"_parse_comment_line created_date" begin
+    line = "Created Date (UTC): 2025-Dec-25 10:04:00.189347"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:created_date] == "2025-Dec-25 10:04:00.189347"
+end
 
+@testset"_parse_comment_line created_by" begin
+    line = "Created by: SpecsLab Prodigy, Version 4.123.1-r123826 "
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:created_by] == "SpecsLab Prodigy, Version 4.123.1-r123826"
+end
+
+@testset"_parse_comment_line scan_mode" begin
+    line = "Scan Mode         = Fixed Analyzer Transmission"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:scan_mode] == "Fixed Analyzer Transmission"
+end
+
+@testset"_parse_comment_line number_of_scan" begin
+    line = "Number of Scans   = 16"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:number_of_scans] == 16
+end
+
+@testset"_parse_comment_line photon energy" begin
+    line = "Excitation Energy = 4.708"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:excitation_energy] ≈ 4.708
+end

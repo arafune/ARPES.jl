@@ -35,7 +35,7 @@ function read_itx(fpath::String)
 
             push!(metadata[:raw_comments], comment)
 
-            _parse_comment_line!(metadata, comment)
+            merge(waves_info, _parse_comment_line(metadata, comment))
 
         elseif startswith(line, "IGOR")
             continue
@@ -70,7 +70,7 @@ Parse comment line
 X //Scan Mode         = Fixed Analyzer Transmission
 → metadata[:scan_mode] = "Fixed Analyzer Transmission"
 """
-function _parse_comment_line!(metadata::Dict, comment::String)
+function _parse_comment_line(comment::String)
     # "key = value"
     if occursin("=", comment)
         parts = split(comment, "=", limit = 2)
@@ -82,23 +82,22 @@ function _parse_comment_line!(metadata::Dict, comment::String)
             key = Symbol(lowercase(replace(key_raw, " " => "_")))
 
             # Convert value to appropriate type
-            val = _parse_value(val_raw)
+            val = _parse_value(String(val_raw))
 
-            metadata[key] = val
+            return Dict(key => val)
         end
 
         # Special format like l"Created Date"
     elseif startswith(comment, "Created Date")
         parts = split(comment, ":", limit = 2)
         if length(parts) == 2
-            metadata[:created_date] = strip(parts[2])
+            return Dict(:created_date => strip(parts[2]))
         end
 
-        # "Created by" format
     elseif startswith(comment, "Created by")
         parts = split(comment, ":", limit = 2)
         if length(parts) == 2
-            metadata[:created_by] = strip(parts[2])
+            return Dict(:created_by => strip(parts[2]))
         end
     end
 end
