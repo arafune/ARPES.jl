@@ -33,38 +33,34 @@ function read_itx(fpath::String)
             comment = replace(line, "X //" => "", count = 1)
             comment = strip(comment)
 
-            # Save as raw data
             push!(metadata[:raw_comments], comment)
 
-            # Extract parsable items
             _parse_comment_line!(metadata, comment)
 
-            # WAVES declaration lines
+        elseif startswith(line, "IGOR")
+            continue
+
         elseif startswith(line, "WAVES")
             waves_info = _parse_waves_declaration(line)
             wave_name = waves_info[:name]
 
-            # BEGIN: start of data section
         elseif startswith(line, "BEGIN")
             in_data_section = true
             data_lines = String[]
 
-            # END: End of data section
         elseif startswith(line, "END")
             in_data_section = false
             wave_data = _parse_wave_data(data_lines, waves_info)
 
-            # SetScale: Dimension scale information
         elseif startswith(line, "X SetScale")
-            _parse_setscale!(waves_info, line)
+            scale_info = _parse_setscale!(line)
+            merge!(waves_info, scale_info)
 
-            # Inside data section
         elseif in_data_section
             push!(data_lines, line)
         end
     end
 
-    # Convert to DimensionalData
     return _to_dimarray(wave_data, waves_info, metadata)
 end
 
@@ -129,10 +125,81 @@ function _parse_value(val_str::String)
 end
 
 """
+Convert to DimArray
+"""
+function _parse_wave_data(data_lines::Vector{String}, waves_info::Dict)
+    # Construct dimensions
+    all_values = Float64[]
+    # x axis (1st dimension)
+    for line in data_lines
+        if isempty(strip(line))
+            continue
+        end
+
+        # Extract space-saparated numbers
+        values = split(line)
+        for v in values
+            try
+                push!(all_values, parse(Float64, v))
+            catch
+                @warn "Failed to parse value: $v"
+            end
+        end
+    end
+
+    # Reshape if shape info is given
+    if haskey(waves_info, :shape)
+        shape = waves_info[:shape]
+        return reshape(all_values, shape)
+    else
+        return all_values
+    end
+end
+
+
+"""
+Convert to DimArray
+"""
+function _to_dimarray(data::Array, waves_info::Dict, metadata::Dict)
+    # Construct dimension
+    dims_list = []
+
+    # x-axis
+    if haskey(waves_info, :x_scale)
+        x_info = waves_info[:x_scale]
+        n_x = size(data, 1)
+        x_vals = range(x_info[:min], x_info[:max], length = n_x)
+
+        dim_name = isempty(x_info[:label]) ? :x : Symbol(x_info[:label])
+        push!(dims_list, Dim{dim_name}(collect(x_vals)))
+    end
+
+    # y-axis
+    if haskey(waves_info, :y_scale) && ndims(data) >= 2
+        y_info = waves_info[:y_scale]
+        n_y = size(data, 2)
+        y_vals = range(y_info[:min], y_info[:max], length = n_y)
+
+        dim_name = isempty(y_info[:label]) ? :y : Symbol(y_info[:label])
+        push!(dims_list, Dim{dim_name}(collect(y_vals)))
+    end
+
+    # Create DimArray
+    da = DimArray(
+        data,
+        Tuple(dims_list);
+        name = Symbol(get(waves_info, :name, "data")),
+        metadata = metadata,
+    )
+
+    return da
+end
+
+"""
 Parse WAVES declaration
 
 WAVES/S/N=(200,2401) 'GrIr111_1'
-→ Dict(:type => "S", :shape => (200, 2401), :name => "GrIr111_1")
+→ Dict(:type => :single_precision, :shape => (200, 2401), :name => "GrIr111_1")
 """
 function _parse_waves_declaration(line::String)
     info = Dict{Symbol,Any}()
@@ -179,38 +246,6 @@ function _parse_waves_declaration(line::String)
     end
 
     return info
-end
-
-"""
-Convert to DimArray
-"""
-function _parse_wave_data(data_lines::Vector{String}, waves_info::Dict)
-    # Construct dimensions
-    all_values = Float64[]
-    # x axis (1st dimension)
-    for line in data_lines
-        if isempty(strip(line))
-            continue
-        end
-
-        # Extract space-saparated numbers
-        values = split(line)
-        for v in values
-            try
-                push!(all_values, parse(Float64, v))
-            catch
-                @warn "Failed to parse value: $v"
-            end
-        end
-    end
-
-    # Reshape if shape info is given
-    if haskey(waves_info, :shape)
-        shape = waves_info[:shape]
-        return reshape(all_values, shape)
-    else
-        return all_values
-    end
 end
 
 """
@@ -287,40 +322,3 @@ function _parse_setscale!(line::String)
     end
 end
 
-"""
-Convert to DimArray
-"""
-function _to_dimarray(data::Array, waves_info::Dict, metadata::Dict)
-    # Construct dimension
-    dims_list = []
-
-    # x-axis
-    if haskey(waves_info, :x_scale)
-        x_info = waves_info[:x_scale]
-        n_x = size(data, 1)
-        x_vals = range(x_info[:min], x_info[:max], length = n_x)
-
-        dim_name = isempty(x_info[:label]) ? :x : Symbol(x_info[:label])
-        push!(dims_list, Dim{dim_name}(collect(x_vals)))
-    end
-
-    # y-axis
-    if haskey(waves_info, :y_scale) && ndims(data) >= 2
-        y_info = waves_info[:y_scale]
-        n_y = size(data, 2)
-        y_vals = range(y_info[:min], y_info[:max], length = n_y)
-
-        dim_name = isempty(y_info[:label]) ? :y : Symbol(y_info[:label])
-        push!(dims_list, Dim{dim_name}(collect(y_vals)))
-    end
-
-    # Create DimArray
-    da = DimArray(
-        data,
-        Tuple(dims_list);
-        name = Symbol(get(waves_info, :name, "data")),
-        metadata = metadata,
-    )
-
-    return da
-end

@@ -1,3 +1,3 @@
 module ARPES
-include("io/formats/itx.jl")
+include("io/io.jl")
 end

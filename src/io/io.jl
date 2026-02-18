@@ -1,4 +1,5 @@
 module IO
+include("formats/format.jl")
 
 function load(fpath::String; loc = nothing)
     resolved_path = resolve_path(fpath)
