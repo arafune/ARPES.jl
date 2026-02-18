@@ -72,35 +72,69 @@ X //Scan Mode         = Fixed Analyzer Transmission
 """
 function _parse_comment_line(comment::String)
     # "key = value"
+    if startswith(comment, "User Comment")
+        parts = split(comment, "=", limit = 2)
+        additional_waves_info = Dict{Symbol,Any}()
+        if length(parts) == 2
+            key_raw = strip(parts[1])
+            val_raw = strip(parts[2])
+            additional_waves_info[:user_comment] = val_raw
+            info_from_comments = _parse_comment_line_comment(String(val_raw))
+            return merge(additional_waves_info, info_from_comments)
+        end
+    end
+
     if occursin("=", comment)
         parts = split(comment, "=", limit = 2)
         if length(parts) == 2
             key_raw = strip(parts[1])
             val_raw = strip(parts[2])
-
-            # Normalize key (replace spaces with _, lowercase)
             key = Symbol(lowercase(replace(key_raw, " " => "_")))
-
-            # Convert value to appropriate type
             val = _parse_value(String(val_raw))
-
             return Dict(key => val)
         end
-
-        # Special format like l"Created Date"
-    elseif startswith(comment, "Created Date")
+    end
+    if startswith(comment, "Created Date")
         parts = split(comment, ":", limit = 2)
         if length(parts) == 2
             return Dict(:created_date => strip(parts[2]))
         end
+    end
 
-    elseif startswith(comment, "Created by")
+    if startswith(comment, "Created by")
         parts = split(comment, ":", limit = 2)
         if length(parts) == 2
             return Dict(:created_by => strip(parts[2]))
         end
     end
 end
+
+"""
+"beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
+->
+Dict{Symbol, Any}(
+:beta => 0
+:p => "6mW"
+:temperature => "RT"
+:y => 21.55
+:position => 187.4655
+:z => 346000
+:theta => -270000
+:x => 13.5)
+"""
+function _parse_comment_line_comment(comment::String)
+    additional_waves_info = Dict{Symbol,Any}()
+    comments = split(comment, ";")
+    for info in comments
+        info_item = split(info, ":")
+        if length(info_item) >= 2
+            key = Symbol(lowercase(replace(info_item[1], " " => "_")))
+            additional_waves_info[key] = _parse_value(String(info_item[2]))
+        end
+    end
+    return additional_waves_info
+end
+
 
 """
 Convert value to appropriate type

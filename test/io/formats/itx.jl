@@ -91,3 +91,31 @@ end
     result = ARPES.IO.Format._parse_comment_line(line)
     @test result[:excitation_energy] ≈ 4.708
 end
+
+@testset"_parse_comment_line not include" begin
+    line = "Acquisition Parameters:"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test isnothing(result)
+end
+
+@testset"_parse_comment_line comment" begin
+    line = "User Comment      = beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
+    result = ARPES.IO.Format._parse_comment_line(line)
+    @test result[:user_comment] ==
+          "beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
+    @test result[:beta] == 0
+    @test result[:temperature] == "RT"
+    @test result[:x] ≈ 13.5
+    @test result[:z] ≈ 346000
+    @test result[:position] ≈ 187.4655
+end
+
+@testset"_parse_comment_line_comment" begin
+    line = "beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
+    result = ARPES.IO.Format._parse_comment_line_comment(line)
+    @test result[:beta] == 0
+    @test result[:temperature] == "RT"
+    @test result[:x] ≈ 13.5
+    @test result[:z] ≈ +00346000
+    @test result[:position] ≈ 187.4655
+end
