@@ -325,23 +325,19 @@ function _parse_setscale!(line::String)
             min_val = parse(Float64, strip(parts[2]))
             max_val = parse(Float64, strip(parts[3]))
             return Dict(
-                :min => min_val,
-                :max => max_val,
-                :unit => unit,
-                :label => label,
-                :axis => axis_key,
-                :name => name,
+                axis_key =>
+                    Dict(:min => min_val, :max => max_val, :unit => unit, :label => label),
             )
         elseif mode == :perpoints
             start_val = parse(Float64, strip(parts[2]))
             step_val = parse(Float64, strip(parts[3]))
             return Dict(
-                :start => start_val,
-                :step => step_val,
-                :unit => unit,
-                :label => label,
-                :axis => axis_key,
-                :name => name,
+                axis_key => Dict(
+                    :start => start_val,
+                    :step => step_val,
+                    :unit => unit,
+                    :label => label,
+                ),
             )
         end
     end
