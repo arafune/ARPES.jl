@@ -122,10 +122,12 @@ end
 
 @testset"_parse_wave_data" begin
     line1 = "67.8969 67.8969 71.7938 75.7938 77.8969 83.6906 84 85.8969 86 86 87.8969"
-    line2 = "54.8032 54.8032 57.6065 60 60 63.213 69.6065 71.1968"
+    line2 = ""
+    line3 = "54.8032 54.8032 57.6065 60 60 63.213 69.6065 71.1968"
     data_lines = String[]
     push!(data_lines, line1)
     push!(data_lines, line2)
+    push!(data_lines, line3)
     result = ARPES.IO.Format._parse_wave_data(data_lines)
     @test result[1] ≈ 67.8969
     @test length(result) == 19
