@@ -30,35 +30,46 @@ end
 #setscale line format:
 @testset "_parse_setscale! basic test" begin
     line = "X SetScale/I x, -11.44, 12.44, \"deg (theta_y)\", 'GrIr111_1'"
-    wave_info = ARPES.IO.Format._parse_setscale!(line)
-    #@test haskey(:x_scale)
-    #xscale = waves_info[:x_scale]
-    @test wave_info[:min] ≈ -11.44
-    @test wave_info[:max] ≈ 12.44
-    @test wave_info[:unit] == "deg"
-    @test wave_info[:label] == "theta_y"
+    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    @test haskey(waves_info, :x_scale)
+    xscale = waves_info[:x_scale]
+    @test xscale[:min] ≈ -11.44
+    @test xscale[:max] ≈ 12.44
+    @test xscale[:unit] == "deg"
+    @test xscale[:label] == "theta_y"
 end
 
 @testset "_parse_setscale! no label" begin
     line = "X SetScale/I y, 0, 100, \"eV\", 'wave1'"
-    wave_info = ARPES.IO.Format._parse_setscale!(line)
-    #@test haskey(waves_info, :y_scale)
-    #yscale = waves_info[:y_scale]
-    @test wave_info[:min] == 0
-    @test wave_info[:max] == 100
-    @test wave_info[:unit] == "eV"
-    @test wave_info[:label] == ""
+    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    @test haskey(waves_info, :y_scale)
+    yscale = waves_info[:y_scale]
+    @test yscale[:min] == 0
+    @test yscale[:max] == 100
+    @test yscale[:unit] == "eV"
+    @test isnothing(yscale[:label])
+end
+
+@testset "_parse_setscale! " begin
+    line = "X SetScale/I x, -10.6875, 10.6875, \"deg (Non-Energy Channel)\", 'Region1_1'"
+    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    @test haskey(waves_info, :x_scale)
+    xscale = waves_info[:x_scale]
+    @test xscale[:min] ≈ -10.6875
+    @test xscale[:max] ≈ 10.6875
+    @test xscale[:unit] == "deg"
+    @test xscale[:label] == "non_energy_channel"
 end
 
 @testset "_parse_setscale! basic test perpoints" begin
     line = "X SetScale/P y, 5.2, 0.002, \"eV\", 'GrIr111_1'"
-    wave_info = ARPES.IO.Format._parse_setscale!(line)
-    #@test haskey(waves_info, :y_scale)
-    #yscale = waves_info[:y_scale]
-    @test wave_info[:start] ≈ 5.2
-    @test wave_info[:step] ≈ 0.002
-    @test wave_info[:unit] == "eV"
-    @test wave_info[:label] == ""
+    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    @test haskey(waves_info, :y_scale)
+    yscale = waves_info[:y_scale]
+    @test yscale[:start] ≈ 5.2
+    @test yscale[:step] ≈ 0.002
+    @test yscale[:unit] == "eV"
+    @test isnothing(yscale[:label])
 end
 
 # comment line:

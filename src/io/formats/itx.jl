@@ -107,6 +107,20 @@ function _parse_comment_line(comment::String)
 end
 
 """
+"""
+function _build_scale(scale_info::Dict, length::Int)
+    if haskey(scale_info, :min)
+        return range(scale_info[:min], scale_info[:max], length = length)
+    elseif haskey(scale_info, :start)
+        return range(scale_info[:start], step = scale_info[:step], length = length)
+    else
+        error("Invalid scale information")
+    end
+end
+
+
+
+"""
 "beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
 ->
 Dict{Symbol, Any}(
@@ -155,12 +169,10 @@ function _parse_value(val_str::String)
 end
 
 """
-Convert to DimArray
+Parse data as simple 1D array
 """
 function _parse_wave_data(data_lines::Vector{String})
-    # Construct dimensions
     all_values = Float64[]
-    # x axis (1st dimension)
     for line in data_lines
         if isempty(strip(line))
             continue
@@ -189,24 +201,22 @@ function _to_dimarray(data::Array, waves_info::Dict)
     if haskey(waves_info, :shape)
         data = reshape(data, waves_info[:shape])
     end
-    # x-axis
-    if haskey(waves_info, :x_scale)
-        x_info = waves_info[:x_scale]
-        n_x = size(data, 1)
-        x_vals = range(x_info[:min], x_info[:max], length = n_x)
 
-        dim_name = isempty(x_info[:label]) ? :x : Symbol(x_info[:label])
-        push!(dims_list, Dim{dim_name}(collect(x_vals)))
-    end
 
-    # y-axis
-    if haskey(waves_info, :y_scale) && ndims(data) >= 2
-        y_info = waves_info[:y_scale]
-        n_y = size(data, 2)
-        y_vals = range(y_info[:min], y_info[:max], length = n_y)
-
-        dim_name = isempty(y_info[:label]) ? :y : Symbol(y_info[:label])
-        push!(dims_list, Dim{dim_name}(collect(y_vals)))
+    axes_keys = [:x_scale, :y_scale, :z_scale, :w_scale]
+    for (i, key) in enumerate(axes_keys)
+        if ndims(data) >= i && haskey(waves_info, key)
+            info = waves_info[key]
+            n = size(data, i)
+            vals = _build_scale(info, length = n)
+            default_name = Symbol(string(key)[1])
+            dim_name = isempty(info[:label]) ? default_name : Symbol(info[:label])
+            d = Dim{dim_name}(vals)
+            if haskey(info, :unit) && !isempty(info[:unit])
+                d = set(d, MetaData(Dict(:unit => info[:unit])))
+            end
+            push!(dims_list, d)
+        end
     end
 
     # Create DimArray
@@ -279,7 +289,7 @@ X SetScale/I x, -11.44, 12.44, "deg (theta_y)", 'GrIr111_1'
 → x-axis: -11.44 to 12.44, unit: "deg", label: "theta_y"
 
 SetScale/P x, 5.2, 0.002, "eV", "ID_001"
-→ x-axis: start=5.2, step=0.002, unit: "eV", label: "ID_001"
+→ x-axis: start=5.2, step=0.002, unit: "eV", label: nothing
 """
 function _parse_setscale!(line::String)
     # SetScale/I x, min, max, "unit (label)", 'wave'
@@ -306,11 +316,15 @@ function _parse_setscale!(line::String)
                 unit_match = match(r"\"([^(]+)\s*\(([^)]+)\)\"", unit_part)
                 if !isnothing(unit_match)
                     unit = strip(unit_match.captures[1])
-                    label = strip(unit_match.captures[2])
+                    label = replace(
+                        lowercase(strip(unit_match.captures[2])),
+                        "-" => "_",
+                        " " => "_",
+                    )
                 end
             else
                 unit = replace(unit_part, "\"" => "")
-                label = ""
+                label = nothing
             end
         end
 
@@ -325,23 +339,19 @@ function _parse_setscale!(line::String)
             min_val = parse(Float64, strip(parts[2]))
             max_val = parse(Float64, strip(parts[3]))
             return Dict(
-                :min => min_val,
-                :max => max_val,
-                :unit => unit,
-                :label => label,
-                :axis => axis_key,
-                :name => name,
+                axis_key =>
+                    Dict(:min => min_val, :max => max_val, :unit => unit, :label => label),
             )
         elseif mode == :perpoints
             start_val = parse(Float64, strip(parts[2]))
             step_val = parse(Float64, strip(parts[3]))
             return Dict(
-                :start => start_val,
-                :step => step_val,
-                :unit => unit,
-                :label => label,
-                :axis => axis_key,
-                :name => name,
+                axis_key => Dict(
+                    :start => start_val,
+                    :step => step_val,
+                    :unit => unit,
+                    :label => label,
+                ),
             )
         end
     end
