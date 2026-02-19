@@ -45,7 +45,7 @@ function read_itx(fpath::String)
 
         elseif startswith(line, "END")
             in_data_section = false
-            wave_data = _parse_wave_data(data_lines, waves_info)
+            wave_data = _parse_wave_data(data_lines)
 
         elseif startswith(line, "X SetScale")
             scale_info = _parse_setscale!(line)
@@ -157,7 +157,7 @@ end
 """
 Convert to DimArray
 """
-function _parse_wave_data(data_lines::Vector{String}, waves_info::Dict)
+function _parse_wave_data(data_lines::Vector{String})
     # Construct dimensions
     all_values = Float64[]
     # x axis (1st dimension)
@@ -176,24 +176,19 @@ function _parse_wave_data(data_lines::Vector{String}, waves_info::Dict)
             end
         end
     end
-
-    # Reshape if shape info is given
-    if haskey(waves_info, :shape)
-        shape = waves_info[:shape]
-        return reshape(all_values, shape)
-    else
-        return all_values
-    end
+    return all_values
 end
 
 
 """
 Convert to DimArray
 """
-function _to_dimarray(data::Array, waves_info::Dict, metadata::Dict)
+function _to_dimarray(data::Array, waves_info::Dict)
     # Construct dimension
     dims_list = []
-
+    if haskey(waves_info, :shape)
+        data = reshape(data, waves_info[:shape])
+    end
     # x-axis
     if haskey(waves_info, :x_scale)
         x_info = waves_info[:x_scale]
