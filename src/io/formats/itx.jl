@@ -11,15 +11,12 @@ Read itx file
 function read_itx(fpath::String)
     lines = readlines(fpath)
 
-    # For storing metadata
-    metadata = Dict{Symbol,Any}()
-    metadata[:raw_comments] = String[]
-    metadata[:source_file] = fpath
 
     # Wave data
     waves_info = Dict{String,Any}()
+    waves_info[:raw_comments] = String[]
+    waves_info[:source_file] = fpath
     wave_data = nothing
-    wave_name = ""
 
     in_data_section = false
     data_lines = String[]
@@ -33,20 +30,18 @@ function read_itx(fpath::String)
             comment = replace(line, "X //" => "", count = 1)
             comment = strip(comment)
 
-            push!(metadata[:raw_comments], comment)
+            push!(waves_info[:raw_comments], comment)
 
-            merge(waves_info, _parse_comment_line(metadata, comment))
+            merge(waves_info, _parse_comment_line(comment))
 
         elseif startswith(line, "IGOR")
             continue
 
         elseif startswith(line, "WAVES")
             waves_info = _parse_waves_declaration(line)
-            wave_name = waves_info[:name]
 
         elseif startswith(line, "BEGIN")
             in_data_section = true
-            data_lines = String[]
 
         elseif startswith(line, "END")
             in_data_section = false
@@ -61,17 +56,18 @@ function read_itx(fpath::String)
         end
     end
 
-    return _to_dimarray(wave_data, waves_info, metadata)
+    return _to_dimarray(wave_data, waves_info)
 end
 
 """
 Parse comment line
 
 X //Scan Mode         = Fixed Analyzer Transmission
-→ metadata[:scan_mode] = "Fixed Analyzer Transmission"
+→ Dict{Symbol, Any}(
+:scan_mode => "Fixed Analyzer Transmission"
+)
 """
 function _parse_comment_line(comment::String)
-    # "key = value"
     if startswith(comment, "User Comment")
         parts = split(comment, "=", limit = 2)
         additional_waves_info = Dict{Symbol,Any}()
@@ -94,6 +90,7 @@ function _parse_comment_line(comment::String)
             return Dict(key => val)
         end
     end
+
     if startswith(comment, "Created Date")
         parts = split(comment, ":", limit = 2)
         if length(parts) == 2

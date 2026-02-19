@@ -47,6 +47,7 @@ jobs:
           coverage: true
 
       - uses: julia-actions/julia-processcoverage@v1
+        if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
 
       - name: Generate HTML coverage
         run: |
@@ -62,6 +63,7 @@ jobs:
           path: coverage_html
 
       - uses: codecov/codecov-action@v4
+        if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
