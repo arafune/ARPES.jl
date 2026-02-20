@@ -1,8 +1,18 @@
 const LOCATION_REGISTRY = Dict{String,Type{<:LocationLoader}}("SPD" => SPDLoader)
 
+"""
+Return Loader type from given file path and location name.
+
+# Arguments
+ -`fpath::String`: File path.
+ -`loc`::Union{String,Nothing}: Location name.
+
+# Returns
+ -`Type{<:LocationLoader}`: Loader type.
+"""
 function select_loader(fpath::String, loc::Union{String,Nothing})
     if !isnothing(loc)
-        return get_loader_by_name(loc)
+        return get_loader_by_name(loc)  # loc = "SPD" → SPDLoader
     end
 
     if !isnothing(OPTIONS.loc)
@@ -19,35 +29,6 @@ function get_loader_by_name(name::String)
         error("Unknown location: '$name'. Available: $(keys(LOCATION_REGISTRY))")
     end
 end
-
-
-"""
-Return Loader type from given file path and location name.
-
-# Arguments
- -`fpath::String`: File path.
- -`loc`::Union{String,Nothing}: Location name.
-
-# Returns
- -`Type{<:LocationLoader}`: Loader type.
-"""
-function select_loader(fpath::String, loc::Union{String,Nothing})
-    if !isnothing(loc)
-        return get_loader_by_name(loc)  # loc = "SPD" → SPDLoader
-    end
-    #
-    if !isnothing(OPTIONS.loc)
-        return get_loader_by_name(OPTIONS.loc)
-    end
-
-    return detect_loader(fpath)
-end
-
-function get_loader_by_name(name::String)
-    # name = "SPD"
-    return LOCATION_REGISTRY[name]  # LOCATION_REGISTRY["SPD"] → SPDLoader
-end
-
 
 """
 Judge the loader type from the file content.
