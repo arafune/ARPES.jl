@@ -1,4 +1,5 @@
 using DimensionalData
+using DimensionalData: set, Dim, DimArray
 
 """
 Read itx file
@@ -11,9 +12,8 @@ Read itx file
 function read_itx(fpath::String)
     lines = readlines(fpath)
 
-
     # Wave data
-    waves_info = Dict{String,Any}()
+    waves_info = Dict{Union{String,Symbol},Any}()
     waves_info[:raw_comments] = String[]
     waves_info[:source_file] = fpath
     wave_data = nothing
@@ -31,14 +31,19 @@ function read_itx(fpath::String)
             comment = strip(comment)
 
             push!(waves_info[:raw_comments], comment)
-
-            merge(waves_info, _parse_comment_line(comment))
+            parsed = _parse_comment_line(comment)
+            if parsed !== nothing
+                merge!(waves_info, parsed)
+            end
 
         elseif startswith(line, "IGOR")
             continue
 
         elseif startswith(line, "WAVES")
-            waves_info = _parse_waves_declaration(line)
+            parsed = _parse_waves_declaration(line)
+            if parsed !== nothing
+                waves_info = merge(waves_info, parsed)
+            end
 
         elseif startswith(line, "BEGIN")
             in_data_section = true
@@ -55,7 +60,6 @@ function read_itx(fpath::String)
             push!(data_lines, line)
         end
     end
-
     return _to_dimarray(wave_data, waves_info)
 end
 
@@ -67,7 +71,7 @@ X //Scan Mode         = Fixed Analyzer Transmission
 :scan_mode => "Fixed Analyzer Transmission"
 )
 """
-function _parse_comment_line(comment::String)
+function _parse_comment_line(comment::AbstractString)
     if startswith(comment, "User Comment")
         parts = split(comment, "=", limit = 2)
         additional_waves_info = Dict{Symbol,Any}()
@@ -201,30 +205,34 @@ function _to_dimarray(data::Array, waves_info::Dict)
     if haskey(waves_info, :shape)
         data = reshape(data, waves_info[:shape])
     end
-
-
     axes_keys = [:x_scale, :y_scale, :z_scale, :w_scale]
     for (i, key) in enumerate(axes_keys)
         if ndims(data) >= i && haskey(waves_info, key)
             info = waves_info[key]
             n = size(data, i)
-            vals = _build_scale(info, length = n)
+            vals = _build_scale(info, n)
             default_name = Symbol(string(key)[1])
             dim_name = isempty(info[:label]) ? default_name : Symbol(info[:label])
             d = Dim{dim_name}(vals)
             if haskey(info, :unit) && !isempty(info[:unit])
-                d = set(d, MetaData(Dict(:unit => info[:unit])))
+                d = Dim{dim_name}(
+                    vals;
+                    metadata = DimensionalData.Dimensions.Metadata(
+                        Dict(:unit => info[:unit]),
+                    ),
+                )
+            else
+                d = Dim{dim_name}(vals)
             end
             push!(dims_list, d)
         end
     end
-
     # Create DimArray
     da = DimArray(
         data,
         Tuple(dims_list);
         name = Symbol(get(waves_info, :name, "data")),
-        metadata = metadata,
+        metadata = DimensionalData.Metadata(waves_info),
     )
 
     return da
@@ -236,7 +244,7 @@ Parse WAVES declaration
 WAVES/S/N=(200,2401) 'GrIr111_1'
 → Dict(:type => :single_precision, :shape => (200, 2401), :name => "GrIr111_1")
 """
-function _parse_waves_declaration(line::String)
+function _parse_waves_declaration(line::AbstractString)
     info = Dict{Symbol,Any}()
 
     # Extract flag part (/S, /N=...)
@@ -291,7 +299,7 @@ X SetScale/I x, -11.44, 12.44, "deg (theta_y)", 'GrIr111_1'
 SetScale/P x, 5.2, 0.002, "eV", "ID_001"
 → x-axis: start=5.2, step=0.002, unit: "eV", label: nothing
 """
-function _parse_setscale!(line::String)
+function _parse_setscale!(line::AbstractString)
     # SetScale/I x, min, max, "unit (label)", 'wave'
     # SetScale/P x, start, step, "unit", "label"
     parts = split(line, ",")

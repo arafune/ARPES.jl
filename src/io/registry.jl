@@ -1,4 +1,3 @@
-# ✅ より良い実装
 const LOCATION_REGISTRY = Dict{String,Type{<:LocationLoader}}("SPD" => SPDLoader)
 
 function select_loader(fpath::String, loc::Union{String,Nothing})
