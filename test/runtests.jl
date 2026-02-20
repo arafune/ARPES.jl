@@ -1,6 +1,11 @@
-using JuliARPES
+using ARPES
+using Coverage
 using Test
 
-@testset "JuliARPES.jl" begin
-    # Write your tests here.
+@testset "ARPES.jl" begin
+    @testset "IO" begin
+        @testset "FORMATS" begin
+            include("io/formats/itx.jl")
+        end
+    end
 end
