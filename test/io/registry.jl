@@ -2,13 +2,14 @@ using Test
 include("../../src/io/types.jl")
 include("../../src/io/registry.jl")
 
-#@testset "select_loader" begin
-#    # Test with explicit location
-#    @test select_loader("dummy.itx", "SPD") == SPDLoader
-#
+@testset "select_loader" begin
+    # Test with explicit location
+    file_path = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
+    @test select_loader("dummy.itx", "SPD") == SPDLoader
+    @test select_loader(file_path, nothing) == SPDLoader
+end
 #    # Test with OPTIONS.loc
 #    OPTIONS[] = (loc = "SPD")
-#    @test select_loader("dummy.itx", nothing) == SPDLoader
 #
 #    OPTIONS[] = (loc = nothing)
 #    # Test with file extension detection
