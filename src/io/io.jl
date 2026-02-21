@@ -1,6 +1,6 @@
 module IO
+include("types.jl")
 include("registry.jl")
-incldue("types.jl")
 include("location/location.jl")
 include("formats/format.jl")
 

@@ -1,5 +1,6 @@
 using DimensionalData
 using DimensionalData: DimArray
+using ..IO: SPDLoader
 
 function load_data(::Type{SPDLoader}, fpath::String)
     # read the SPD file and parse its content
