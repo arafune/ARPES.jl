@@ -12,11 +12,7 @@ Return Loader type from given file path and location name.
 """
 function select_loader(fpath::String, loc::Union{String,Nothing})
     if !isnothing(loc)
-        return get_loader_by_name(loc)  # loc = "SPD" → SPDLoader
-    end
-
-    if !isnothing(OPTIONS.loc)
-        return get_loader_by_name(OPTIONS.loc)
+        return get_loader_by_name(loc)
     end
 
     return detect_loader(fpath)

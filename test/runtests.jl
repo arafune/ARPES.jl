@@ -7,5 +7,8 @@ using Test
         @testset "FORMATS" begin
             include("io/formats/itx.jl")
         end
+        @testset "registry" begin
+            include("io/registry.jl")
+        end
     end
 end
