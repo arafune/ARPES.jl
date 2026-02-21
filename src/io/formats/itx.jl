@@ -2,12 +2,19 @@ using DimensionalData
 using DimensionalData: set, Dim, DimArray
 
 """
-Read itx file
+    read_itx(fpath::String)
 
-# Memo:
+Reads an ITX (Igor Text) file and parses its contents into structured data.
 
-1. Save comment lines as raw data
-2. Parse into structured information
+- Saves comment lines as raw data.
+- Parses comments, wave declarations, and scale information into a dictionary.
+- Extracts wave data and converts it into a `DimArray` with appropriate metadata.
+
+# Arguments
+- `fpath::String`: Path to the ITX file.
+
+# Returns
+- `DimArray`: A dimensional array containing the parsed wave data and metadata.
 """
 function read_itx(fpath::String)
     lines = readlines(fpath)
@@ -53,7 +60,7 @@ function read_itx(fpath::String)
             wave_data = _parse_wave_data(data_lines)
 
         elseif startswith(line, "X SetScale")
-            scale_info = _parse_setscale!(line)
+            scale_info = _parse_setscale(line)
             merge!(waves_info, scale_info)
 
         elseif in_data_section
@@ -64,12 +71,18 @@ function read_itx(fpath::String)
 end
 
 """
-Parse comment line
+    _parse_comment_line(comment::AbstractString)
 
-X //Scan Mode         = Fixed Analyzer Transmission
-→ Dict{Symbol, Any}(
-:scan_mode => "Fixed Analyzer Transmission"
-)
+Parses a comment line from the ITX file and extracts key-value pairs or metadata.
+
+- Handles user comments, created date, and created by fields.
+- Converts keys to symbols and values to appropriate types.
+
+# Arguments
+- `comment::AbstractString`: The comment line to parse.
+
+# Returns
+- `Dict{Symbol, Any}`: Dictionary of parsed metadata, or `nothing` if not applicable.
 """
 function _parse_comment_line(comment::AbstractString)
     if startswith(comment, "User Comment")
@@ -111,6 +124,16 @@ function _parse_comment_line(comment::AbstractString)
 end
 
 """
+    _build_scale(scale_info::Dict, length::Int)
+
+Builds a numerical range for a dimension based on scale information.
+
+# Arguments
+- `scale_info::Dict`: Dictionary containing scale parameters (`:min`, `:max`, `:start`, `:step`).
+- `length::Int`: Number of points in the range.
+
+# Returns
+- `AbstractRange`: The constructed range for the dimension.
 """
 function _build_scale(scale_info::Dict, length::Int)
     if haskey(scale_info, :min)
@@ -125,17 +148,19 @@ end
 
 
 """
-"beta:0;Temperature:RT;X:13.5;Y:21.55;Z:+00346000;theta:-00270000;position:187.4655;UV(P);IR(P);+w;P:113mW;+3w;P:6mW;"
-->
-Dict{Symbol, Any}(
-:beta => 0
-:p => "6mW"
-:temperature => "RT"
-:y => 21.55
-:position => 187.4655
-:z => 346000
-:theta => -270000
-:x => 13.5)
+    _parse_comment_line_comment(comment::String)
+
+Parses a semicolon-separated comment string into key-value pairs.
+
+Example:
+    "beta:0;Temperature:RT;X:13.5;" → Dict(:beta => 0, :temperature => "RT", :x => 13.5)
+
+# Arguments
+- `comment::String`: The comment string to parse.
+
+# Returns
+- `Dict{Symbol, Any}`: Dictionary of parsed key-value pairs.
+
 """
 function _parse_comment_line_comment(comment::String)
     additional_waves_info = Dict{Symbol,Any}()
@@ -152,7 +177,15 @@ end
 
 
 """
-Convert value to appropriate type
+    _parse_value(val_str::String)
+
+Converts a string value to an appropriate type (Int, Float64, or String).
+
+# Arguments
+- `val_str::String`: The string value to convert.
+
+# Returns
+- `Int`, `Float64`, or `String`: The parsed value.
 """
 function _parse_value(val_str::String)
     val_str = strip(val_str)
@@ -173,7 +206,15 @@ function _parse_value(val_str::String)
 end
 
 """
-Parse data as simple 1D array
+    _parse_wave_data(data_lines::Vector{String})
+
+Parses lines of wave data into a 1D array of Float64 values.
+
+# Arguments
+- `data_lines::Vector{String}`: Lines containing space-separated numeric values.
+
+# Returns
+- `Vector{Float64}`: Parsed numeric data.
 """
 function _parse_wave_data(data_lines::Vector{String})
     all_values = Float64[]
@@ -197,7 +238,16 @@ end
 
 
 """
-Convert to DimArray
+    _to_dimarray(data::Array, waves_info::Dict)
+
+Converts parsed data and metadata into a `DimArray` with appropriate dimensions and metadata.
+
+# Arguments
+- `data::Array`: The wave data array.
+- `waves_info::Dict`: Metadata and dimension information.
+
+# Returns
+- `DimArray`: The constructed dimensional array.
 """
 function _to_dimarray(data::Array, waves_info::Dict)
     # Construct dimension
@@ -239,10 +289,19 @@ function _to_dimarray(data::Array, waves_info::Dict)
 end
 
 """
-Parse WAVES declaration
+    _parse_waves_declaration(line::AbstractString)
 
-WAVES/S/N=(200,2401) 'GrIr111_1'
-→ Dict(:type => :single_precision, :shape => (200, 2401), :name => "GrIr111_1")
+Parses a WAVES declaration line from the ITX file and extracts wave metadata.
+
+Example:
+    WAVES/S/N=(200,2401) 'GrIr111_1'
+    → Dict(:type => :single_precision, :shape => (200, 2401), :name => "GrIr111_1")
+
+# Arguments
+- `line::AbstractString`: The WAVES declaration line.
+
+# Returns
+- `Dict{Symbol, Any}`: Dictionary of parsed wave metadata.
 """
 function _parse_waves_declaration(line::AbstractString)
     info = Dict{Symbol,Any}()
@@ -292,14 +351,24 @@ function _parse_waves_declaration(line::AbstractString)
 end
 
 """
-Parse SetScale
-X SetScale/I x, -11.44, 12.44, "deg (theta_y)", 'GrIr111_1'
-→ x-axis: -11.44 to 12.44, unit: "deg", label: "theta_y"
+    _parse_setscale(line::AbstractString)
 
-SetScale/P x, 5.2, 0.002, "eV", "ID_001"
-→ x-axis: start=5.2, step=0.002, unit: "eV", label: nothing
+Parses a SetScale line from the ITX file and extracts axis scaling information.
+
+Examples:
+    X SetScale/I x, -11.44, 12.44, "deg (theta_y)", 'GrIr111_1'
+    → x-axis: -11.44 to 12.44, unit: "deg", label: "theta_y"
+
+    SetScale/P x, 5.2, 0.002, "eV", "ID_001"
+    → x-axis: start=5.2, step=0.002, unit: "eV", label: nothing
+
+# Arguments
+- `line::AbstractString`: The SetScale line to parse.
+
+# Returns
+- `Dict{Symbol, Any}`: Dictionary containing axis scale information.
 """
-function _parse_setscale!(line::AbstractString)
+function _parse_setscale(line::AbstractString)
     # SetScale/I x, min, max, "unit (label)", 'wave'
     # SetScale/P x, start, step, "unit", "label"
     parts = split(line, ",")

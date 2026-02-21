@@ -31,7 +31,7 @@ end
 #setscale line format:
 @testset "_parse_setscale! basic test" begin
     line = "X SetScale/I x, -11.44, 12.44, \"deg (theta_y)\", 'GrIr111_1'"
-    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    waves_info = ARPES.IO.Format._parse_setscale(line)
     @test haskey(waves_info, :x_scale)
     xscale = waves_info[:x_scale]
     @test xscale[:min] ≈ -11.44
@@ -42,7 +42,7 @@ end
 
 @testset "_parse_setscale! no label" begin
     line = "X SetScale/I y, 0, 100, \"eV\", 'wave1'"
-    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    waves_info = ARPES.IO.Format._parse_setscale(line)
     @test haskey(waves_info, :y_scale)
     yscale = waves_info[:y_scale]
     @test yscale[:min] == 0
@@ -53,7 +53,7 @@ end
 
 @testset "_parse_setscale! " begin
     line = "X SetScale/I x, -10.6875, 10.6875, \"deg (Non-Energy Channel)\", 'Region1_1'"
-    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    waves_info = ARPES.IO.Format._parse_setscale(line)
     @test haskey(waves_info, :x_scale)
     xscale = waves_info[:x_scale]
     @test xscale[:min] ≈ -10.6875
@@ -64,7 +64,7 @@ end
 
 @testset "_parse_setscale! basic test perpoints" begin
     line = "X SetScale/P y, 5.2, 0.002, \"eV\", 'GrIr111_1'"
-    waves_info = ARPES.IO.Format._parse_setscale!(line)
+    waves_info = ARPES.IO.Format._parse_setscale(line)
     @test haskey(waves_info, :y_scale)
     yscale = waves_info[:y_scale]
     @test yscale[:start] ≈ 5.2

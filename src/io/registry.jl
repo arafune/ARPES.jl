@@ -46,15 +46,11 @@ function detect_loader(fpath::String)
         return detect_itx_loader(fpath)
     elseif ext == ".sp2"
         return detect_sp2_loader(fpath)
-    elseif ext == ".h5" || ext == ".hdf5"
-        return detect_hdf5_loader(fpath)
     else
         @warn "Unknown file extension: $ext, using GenericLoader"
         return GenericLoader
     end
 end
-
-
 
 
 """ITX file"""
@@ -70,12 +66,15 @@ function detect_itx_loader(fpath::String)
 
     header_text = join(header_lines, "\n")
 
-    if occursin("SpecsLab Prodigy", header_text)
+    if occursin("SpecsLab Prodigy", header_text) || occursin("R. Arafune", header_text)
         return SPDLoader
-    elseif occursin("MAX IV", header_text) || occursin("Bloch", header_text)
-        return BlochLoader
     else
         @info "Could not determine location from ITX file, using GenericLoader"
         return GenericLoader
     end
+end
+
+"""SP2 file"""
+function detect_sp2_loader(fpath::String)
+    return SPDLoader
 end
