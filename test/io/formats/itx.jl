@@ -128,7 +128,7 @@ end
     @test result[:beta] == 0
     @test result[:temperature] == "RT"
     @test result[:x] ≈ 13.5
-    @test result[:z] ≈ +00346000
+    @test result[:z] ≈ 346000
     @test result[:position] ≈ 187.4655
 end
 
