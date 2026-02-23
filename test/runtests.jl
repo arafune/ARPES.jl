@@ -4,6 +4,9 @@ using Test
 
 @testset "ARPES.jl" begin
     @testset "IO" begin
+        @testset "IO basic" begin
+            include("io/io.jl")
+        end
         @testset "Location" begin
             include("io/location/spd.jl")
         end
