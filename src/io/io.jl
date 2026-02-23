@@ -10,6 +10,7 @@ include("types.jl")
 include("registry.jl")
 include("formats/format.jl")
 include("location/location.jl")
+using ARPES.IO.Location: load_data
 
 export load
 """
@@ -30,9 +31,9 @@ data = load("data/file.itx", loc="spd")
 function load(fpath::String; loc = Union{String,nothing})
     #  resolved_path = resolve_path(fpath)
 
-    loader_type = select_loader(resolved_path, loc)
+    loader_type = select_loader(fpath, loc)
 
-    return load_data(loader_type, path)
+    return load_data(loader_type, fpath)
 end
 end
 

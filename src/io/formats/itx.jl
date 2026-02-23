@@ -263,9 +263,11 @@ function _to_dimarray(data::Array, waves_info::Dict)
             n = size(data, i)
             vals = _build_scale(info, n)
             default_name = Symbol(string(key)[1])
-            dim_name = isempty(info[:label]) ? default_name : Symbol(info[:label])
+            label = get(info, :label, nothing)
+            dim_name = (label === nothing || isempty(label)) ? default_name : Symbol(label)
             d = Dim{dim_name}(vals)
-            if haskey(info, :unit) && !isempty(info[:unit])
+            unit = get(info, :unit, nothing)
+            if unit !== nothing && !isempty(unit)
                 d = Dim{dim_name}(
                     vals;
                     metadata = DimensionalData.Dimensions.Metadata(
