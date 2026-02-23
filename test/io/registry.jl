@@ -1,6 +1,5 @@
 using Test
-include("../../src/io/types.jl")
-include("../../src/io/registry.jl")
+using ARPES.IO: select_loader, get_loader_by_name
 
 @testset "select_loader" begin
     # Test with explicit location

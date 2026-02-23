@@ -1,6 +1,7 @@
 using DimensionalData
 using DimensionalData: set, Dim, DimArray
 
+export read_itx
 """
     read_itx(fpath::String)
 

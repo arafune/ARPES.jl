@@ -1,7 +1,23 @@
+using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
 
+"""
+    load_data(::Type{SPDLoader}, fpath:String)
+
+Load and parse an SPD file from the given file path.
+
+# Arguments
+- `::Type{SPDLoader}`: Loader type for SPD files.
+- `fpath::String`: Path to the SPD file.
+
+# Returns
+A standardized DimArray parsed from the file.
+
+# Notes
+Supports `.itx` and `.sp2` file extensions.
+"""
 function load_data(::Type{SPDLoader}, fpath::String)
     # read the SPD file and parse its content
     ext = lowercase(splitext(fpath)[2])

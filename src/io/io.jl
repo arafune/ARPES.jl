@@ -8,9 +8,10 @@ handling file formats, and managing file locations.
 module IO
 include("types.jl")
 include("registry.jl")
-include("location/location.jl")
 include("formats/format.jl")
+include("location/location.jl")
 
+export load
 """
     load(fpath::String; loc = Union{String, nothing})
 
@@ -22,7 +23,7 @@ Returns parsed data.
 
 # Example
 ```julia
-data = IO.load("data/file.itx", loc="spd")
+data = load("data/file.itx", loc="spd")
 ```
 
 """
@@ -33,6 +34,5 @@ function load(fpath::String; loc = Union{String,nothing})
 
     return load_data(loader_type, path)
 end
-export load
 end
 
