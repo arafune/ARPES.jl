@@ -1,3 +1,9 @@
+"""
+Registry mapping location names to their corresponding loader types.
+
+# Example
+LOCATION_REGISTRY["SPD"] #=> SPDLoader
+"""
 const LOCATION_REGISTRY = Dict{String,Type{<:LocationLoader}}("SPD" => SPDLoader)
 
 """
@@ -49,7 +55,15 @@ function detect_loader(fpath::String)
 end
 
 
-"""ITX file"""
+"""
+Detect the loader type for ITX files by inspecting the file header.
+
+# Arguments
+- `fpath::String`: File path
+
+# Returns
+- `Type{<:LocationLoader}`: Loader type
+"""
 function detect_itx_loader(fpath::String)
     #
     header_lines = String[]
@@ -70,7 +84,15 @@ function detect_itx_loader(fpath::String)
     end
 end
 
-"""SP2 file"""
+"""
+Detect the loader type for SP2 files.
+
+# Arguments
+- `fpath::String`: File path
+
+# Returns
+- `Type{<:LocationLoader}`: Loader type
+"""
 function detect_sp2_loader(fpath::String)
     return SPDLoader
 end
