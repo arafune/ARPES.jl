@@ -8,6 +8,7 @@ using Test
             include("io/io.jl")
         end
         @testset "Location" begin
+            include("io/location/location.jl")
             include("io/location/spd.jl")
         end
         @testset "FORMATS" begin
