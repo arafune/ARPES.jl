@@ -2,7 +2,7 @@ using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
-
+using ARPES: ARPESData, phi, eV, ch, ch2
 """
     load_data(::Type{SPDLoader}, fpath:String)
 
@@ -45,7 +45,7 @@ const DIM_ALIAS = Dict(
     eV => [:kinetic_energy, :energy, :binding_energy],
 )
 
-const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => psi, :w=>spin)
+const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => ch, :w=>ch2)
 
 Location.dim_alias(::SPDLoader) = DIM_ALIAS
 Location.default_dim_map(::SPDLoader) = DEFAULT_DIM_MAP

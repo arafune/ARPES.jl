@@ -9,9 +9,10 @@ using Dates
 @dim phi "degrees"
 @dim psi "degrees"
 @dim eV "eV"
-@dim Cycle "cycle"
-@dim Ch2 "ch2"
+@dim ch
+@dim ch2
 @dim delay
+@dim spin
 
 abstract type IntensityUnit end
 struct Counts <: IntensityUnit end

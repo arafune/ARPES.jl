@@ -1,5 +1,5 @@
 module Location
-
+using ..IO: LocationLoader, SPDLoader, GenericLoader
 export canonical_dim, dim_alias, default_dim_map
 
 dim_alias(::LocationLoader) = Dict{Function,Vector{Symbol}}()
