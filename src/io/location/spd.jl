@@ -40,3 +40,12 @@ follows Rev.Sci.Instrum. 89, 043903 (2018).
 function spd_to_standard(raw::DimArray)
     return raw
 end
+const DIM_ALIAS = Dict(
+    phi => [:non_energy_channel, :angle, :theta],
+    eV => [:kinetic_energy, :energy, :binding_energy],
+)
+
+const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => psi, :w=>spin)
+
+Location.dim_alias(::SPDLoader) = DIM_ALIAS
+Location.default_dim_map(::SPDLoader) = DEFAULT_DIM_MAP
