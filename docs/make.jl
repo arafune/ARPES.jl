@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(ARPES, :DocTestSetup, :(using ARPES); recursive = true)
 
 makedocs(;
     modules = [ARPES],
-    authors = "Ryuichi ARafune",
+    authors = "Ryuichi Arafune",
     sitename = "ARPES.jl",
     format = Documenter.HTML(; edit_link = "main", assets = String[]),
     pages = ["Home" => "index.md"],
