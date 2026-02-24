@@ -1,7 +1,7 @@
-using DimensinalData
+using DimensionalData
 using DimensionalData.Dimensions: name, val
-using .IO: LocationLoader
-using .IO.Location: canonical_dim
+using ..IO: LocationLoader
+using ..IO.Location: canonical_dim
 
 function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
     new_dims = map(dims(raw)) do d
