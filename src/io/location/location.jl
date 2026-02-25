@@ -37,7 +37,7 @@ function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
         isnothing(ctor) ? d : ctor(val(d))
     end
 
-    return rebuild(raw; dims = Tuple(new_dims))
+    return rebuild(raw; dims = new_dims)
 end
 
 """

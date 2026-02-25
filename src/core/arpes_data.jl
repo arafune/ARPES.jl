@@ -53,11 +53,11 @@ Container for ARPES data.
 
 # Constructor
 The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`.
-"""
-s
+
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
 - `unit::U`: The unit of intensity, subtype of IntensityUnit.
+- `type::Conf`: The analyzer configuration type label.
 """
 struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf}
     intensity::T
