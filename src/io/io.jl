@@ -8,6 +8,9 @@ handling file formats, and managing file locations.
 module IO
 include("types.jl")
 include("registry.jl")
+
+function to_standardize end
+
 include("formats/format.jl")
 include("location/location.jl")
 include("processing/processing.jl")

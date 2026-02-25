@@ -3,6 +3,8 @@ using DimensionalData.Dimensions: name, val
 using ..IO: LocationLoader
 using ..IO.Location: canonical_dim
 
+import ..IO: to_standardize
+
 function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
     new_dims = map(dims(raw)) do d
         raw_name = name(d)
