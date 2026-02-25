@@ -435,4 +435,3 @@ function _parse_setscale(line::AbstractString)
         end
     end
 end
-

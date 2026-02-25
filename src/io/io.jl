@@ -37,4 +37,3 @@ function load(fpath::String; loc = Union{String,nothing})
     return load_data(loader_type, fpath)
 end
 end
-

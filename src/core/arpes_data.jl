@@ -9,7 +9,7 @@ using Dates
 @dim phi "degrees"
 @dim psi "degrees"
 @dim eV "eV"
-@dim ch
+@dim detector_ch
 @dim ch2
 @dim delay
 @dim spin
@@ -18,10 +18,12 @@ using Dates
 Abstract type representing the unit of intensity in ARPES data.
 """
 abstract type IntensityUnit end
+
 """
 Intensity unit representing raw counts.
 """
 struct Counts <: IntensityUnit end
+
 """
 Intensity unit representing counts per second (CPS).
 """
@@ -38,4 +40,3 @@ struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit}
     intensity::T
     unit::U
 end
-

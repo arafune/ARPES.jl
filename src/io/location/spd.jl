@@ -2,15 +2,16 @@ using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
-using ARPES: ARPESData, phi, eV, ch, ch2
+using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts
 using ..IO.Location: to_standardize
 
 const DIM_ALIAS = Dict(
     phi => [:non_energy_channel, :angle, :theta],
     eV => [:kinetic_energy, :energy, :binding_energy],
+    detector_ch => [:energy_channel, :channel, :ch],
 )
 
-const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => ch, :w=>ch2)
+const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => detector_ch, :w=>ch2)
 
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
@@ -49,6 +50,12 @@ follows Rev.Sci.Instrum. 89, 043903 (2018).
 
 """
 function spd_to_standard(raw::DimArray)
-    return to_standardize(SPDLoader, raw)
+    standard_array = to_standardize(SPDLoader, raw)
+    if haskey(metadata(standard_array), :d_scale)  #made from itx
+        if startswith(metadata(standard_array)[:d_scale][:unit], "count")
+            return ARPESData(standard_array, Counts())
+        end
+        return ARPESData(standard_array, CPS())
+    end
+    return ARPESData(standard_array, Counts())
 end
-
