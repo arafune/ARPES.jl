@@ -2,7 +2,7 @@ using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
-using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts
+using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI
 using ..IO.Location: to_standardize
 
 const DIM_ALIAS = Dict(
@@ -53,9 +53,9 @@ function spd_to_standard(raw::DimArray)
     standard_array = to_standardize(SPDLoader, raw)
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
-            return ARPESData(standard_array, Counts())
+            return ARPESData(standard_array, Counts(), TypeI)
         end
-        return ARPESData(standard_array, CPS())
+        return ARPESData(standard_array, CPS(), TypeI)
     end
-    return ARPESData(standard_array, Counts())
+    return ARPESData(standard_array, Counts(), TypeI)
 end
