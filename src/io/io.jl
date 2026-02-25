@@ -10,6 +10,7 @@ include("types.jl")
 include("registry.jl")
 include("formats/format.jl")
 include("location/location.jl")
+include("processing/processing.jl")
 using ARPES.IO.Location: load_data
 
 export load
