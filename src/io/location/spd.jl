@@ -3,6 +3,16 @@ using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
 using ARPES: ARPESData, phi, eV, ch, ch2
+
+const DIM_ALIAS = Dict(
+    phi => [:non_energy_channel, :angle, :theta],
+    eV => [:kinetic_energy, :energy, :binding_energy],
+)
+
+const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => ch, :w=>ch2)
+
+Location.dim_alias(::SPDLoader) = DIM_ALIAS
+Location.default_dim_map(::SPDLoader) = DEFAULT_DIM_MAP
 """
     load_data(::Type{SPDLoader}, fpath:String)
 
@@ -40,12 +50,4 @@ follows Rev.Sci.Instrum. 89, 043903 (2018).
 function spd_to_standard(raw::DimArray)
     return raw
 end
-const DIM_ALIAS = Dict(
-    phi => [:non_energy_channel, :angle, :theta],
-    eV => [:kinetic_energy, :energy, :binding_energy],
-)
 
-const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => ch, :w=>ch2)
-
-Location.dim_alias(::SPDLoader) = DIM_ALIAS
-Location.default_dim_map(::SPDLoader) = DEFAULT_DIM_MAP
