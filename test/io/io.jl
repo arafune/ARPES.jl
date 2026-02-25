@@ -7,3 +7,4 @@ using ARPES
     data = load(file_path, loc = "SPD")
     @test !isempty(data.intensity)
 end
+
