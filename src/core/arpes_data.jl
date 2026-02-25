@@ -1,4 +1,5 @@
 using DimensionalData
+import Base: size, axes, getindex, iterate
 using DimensionalData.Dimensions: @dim
 using Dates
 
@@ -40,3 +41,13 @@ struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit}
     intensity::T
     unit::U
 end
+
+# delegate methods
+# -------------------
+
+size(d::ARPESData) = size(d.intensity)
+axes(d::ARPESData) = axes(d.intensity)
+iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
+getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
+dims(d::ARPESData) = dims(d.intensity)
+name(d::ARPESData) = name(d.intensity)
