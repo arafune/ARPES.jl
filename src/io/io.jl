@@ -9,11 +9,8 @@ module IO
 include("types.jl")
 include("registry.jl")
 
-function to_standardize end
-
 include("formats/format.jl")
 include("location/location.jl")
-include("processing/processing.jl")
 using ARPES.IO.Location: load_data
 
 export load
