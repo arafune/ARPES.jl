@@ -2,6 +2,7 @@ using DimensionalData
 using DimensionalData: set, Dim, DimArray
 
 export read_itx
+
 """
     read_itx(fpath::String)
 
@@ -145,8 +146,6 @@ function _build_scale(scale_info::Dict, length::Int)
         error("Invalid scale information")
     end
 end
-
-
 
 """
     _parse_comment_line_comment(comment::String)
@@ -436,4 +435,3 @@ function _parse_setscale(line::AbstractString)
         end
     end
 end
-

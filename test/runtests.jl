@@ -3,11 +3,15 @@ using Coverage
 using Test
 
 @testset "ARPES.jl" begin
+    @testset "Core" begin
+        include("core/arpes_data.jl")
+    end
     @testset "IO" begin
         @testset "IO basic" begin
             include("io/io.jl")
         end
         @testset "Location" begin
+            include("io/location/location.jl")
             include("io/location/spd.jl")
         end
         @testset "FORMATS" begin

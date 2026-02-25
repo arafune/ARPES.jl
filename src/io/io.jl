@@ -8,6 +8,7 @@ handling file formats, and managing file locations.
 module IO
 include("types.jl")
 include("registry.jl")
+
 include("formats/format.jl")
 include("location/location.jl")
 using ARPES.IO.Location: load_data
@@ -36,4 +37,3 @@ function load(fpath::String; loc = Union{String,nothing})
     return load_data(loader_type, fpath)
 end
 end
-
