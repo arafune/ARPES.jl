@@ -2,6 +2,7 @@ using DimensionalData
 import Base: size, axes, getindex, iterate
 using DimensionalData.Dimensions: @dim
 using Dates
+import DimensionalData: dims, name
 
 #--- Dimension names used for ARPES ---
 @dim kx "1/Å"
