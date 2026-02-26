@@ -15,6 +15,7 @@ const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => detector_ch, :w=>ch2)
 
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
+
 """
     load_data(::Type{SPDLoader}, fpath:String)
 
@@ -51,11 +52,27 @@ end
 
 
 """
-Convert raw DimArray from SPD group to the standard ARPESData format, in which the angle notation
-follows Rev.Sci.Instrum. 89, 043903 (2018).
+    spd_to_standard(raw::DimArray) -> ARPESData
+
+Convert a raw `DimArray` from the SPD group into the standard `ARPESData` format,
+in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018).
+
+- Standardizes the input array using `to_standardize(SPDLoader, raw)`.
+- Handles k-space conversion (e.g., renaming beta to ξ and possibly flipping the sign).
+- Determines the appropriate intensity unit (`Counts` or `CPS`) based on the `:d_scale` metadata:
+    - If the unit starts with "count", returns `ARPESData` with `Counts()`.
+    - Otherwise, returns `ARPESData` with `CPS()`.
+- If no `:d_scale` metadata is present, defaults to `Counts()`.
+
+# Arguments
+- `raw::DimArray`: The raw SPD data array to be standardized.
+
+# Returns
+- `ARPESData`: The standardized ARPES data object with appropriate intensity units.
+
 
 """
-function spd_to_standard(raw::DimArray)
+function spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
     # to convert k-space smoothly,
     # * rename beta -> \xi (and flip the sign?)
