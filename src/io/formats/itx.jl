@@ -31,7 +31,6 @@ function read_itx(fpath::String)
     data_lines = String[]
 
     for line in lines
-        original_line = line
         line = strip(line)
 
         # Comment lines starting from X //
@@ -388,7 +387,7 @@ function _parse_setscale(line::AbstractString)
         axis_part = strip(split(parts[1], " ")[end])  # "x"
         axis_key = Symbol("$(axis_part)_scale")
 
-        unit, labe = "", ""
+        unit, label = "", ""
         if length(parts) >= 4
             unit_part = strip(parts[4])
             if occursin("(", unit_part) && occursin(")", unit_part)
