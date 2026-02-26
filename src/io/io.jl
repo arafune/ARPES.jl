@@ -29,11 +29,15 @@ data = load("data/file.itx", loc="spd")
 ```
 
 """
-function load(fpath::String; loc = Union{String,nothing})
+function load(
+    fpath::String;
+    loc::Union{String,Nothing} = nothing,
+    metadata::Union{Dict{Symbol,Any},Nothing} = nothing,
+)
     #  resolved_path = resolve_path(fpath)
 
     loader_type = select_loader(fpath, loc)
 
-    return load_data(loader_type, fpath)
+    return load_data(loader_type, fpath, metadata = metadata)
 end
 end

@@ -30,17 +30,23 @@ A standardized DimArray parsed from the file.
 # Notes
 Supports `.itx` and `.sp2` file extensions.
 """
-function load_data(::Type{SPDLoader}, fpath::String)
+function load_data(
+    ::Type{SPDLoader},
+    fpath::String;
+    metadata::Union{Dict{Symbol,Any},Nothing} = nothing,
+)
     # read the SPD file and parse its content
     ext = lowercase(splitext(fpath)[2])
     if ext == ".itx"
         raw_dimarray = read_itx(fpath)
-        return spd_to_standard(raw_dimarray)
-
     elseif ext == ".sp2"
         raw_dimarray = read_sp2(fpath)
-        return spd_to_standard(raw_dimarray)
     end
+    if metadata !== nothing
+        new_metadata = merge(Dict(metadata(raw_dimarray)), metadata)
+        raw_dimarray = setmetadata(raw_dimarray, new_metadata)
+    end
+    return spd_to_standard(raw_dimarray)
 end
 
 
@@ -51,6 +57,9 @@ follows Rev.Sci.Instrum. 89, 043903 (2018).
 """
 function spd_to_standard(raw::DimArray)
     standard_array = to_standardize(SPDLoader, raw)
+    # to convert k-space smoothly,
+    # * rename beta -> \xi (and flip the sign?)
+
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
             return ARPESData(standard_array, Counts())
