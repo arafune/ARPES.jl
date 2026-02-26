@@ -6,7 +6,7 @@ using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts
 using ..IO.Location: to_standardize
 
 const DIM_ALIAS = Dict(
-    phi => [:non_energy_channel, :angle, :theta],
+    phi => [:non_energy_channel, :angle, :theta, :theta_y],
     eV => [:kinetic_energy, :energy, :binding_energy],
     detector_ch => [:energy_channel, :channel, :ch],
 )
