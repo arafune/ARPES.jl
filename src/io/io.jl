@@ -15,11 +15,12 @@ using ARPES.IO.Location: load_data
 
 export load
 """
-    load(fpath::String; loc = Union{String, nothing})
+    load(fpath::String; loc = Union{String, nothing}, extra_metadata = Union{AbstractDict{Symbol,<:Any}, Nothing})
 
 Load data from the given file path.
 - `fpath`: Path to the file.
 - `loc`: Optional location argument (String or nothing).
+- `extra_metadata`: Optional dictionary of extra metadata to merge with the loaded data's metadata.
 
 Returns parsed data.
 
