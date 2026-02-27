@@ -2,7 +2,6 @@ using Test
 using ARPES.IO: SPDLoader
 using ARPES: phi, eV, detector_ch, ch2
 using ARPES.IO.Location: canonical_dim
-# canonical_dimがLocationモジュールにある場合はusing Location: canonical_dimも追加
 
 @testset "canonical_dim with SPDLoader" begin
     loader = SPDLoader()

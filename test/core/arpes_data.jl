@@ -3,7 +3,8 @@ using DimensionalData
 using ARPES
 
 file_path = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
-arpes_ch_resolved = load(file_path, loc = "SPD")
+metadata = Dict(:beta=>0.0)
+arpes_ch_resolved = load(file_path, loc = "SPD", metadata = metadata)
 
 @testset "ARPESData delegate" begin
     @test size(arpes_ch_resolved) == (40, 341, 24)
@@ -14,4 +15,5 @@ arpes_ch_resolved = load(file_path, loc = "SPD")
     @test metadata(arpes_ch_resolved)[:lens_voltage] == "40V"
     @test arpes_ch_resolved[1, 1, 1] ≈ 67.8969
     @test arpes_ch_resolved.unit == CPS()
+    @test metadata(arpes_ch_resolved)[:beta] == 0.0
 end

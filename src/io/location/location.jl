@@ -63,6 +63,7 @@ function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
         isnothing(ctor) ? d : ctor(val(d))
     end
 
+
     return rebuild(raw; dims = new_dims)
 end
 
@@ -91,8 +92,12 @@ function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
     return get(default_dim_map(loader), name, nothing)
 end
 
-
 canonical_dim(loader::LocationLoader, name::Symbol) = canonical_dim(typeof(loader), name)
+
+
+function angles_for_k_conversion(loaader::Type{<:LocationLoader}, metadata) end
+
+
 
 include("spd.jl")
 export load_data

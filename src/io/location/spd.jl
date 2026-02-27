@@ -19,8 +19,6 @@ const STANDARD_ANGLES = Dict(
     δ => 0.0,
 )
 
-
-
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
 Location.angle_stndardization(::Type{SPDLoader}) = STANDARD_ANGLES
@@ -68,7 +66,6 @@ Convert a raw `DimArray` from the SPD group into the standard `ARPESData` format
 in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018).
 
 - Standardizes the input array using `to_standardize(SPDLoader, raw)`.
-- Handles k-space conversion (e.g., renaming beta to ξ and possibly flipping the sign).
 - Determines the appropriate intensity unit (`Counts` or `CPS`) based on the `:d_scale` metadata:
     - If the unit starts with "count", returns `ARPESData` with `Counts()`.
     - Otherwise, returns `ARPESData` with `CPS()`.
@@ -79,8 +76,6 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 
 # Returns
 - `ARPESData`: The standardized ARPES data object with appropriate intensity units.
-
-
 """
 function spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
