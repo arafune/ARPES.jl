@@ -13,8 +13,18 @@ const DIM_ALIAS = Dict(
 
 const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => detector_ch, :w=>ch2)
 
+const STANDARD_ANGLES = Dict(
+    β => [Dict(:theta => pulse_to_theta, :a => pulse_to_theta)],
+    ξ => Dict(:beta => negate),
+    δ => 0.0,
+)
+
+
+
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
+Location.angle_stndardization(::Type{SPDLoader}) = STANDARD_ANGLES
+
 
 """
     load_data(::Type{SPDLoader}, fpath:String)
@@ -84,4 +94,42 @@ function spd_to_standard(raw::DimArray)::ARPESData
         return ARPESData(standard_array, CPS())
     end
     return ARPESData(standard_array, Counts())
+end
+
+"""
+    negate(x)
+
+Returns the negation of the input `x`.
+
+# Arguments
+- `x`: A numeric value.
+
+# Returns
+- The negated value of `x`.
+"""
+function negate(x)
+    return -x
+end
+
+"""
+    pulse_to_theta(pulses::Integer) -> Float64
+
+Converts a given number of pulses from a rotary encoder to the corresponding emission angle (theta) in degrees.
+Assumes:
+- `normal_emission_angle` is the reference angle (315.0 degrees).
+- Each degree corresponds to 6000 pulses.
+- One full rotation is 2160000 pulses.
+
+# Arguments
+- `pulses::Integer`: The number of pulses to convert.
+
+# Returns
+- `Float64`: The calculated emission angle in degrees.
+"""
+function pulse_to_theta(pulses::Integer)
+    NORMAL_EMISSION_ANGLE = 315.0
+    PULSES_ONE_DEGREE = 6000
+    PULSE_FULL_ROTATION = 2160000
+    angle = mod(pulses, PULSE_FULL_ROTATION)÷PULSES_ONE_DEGREE
+    return mod(-(angle - NORMAL_EMISSION_ANGLE) + 90, 180) - 90
 end

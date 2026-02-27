@@ -8,11 +8,37 @@ Returns a dictionary mapping dimension constructor functions to their alias symb
 """
 dim_alias(::Type{<:LocationLoader}) = Dict{Function,Vector{Symbol}}()
 dim_alias(loader::LocationLoader) = dim_alias(typeof(loader))
+
 """
 Returns a dictionary mapping dimension alias symbols to their constructor functions for a LocationLoader.
 """
 default_dim_map(::Type{<:LocationLoader}) = Dict{Symbol,Function}()
 default_dim_map(loader::LocationLoader) = default_dim_map(typeof(loader))
+
+"""
+    angle_standardization(::Type{<:LocationLoader}) -> Dict
+
+Returns an empty dictionary for angle standardization configuration for a given `LocationLoader` type.
+# Returns
+- `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: An empty dictionary.
+"""
+angle_standardization(::Type{<:LocationLoader}) =
+    Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}()
+"""
+    angle_standardization(loader::LocationLoader) -> Dict
+
+Returns the angle standardization configuration for a given `LocationLoader` instance by dispatching to its type.
+
+# Arguments
+- `loader::LocationLoader`: The loader instance.
+
+# Returns
+- `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: The configuration dictionary.
+"""
+angle_standardization(loader::LocationLoader) = angle_standardization(typeof(loader))
+
+
+
 """
     to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
 
@@ -61,6 +87,7 @@ function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
             return ctor
         end
     end
+
     return get(default_dim_map(loader), name, nothing)
 end
 
