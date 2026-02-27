@@ -32,12 +32,12 @@ data = load("data/file.itx", loc="spd")
 function load(
     fpath::String;
     loc::Union{String,Nothing} = nothing,
-    metadata::Union{Dict{Symbol,Any},Nothing} = nothing,
+    extra_metadata::Union{AbstractDict{Symbol,<:Any},Nothing} = nothing,
 )
     #  resolved_path = resolve_path(fpath)
 
     loader_type = select_loader(fpath, loc)
 
-    return load_data(loader_type, fpath, metadata = metadata)
+    return load_data(loader_type, fpath, extra_metadata = extra_metadata)
 end
 end

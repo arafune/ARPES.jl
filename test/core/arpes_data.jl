@@ -3,8 +3,8 @@ using DimensionalData
 using ARPES
 
 file_path = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
-metadata = Dict(:beta=>0.0)
-arpes_ch_resolved = load(file_path, loc = "SPD", metadata = metadata)
+meta_data = Dict(:beta=>0.0)
+arpes_ch_resolved = load(file_path, loc = "SPD", extra_metadata = meta_data)
 
 @testset "ARPESData delegate" begin
     @test size(arpes_ch_resolved) == (40, 341, 24)
