@@ -16,9 +16,7 @@ Returns the negation of the input `x`.
 # Returns
 - The negated value of `x`.
 """
-function negate(x)
-    return -x
-end
+negate(x) = -x
 
 """
     pulse_to_theta(pulses::Integer) -> Float64
@@ -59,7 +57,7 @@ const STANDARD_ANGLES = Dict(
 
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
-Location.angle_standardization(::Type{SPDLoader}) = STANDARD_ANGLES
+Location.angle_Shin_convention(::Type{SPDLoader}) = STANDARD_ANGLES
 
 """
     load_data(::Type{SPDLoader}, fpath:String)

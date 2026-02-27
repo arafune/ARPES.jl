@@ -16,26 +16,21 @@ default_dim_map(::Type{<:LocationLoader}) = Dict{Symbol,Function}()
 default_dim_map(loader::LocationLoader) = default_dim_map(typeof(loader))
 
 """
-    angle_standardization(::Type{<:LocationLoader}) -> Dict
-
-Returns an empty dictionary for angle standardization configuration for a given `LocationLoader` type.
-# Returns
-- `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: An empty dictionary.
-"""
-angle_standardization(::Type{<:LocationLoader}) =
-    Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}()
-"""
-    angle_standardization(loader::LocationLoader) -> Dict
+    angle_Shin_convention(::Type{<:LocationLoader}) -> Dict
+    angle_Shin_convention(loader::LocationLoader) -> Dict
 
 Returns the angle standardization configuration for a given `LocationLoader` instance by dispatching to its type.
 
 # Arguments
+- `loader::Type{<:LocationLoader}`: The loader type.
 - `loader::LocationLoader`: The loader instance.
 
 # Returns
-- `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: The configuration dictionary.
+- `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: An empty dictionary.
 """
-angle_standardization(loader::LocationLoader) = angle_standardization(typeof(loader))
+angle_Shin_convention(::Type{<:LocationLoader}) =
+    Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}()
+angle_Shin_convention(loader::LocationLoader) = angle_Shin_convention(typeof(loader))
 
 
 
@@ -57,6 +52,7 @@ dimension is retained.
 A new `DimArray` with standardized dimensions.
 """
 function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
+
     new_dims = map(dims(raw)) do d
         raw_name = name(d)
         ctor=canonical_dim(loader, raw_name)
@@ -91,11 +87,78 @@ function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
 
     return get(default_dim_map(loader), name, nothing)
 end
-
 canonical_dim(loader::LocationLoader, name::Symbol) = canonical_dim(typeof(loader), name)
 
+"""
+  convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict) -> Dict{Symbol,Any}
 
-function angles_for_k_conversion(loaader::Type{<:LocationLoader}, metadata) end
+Convert metadata keys according to the Shin convention.
+
+Given a `metadata_dict` containing raw metadata and a `conversion_rule` dict specifying how to map and resolve keys,
+this function applies the conversion rules and returns a new dictionary with keys as specified in `conversion_rule`
+and values resolved using `_resolve_Shin_rule`. Only keys with non-`nothing` resolved values are included in the result.
+
+# Arguments
+- `metadata_dict::Dict`: The input metadata dictionary.
+- `conversion_rule::Dict`: A dictionary mapping target keys to conversion rules.
+
+# Returns
+- `Dict{Symbol,Any}`: A dictionary with converted keys and resolved values.
+"""
+function convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict)
+
+    result = Dict{Symbol,Any}()
+    for (target_key, rule) in conversion_rule
+        value = _resolve_Shin_rule(metadata_dict, rule)
+        if value !== nothing
+            result[target_key] = value
+        end
+    end
+
+    return result
+end
+
+# ----------------------------
+# 1. Symbol:
+# ----------------------------
+function _resolve_Shin_rule(metadata::Dict, rule::Symbol)
+    return haskey(metadata, rule) ? metadata[rule] : nothing
+end
+
+
+# ----------------------------
+# 2. Dict: key => function
+# ----------------------------
+function _resolve_Shin_rule(metadata::Dict, rule::Dict)
+    for (source_key, f) in rule
+        if haskey(metadata, source_key)
+            return f(metadata[source_key])
+        end
+    end
+    return nothing
+end
+
+
+# ----------------------------
+# 3. Vector:
+# ----------------------------
+function _resolve_Shin_rule(metadata::Dict, rule::Vector)
+    for subrule in rule
+        value = _resolve_Shin_rule(metadata, subrule)
+        if value !== nothing
+            return value
+        end
+    end
+    return nothing
+end
+
+
+# ----------------------------
+# 4. Value
+# ----------------------------
+function _resolve_Shin_rule(metadata::Dict, rule)
+    return rule
+end
 
 
 
