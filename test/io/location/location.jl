@@ -46,5 +46,13 @@ end
     @test converted_dict[:energy] == 20.0
     @test converted_dict[:β] == pulse_to_theta(200)
     @test converted_dict[:χ] == 0.0
+
+    blank_conversion_rule = Dict()
+    converted_dict = convert_Shin_convention(metadata_dict, blank_conversion_rule)
+    @test isempty(converted_dict)
+
+    blank_vector_conversion_rule = Dict(:beta=>[])
+    converted_dict = convert_Shin_convention(metadata_dict, blank_vector_conversion_rule)
+    @test isempty(converted_dict)
 end
 
