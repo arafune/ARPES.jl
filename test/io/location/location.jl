@@ -54,5 +54,9 @@ end
     blank_vector_conversion_rule = Dict(:beta=>[])
     converted_dict = convert_Shin_convention(metadata_dict, blank_vector_conversion_rule)
     @test isempty(converted_dict)
+
+    conversion_rule_just_replace = Dict(:another_angle => :angle)
+    converted_dict = convert_Shin_convention(metadata_dict, conversion_rule_just_replace)
+    @test haskey(converted_dict, :another_angle)
 end
 
