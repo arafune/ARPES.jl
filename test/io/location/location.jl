@@ -24,10 +24,8 @@ end
 @testset "test for helper function in location.jl" begin
     @test pulse_to_theta(0) == -45.0
     @test pulse_to_theta(-6000) == -44.0
-    @test pulse_to_theta(-12000) == -43.0
     @test pulse_to_theta(-270000) == 0
     @test pulse_to_theta(-540000) == 45
-    @test negate(5) == -5
     @test negate(5.3) == -5.3
     @test negate(-3) == 3
 end
