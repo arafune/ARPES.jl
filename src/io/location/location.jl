@@ -59,8 +59,11 @@ function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
         isnothing(ctor) ? d : ctor(val(d))
     end
 
+    metadata_dict = Dict(metadata(raw))
+    shin_converted = convert_Shin_convention(metadata_dict, angle_Shin_convention(loader))
+    new_metadata = merge(metadata_dict, shin_converted)
 
-    return rebuild(raw; dims = new_dims)
+    return rebuild(raw; dims = new_dims, metadata = new_metadata)
 end
 
 """
@@ -74,7 +77,7 @@ If not found, returns the constructor from the default dimension map or `nothing
 - `name::Symbol`: The alias symbol to resolve.
 
 # Returns
-- `Function` or `Nothing`: The canonical constructor function or `nothing` if not found.
+- `Symbol` or `Nothing`: The canonical name of angle defined by RevSciInstruments or `nothing` if not found.
 """
 function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
     alias_map = dim_alias(loader)
@@ -84,8 +87,6 @@ function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
             return ctor
         end
     end
-
-    angle_convention = angle_Shin_convention(loader)
 
     return get(default_dim_map(loader), name, nothing)
 end
