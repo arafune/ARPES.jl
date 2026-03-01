@@ -66,24 +66,33 @@ end
     metadata = Dict(:a => 10, :b => 20)
 
     conversion_rule1 = Dict(:new1 => Dict(:a => x -> x * 2, :b => x -> x + 1))
-
     result1 = convert_Shin_convention(metadata, conversion_rule1)
-
     @test result1[:new1] == 20
     @test haskey(result1, :new1)
 
-
     conversion_rule2 = Dict(:new2 => Dict(:c => x -> x * 100, :b => x -> x + 5))
-
     result2 = convert_Shin_convention(metadata, conversion_rule2)
-
     @test result2[:new2] == 25
 
-
     conversion_rule3 = Dict(:new3 => Dict(:x => x -> x * 2, :y => x -> x + 1))
-
     result3 = convert_Shin_convention(metadata, conversion_rule3)
+    @test !haskey(result3, :new3)
+    @test isempty(result3)
+end
 
+
+@testset "convert_Shin_convention with Vector rule" begin
+    metadata = Dict(:a => 10, :b => 20)
+    conversion_rule1 = Dict(:new1 => [:a, :b])
+    result1 = convert_Shin_convention(metadata, conversion_rule1)
+    @test result1[:new1] == 10
+
+    conversion_rule2 = Dict(:new2 => [:c, :b])
+    result2 = convert_Shin_convention(metadata, conversion_rule2)
+    @test result2[:new2] == 20
+
+    conversion_rule3 = Dict(:new3 => [:x, :y])
+    result3 = convert_Shin_convention(metadata, conversion_rule3)
     @test !haskey(result3, :new3)
     @test isempty(result3)
 end
