@@ -118,17 +118,26 @@ function convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict)
     return result
 end
 
-# ----------------------------
-# 1. Symbol:
-# ----------------------------
+"""
+ _resolve_Shin_rule: Resolves a rule against metadata.
+
+ This function is overloaded to handle different types of `rule`:
+   1. Symbol: Returns the value for the symbol key in metadata, or `nothing` if not present.
+   2. Dict: Iterates over key-function pairs, applies the function to the value if the key exists.
+   3. Vector: Tries each subrule in order, returning the first non-nothing result.
+   4. Value: Returns the rule itself.
+
+ Arguments:
+   metadata::Dict : Dictionary containing metadata.
+   rule           : Rule to resolve (Symbol, Dict, Vector, or any value).
+
+ Returns:
+   The resolved value according to the rule type, or `nothing` if not found.
+"""
 function _resolve_Shin_rule(metadata::Dict, rule::Symbol)
     return haskey(metadata, rule) ? metadata[rule] : nothing
 end
 
-
-# ----------------------------
-# 2. Dict: key => function
-# ----------------------------
 function _resolve_Shin_rule(metadata::Dict, rule::Dict)
     for (source_key, f) in rule
         if haskey(metadata, source_key)
@@ -138,10 +147,6 @@ function _resolve_Shin_rule(metadata::Dict, rule::Dict)
     return nothing
 end
 
-
-# ----------------------------
-# 3. Vector:
-# ----------------------------
 function _resolve_Shin_rule(metadata::Dict, rule::Vector)
     for subrule in rule
         value = _resolve_Shin_rule(metadata, subrule)
@@ -152,10 +157,6 @@ function _resolve_Shin_rule(metadata::Dict, rule::Vector)
     return nothing
 end
 
-
-# ----------------------------
-# 4. Value
-# ----------------------------
 function _resolve_Shin_rule(metadata::Dict, rule)
     return rule
 end
