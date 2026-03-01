@@ -90,12 +90,12 @@ function load_data(
         new_metadata = merge(Dict(metadata(raw_dimarray)), extra_metadata)
         raw_dimarray = DimensionalData.rebuild(raw_dimarray; metadata = new_metadata)
     end
-    return spd_to_standard(raw_dimarray)
+    return _spd_to_standard(raw_dimarray)
 end
 
 
 """
-    spd_to_standard(raw::DimArray) -> ARPESData
+    _spd_to_standard(raw::DimArray) -> ARPESData
 
 Convert a raw `DimArray` from the SPD group into the standard `ARPESData` format,
 in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018).
@@ -112,7 +112,7 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 # Returns
 - `ARPESData`: The standardized ARPES data object with appropriate intensity units.
 """
-function spd_to_standard(raw::DimArray)::ARPESData
+function _spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
     # to convert k-space smoothly,
     # * rename beta -> \xi (and flip the sign?)

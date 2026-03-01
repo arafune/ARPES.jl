@@ -85,6 +85,8 @@ function canonical_dim(loader::Type{<:LocationLoader}, name::Symbol)
         end
     end
 
+    angle_convention = angle_Shin_convention(loader)
+
     return get(default_dim_map(loader), name, nothing)
 end
 canonical_dim(loader::LocationLoader, name::Symbol) = canonical_dim(typeof(loader), name)
