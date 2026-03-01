@@ -109,10 +109,8 @@ function convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict)
 
     result = Dict{Symbol,Any}()
     for (target_key, rule) in conversion_rule
-        value = _resolve_Shin_rule(metadata_dict, rule)
-        if value !== nothing
-            result[target_key] = value
-        end
+        value = _resolve_Shin_rule(metadata_dict, target_key, rule)
+        value !== nothing && (result[target_key] = value)
     end
 
     return result
@@ -124,21 +122,23 @@ end
  This function is overloaded to handle different types of `rule`:
    1. Symbol: Returns the value for the symbol key in metadata, or `nothing` if not present.
    2. Dict: Iterates over key-function pairs, applies the function to the value if the key exists.
-   3. Vector: Tries each subrule in order, returning the first non-nothing result.
-   4. Value: Returns the rule itself.
+   3. Function: Applies the function to the value of the target key if it exists, otherwise returns `nothing`.
+   4. Vector: Tries each subrule in order, returning the first non-nothing result.
+   5. Value: Returns the rule itself.
 
  Arguments:
    metadata::Dict : Dictionary containing metadata.
+   target_key::Symbol : The key for which the rule is being resolved (used for function rules).
    rule           : Rule to resolve (Symbol, Dict, Vector, or any value).
 
  Returns:
    The resolved value according to the rule type, or `nothing` if not found.
 """
-function _resolve_Shin_rule(metadata::Dict, rule::Symbol)
-    return haskey(metadata, rule) ? metadata[rule] : nothing
+function _resolve_Shin_rule(metadata::Dict, _::Symbol, rule::Symbol)
+    return get(metadata, rule, nothing)
 end
 
-function _resolve_Shin_rule(metadata::Dict, rule::Dict)
+function _resolve_Shin_rule(metadata::Dict, _::Symbol, rule::Dict)
     for (source_key, f) in rule
         if haskey(metadata, source_key)
             return f(metadata[source_key])
@@ -147,21 +147,22 @@ function _resolve_Shin_rule(metadata::Dict, rule::Dict)
     return nothing
 end
 
-function _resolve_Shin_rule(metadata::Dict, rule::Vector)
+function _resolve_Shin_rule(metadata::Dict, target_key::Symbol, rule::Function)
+    haskey(metadata, target_key) || return nothing
+    return rule(metadata[target_key])
+end
+
+function _resolve_Shin_rule(metadata::Dict, target_key::Symbol, rule::Vector)
     for subrule in rule
-        value = _resolve_Shin_rule(metadata, subrule)
-        if value !== nothing
-            return value
-        end
+        value = _resolve_Shin_rule(metadata, target_key, subrule)
+        value !== nothing && return value
     end
     return nothing
 end
 
-function _resolve_Shin_rule(metadata::Dict, rule)
+function _resolve_Shin_rule(_::Dict, _::Symbol, rule)
     return rule
 end
-
-
 
 include("spd.jl")
 export load_data

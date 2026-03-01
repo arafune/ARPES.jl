@@ -1,7 +1,7 @@
 using Test
 using ARPES.IO: SPDLoader
 using ARPES: phi, eV, detector_ch, ch2
-using ARPES.IO.Location: canonical_dim, pulse_to_theta, negate
+using ARPES.IO.Location: canonical_dim, pulse_to_theta, negate, convert_Shin_convention
 
 @testset "canonical_dim with SPDLoader" begin
     loader = SPDLoader()
@@ -31,3 +31,15 @@ end
     @test negate(5.3) == -5.3
     @test negate(-3) == 3
 end
+
+# ------ test for convert_Shin_convention ------ 
+@testset "test for convert_Shin_convention" begin
+    metadata_dict = Dict(:angle => 300, :energy => 10.0, :other => "value")
+    conversion_rule = Dict(:angle => pulse_to_theta, :energy => x -> x * 2)
+
+    converted_dict = convert_Shin_convention(metadata_dict, conversion_rule)
+
+    @test converted_dict[:angle] == pulse_to_theta(300)
+    @test converted_dict[:energy] == 20.0
+end
+
