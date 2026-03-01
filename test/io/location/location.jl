@@ -34,12 +34,19 @@ end
 
 # ------ test for convert_Shin_convention ------ 
 @testset "test for convert_Shin_convention" begin
-    metadata_dict = Dict(:angle => 300, :energy => 10.0, :other => "value")
-    conversion_rule = Dict(:angle => pulse_to_theta, :energy => x -> x * 2)
+    metadata_dict = Dict(:angle => 300, :energy => 10.0, :other => "value", :a => 200)
+    conversion_rule = Dict(
+        :angle => pulse_to_theta,
+        :energy => x -> x * 2,
+        :χ => 0.0,
+        :β => [Dict(:theta => pulse_to_theta, :a => pulse_to_theta)],
+    )
 
     converted_dict = convert_Shin_convention(metadata_dict, conversion_rule)
 
     @test converted_dict[:angle] == pulse_to_theta(300)
     @test converted_dict[:energy] == 20.0
+    @test converted_dict[:β] == pulse_to_theta(200)
+    @test converted_dict[:χ] == 0.0
 end
 
