@@ -58,5 +58,32 @@ end
     conversion_rule_just_replace = Dict(:another_angle => :angle)
     converted_dict = convert_Shin_convention(metadata_dict, conversion_rule_just_replace)
     @test haskey(converted_dict, :another_angle)
+
+    donversion_rule_with_nonexistent_key = Dict(:nonexistent => :nonexistent)
 end
 
+@testset "convert_Shin_convention with Dict rule" begin
+    metadata = Dict(:a => 10, :b => 20)
+
+    conversion_rule1 = Dict(:new1 => Dict(:a => x -> x * 2, :b => x -> x + 1))
+
+    result1 = convert_Shin_convention(metadata, conversion_rule1)
+
+    @test result1[:new1] == 20
+    @test haskey(result1, :new1)
+
+
+    conversion_rule2 = Dict(:new2 => Dict(:c => x -> x * 100, :b => x -> x + 5))
+
+    result2 = convert_Shin_convention(metadata, conversion_rule2)
+
+    @test result2[:new2] == 25
+
+
+    conversion_rule3 = Dict(:new3 => Dict(:x => x -> x * 2, :y => x -> x + 1))
+
+    result3 = convert_Shin_convention(metadata, conversion_rule3)
+
+    @test !haskey(result3, :new3)
+    @test isempty(result3)
+end
