@@ -2,7 +2,7 @@
 Registry mapping location names to their corresponding loader types.
 
 # Example
-LOCATION_REGISTRY["SPD"] #=> SPDLoader
+LOCATION_REGISTRY["SPD"] => SPDLoader
 """
 const LOCATION_REGISTRY = Dict{String,Type{<:LocationLoader}}("SPD" => SPDLoader)
 
@@ -68,7 +68,7 @@ function detect_itx_loader(fpath::String)
     #
     header_lines = String[]
     open(fpath, "r") do io
-        for i = 1:50
+        for _ = 1:50
             eof(io) && break
             push!(header_lines, readline(io))
         end

@@ -18,7 +18,7 @@ Reads an ITX (Igor Text) file and parses its contents into structured data.
 # Returns
 - `DimArray`: A dimensional array containing the parsed wave data and metadata.
 """
-function read_itx(fpath::String)
+function read_itx(fpath::String)::DimArray
     lines = readlines(fpath)
 
     # Wave data
@@ -31,7 +31,6 @@ function read_itx(fpath::String)
     data_lines = String[]
 
     for line in lines
-        original_line = line
         line = strip(line)
 
         # Comment lines starting from X //
@@ -249,7 +248,7 @@ Converts parsed data and metadata into a `DimArray` with appropriate dimensions 
 # Returns
 - `DimArray`: The constructed dimensional array.
 """
-function _to_dimarray(data::Array, waves_info::Dict)
+function _to_dimarray(data::Array, waves_info::Dict)::DimArray
     # Construct dimension
     dims_list = []
     if haskey(waves_info, :shape)
@@ -388,7 +387,7 @@ function _parse_setscale(line::AbstractString)
         axis_part = strip(split(parts[1], " ")[end])  # "x"
         axis_key = Symbol("$(axis_part)_scale")
 
-        unit, labe = "", ""
+        unit, label = "", ""
         if length(parts) >= 4
             unit_part = strip(parts[4])
             if occursin("(", unit_part) && occursin(")", unit_part)
