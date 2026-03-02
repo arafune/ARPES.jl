@@ -49,7 +49,7 @@ Container for ARPES data.
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
 - `unit::U`: The unit of intensity.
-- `type::Conf`: The analyzer configuration type label.
+- `analyzer_configuration::Conf`: The analyzer configuration type label.
 
 # Constructor
 The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`.
@@ -57,21 +57,24 @@ The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
 - `unit::U`: The unit of intensity, subtype of IntensityUnit.
-- `type::Conf`: The analyzer configuration type label.
+- `analyzer_configuration::Conf`: The analyzer configuration type label.
 """
-struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf}
+struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:Type{<:AnalyzerConfiguration}}
     intensity::T
     unit::U
-    type::Conf
+    analyzer_configuration::Conf
 
-    function ARPESData(intensity::T, unit::U, type::Conf) where {T,U,Conf}
-        if !(type isa Type && type <: AnalyzerConfiguration)
+    function ARPESData(intensity::T, unit::U, analyzer_configuration::Conf) where {T,U,Conf}
+        if !(analyzer_configuration isa AnalyzerConfiguration)
             throw(
-                ArgumentError("type must be a subtype of AnalyzerConfiguration, got $type"),
+                ArgumentError(
+                    "analyzer_configuration must be a subtype of AnalyzerConfiguration, got $(typeof(analyzer_configuration))",
+                ),
             )
         end
-        new{T,U,Conf}(intensity, unit, type)
+        new{T,U,Conf}(intensity, unit, analyzer_configuration)
     end
+
 end
 
 
