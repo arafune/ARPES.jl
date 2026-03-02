@@ -18,7 +18,7 @@ Reads an ITX (Igor Text) file and parses its contents into structured data.
 # Returns
 - `DimArray`: A dimensional array containing the parsed wave data and metadata.
 """
-function read_itx(fpath::String)
+function read_itx(fpath::String)::DimArray
     lines = readlines(fpath)
 
     # Wave data
@@ -248,7 +248,7 @@ Converts parsed data and metadata into a `DimArray` with appropriate dimensions 
 # Returns
 - `DimArray`: The constructed dimensional array.
 """
-function _to_dimarray(data::Array, waves_info::Dict)
+function _to_dimarray(data::Array, waves_info::Dict)::DimArray
     # Construct dimension
     dims_list = []
     if haskey(waves_info, :shape)
