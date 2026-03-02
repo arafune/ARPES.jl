@@ -2,7 +2,7 @@
 Registry mapping location names to their corresponding loader types.
 
 # Example
-LOCATION_REGISTRY["SPD"] #=> SPDLoader
+LOCATION_REGISTRY["SPD"] => SPDLoader
 """
 const LOCATION_REGISTRY = Dict{String,Type{<:LocationLoader}}("SPD" => SPDLoader)
 

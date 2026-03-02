@@ -33,7 +33,7 @@ Assumes:
 # Returns
 - `Float64`: The calculated emission angle in degrees.
 """
-function pulse_to_theta(pulses::Integer)
+function _pulse_to_theta_spd(pulses::Integer)
     NORMAL_EMISSION_ANGLE = 315.0
     PULSES_ONE_DEGREE = 6000
     PULSE_FULL_ROTATION = 2160000
@@ -50,7 +50,7 @@ const DIM_ALIAS = Dict(
 const DEFAULT_DIM_MAP = Dict(:x => phi, :y => eV, :z => detector_ch, :w=>ch2)
 
 const STANDARD_ANGLES = Dict(
-    :β => [Dict(:theta => pulse_to_theta, :a => pulse_to_theta)],
+    :β => [Dict(:theta => _pulse_to_theta_spd, :a => _pulse_to_theta_spd)],
     :ξ => Dict(:beta => negate),
     :δ => 0.0,
 )
