@@ -57,13 +57,13 @@ jobs:
           genhtml lcov.info --output-directory coverage_html
 
       - name: Upload coverage HTML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: matrix.version == '1.12'
         with:
           name: coverage-html
           path: coverage_html
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
         with:
           files: lcov.info
