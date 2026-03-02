@@ -59,24 +59,19 @@ The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`
 - `unit::U`: The unit of intensity, subtype of IntensityUnit.
 - `analyzer_configuration::Conf`: The analyzer configuration type label.
 """
-struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:Type{<:AnalyzerConfiguration}}
+struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
     intensity::T
     unit::U
-    analyzer_configuration::Conf
-
-    function ARPESData(intensity::T, unit::U, analyzer_configuration::Conf) where {T,U,Conf}
-        if !(analyzer_configuration isa AnalyzerConfiguration)
-            throw(
-                ArgumentError(
-                    "analyzer_configuration must be a subtype of AnalyzerConfiguration, got $(typeof(analyzer_configuration))",
-                ),
-            )
-        end
-        new{T,U,Conf}(intensity, unit, analyzer_configuration)
-    end
-
 end
 
+# 型で dispatch する outer constructor
+function ARPESData(
+    intensity::T,
+    unit::U,
+    ::Type{Conf},
+) where {T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
+    ARPESData{T,U,Conf}(intensity, unit)
+end
 
 # delegate methods
 # -------------------
