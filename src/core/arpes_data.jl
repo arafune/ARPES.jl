@@ -3,6 +3,7 @@ import Base: size, axes, getindex, iterate, parent
 using DimensionalData.Dimensions: @dim
 using Dates
 import DimensionalData: dims, name, metadata
+using Makie
 
 #--- Dimension names used for ARPES ---
 @dim kx "1/Å"
