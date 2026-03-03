@@ -1,5 +1,5 @@
 using DimensionalData
-import Base: size, axes, getindex, iterate
+import Base: size, axes, getindex, iterate, parent
 using DimensionalData.Dimensions: @dim
 using Dates
 import DimensionalData: dims, name, metadata
@@ -83,3 +83,4 @@ getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
 dims(d::ARPESData) = dims(d.intensity)
 name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
+parent(d::ARPESData) = parent(d.intensity)
