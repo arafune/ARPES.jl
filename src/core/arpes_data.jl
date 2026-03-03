@@ -79,7 +79,7 @@ function ARPESData(
     ::Type{Conf},
     energy_definition::EnergyDefinition = FinalStateEnergy,
 ) where {T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
-    ARPESData{T,U,Conf}(intensity, unit, energy_def)
+    ARPESData{T,U,Conf}(intensity, unit, energy_definition)
 end
 
 # delegate methods
