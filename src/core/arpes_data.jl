@@ -49,7 +49,7 @@ Container for ARPES data.
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
 - `unit::U`: The unit of intensity.
-- `type::Conf`: The analyzer configuration type label.
+- `analyzer_configuration::Conf`: The analyzer configuration type label.
 
 # Constructor
 The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`.
@@ -57,23 +57,21 @@ The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
 - `unit::U`: The unit of intensity, subtype of IntensityUnit.
-- `type::Conf`: The analyzer configuration type label.
+- `analyzer_configuration::Conf`: The analyzer configuration type label.
 """
-struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf}
+struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
     intensity::T
     unit::U
-    type::Conf
-
-    function ARPESData(intensity::T, unit::U, type::Conf) where {T,U,Conf}
-        if !(type isa Type && type <: AnalyzerConfiguration)
-            throw(
-                ArgumentError("type must be a subtype of AnalyzerConfiguration, got $type"),
-            )
-        end
-        new{T,U,Conf}(intensity, unit, type)
-    end
 end
 
+# 型で dispatch する outer constructor
+function ARPESData(
+    intensity::T,
+    unit::U,
+    ::Type{Conf},
+) where {T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
+    ARPESData{T,U,Conf}(intensity, unit)
+end
 
 # delegate methods
 # -------------------
