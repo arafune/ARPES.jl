@@ -93,3 +93,7 @@ dims(d::ARPESData) = dims(d.intensity)
 name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
 parent(d::ARPESData) = parent(d.intensity)
+
+function Makie.convert_arguments(P::Type{<:Makie.PlotFunc}, data::ARPESData)
+    return Makie.convert_arguments(P, data.intensity)
+end
