@@ -38,6 +38,13 @@ struct TypeII <: AnalyzerConfiguration end
 struct TypeIp <: AnalyzerConfiguration end
 struct TypeIIp <: AnalyzerConfiguration end
 
+@enum EnergyDefinition begin
+    BindingEnergy
+    FinalStateEnergy
+    KineticEnergy
+    IntermediateEnergy
+end
+
 """
 Container for ARPES data.
 
