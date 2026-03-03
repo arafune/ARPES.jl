@@ -69,6 +69,7 @@ The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`
 struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
     intensity::T
     unit::U
+    energy_definition::EnergyDefinition
 end
 
 # 型で dispatch する outer constructor
@@ -76,8 +77,9 @@ function ARPESData(
     intensity::T,
     unit::U,
     ::Type{Conf},
+    energy_definition::EnergyDefinition = FinalStateEnergy,
 ) where {T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
-    ARPESData{T,U,Conf}(intensity, unit)
+    ARPESData{T,U,Conf}(intensity, unit, energy_def)
 end
 
 # delegate methods
