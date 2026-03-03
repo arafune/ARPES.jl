@@ -252,7 +252,8 @@ function _to_dimarray(data::Array, waves_info::Dict)::DimArray
     # Construct dimension
     dims_list = []
     if haskey(waves_info, :shape)
-        data = reshape(data, waves_info[:shape])
+        shapedim = length(waves_info[:shape])
+        data = permutedims(reshape(data, reverse(waves_info[:shape])), shapedim:-1:1)
     end
     axes_keys = [:x_scale, :y_scale, :z_scale, :w_scale]
     for (i, key) in enumerate(axes_keys)

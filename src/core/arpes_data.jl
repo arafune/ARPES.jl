@@ -3,6 +3,7 @@ import Base: size, axes, getindex, iterate
 using DimensionalData.Dimensions: @dim
 using Dates
 import DimensionalData: dims, name, metadata
+using Makie
 
 #--- Dimension names used for ARPES ---
 @dim kx "1/Å"
@@ -53,3 +54,7 @@ getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
 dims(d::ARPESData) = dims(d.intensity)
 name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
+
+function Makie.convert_arguments(P::Type{<:Makie.PlotFunc}, data::ARPESData)
+    return Makie.convert_arguments(P, data.intensity)
+end

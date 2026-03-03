@@ -1,6 +1,6 @@
 name = "ARPES"
 uuid = "3764e38b-e87f-453d-b456-dc646f8e1bb8"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Ryuichi Arafune"]
 
 [deps]
@@ -8,6 +8,7 @@ Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 LocalCoverage = "5f6e1e16-694c-5876-87ef-16b5274f298e"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 StringEncodings = "69024149-9ee7-55f6-a4c4-859efe599b68"
 
 [compat]
@@ -15,6 +16,7 @@ Coverage = "1"
 Dates = "1"
 DimensionalData = "0.29, 0.30"
 LocalCoverage = "0.8"
+Makie = "0.24"
 StringEncodings = "0.3.7"
 julia = "1.12"
 
