@@ -57,16 +57,15 @@ Container for ARPES data.
 
 # Fields
 - `intensity::T`: The intensity values, stored as an AbstractDimArray.
-- `unit::U`: The unit of intensity.
-- `analyzer_configuration::Conf`: The analyzer configuration type label.
-
-# Constructor
-The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`.
-
-# Fields
-- `intensity::T`: The intensity values, stored as an AbstractDimArray.
+  * the metadata of this array should include the following symbols and value:
+    * :hv - the photon energy in eV.
+    * :workfunction - the work function of the analyzer in eV.
+  * the energy axis must be eV. and the emission angle must be phi and psi.
+    phi is the emission angle of photoelectron parallel with the slit direction.
+  * If the data is after the momentum conversion, the dimensions should be kx, ky, kz, kp.
 - `unit::U`: The unit of intensity, subtype of IntensityUnit.
 - `analyzer_configuration::Conf`: The analyzer configuration type label.
+- `energy_definition::EnergyDefinition`: The definition of energy used in the data (BindingEnergy, KineticEnergy, FinalStateEnergy, IntermediateEnergy).
 """
 struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
     intensity::T

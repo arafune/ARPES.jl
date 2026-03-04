@@ -114,8 +114,6 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 """
 function _spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
-    # to convert k-space smoothly,
-    # * rename beta -> \xi (and flip the sign?)
 
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
