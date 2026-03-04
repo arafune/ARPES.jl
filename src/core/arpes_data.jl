@@ -4,6 +4,7 @@ using DimensionalData.Dimensions: @dim
 using Dates
 import DimensionalData: dims, name, metadata
 using Makie
+import Makie: convert_arguments
 
 #--- Dimension names used for ARPES ---
 @dim kx "1/Å"
@@ -70,17 +71,8 @@ The inner constructor checks that `type` is a subtype of `AnalyzerConfiguration`
 struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
     intensity::T
     unit::U
+    analyzer_configuration::Type{Conf}
     energy_definition::EnergyDefinition
-end
-
-# 型で dispatch する outer constructor
-function ARPESData(
-    intensity::T,
-    unit::U,
-    ::Type{Conf},
-    energy_definition::EnergyDefinition = FinalStateEnergy,
-) where {T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
-    ARPESData{T,U,Conf}(intensity, unit, energy_definition)
 end
 
 # delegate methods
@@ -95,6 +87,9 @@ name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
 parent(d::ARPESData) = parent(d.intensity)
 
-function Makie.convert_arguments(P::Type{<:Makie.PlotFunc}, data::ARPESData)
+function Makie.convert_arguments(
+    P::Type{<:Makie.AbstractPlot},
+    data::ARPESData{<:AbstractDimArray,<:IntensityUnit,<:AnalyzerConfiguration},
+)
     return Makie.convert_arguments(P, data.intensity)
 end
