@@ -1,17 +1,12 @@
-using JuliARPES
+using ARPES
 using Documenter
 
-DocMeta.setdocmeta!(JuliARPES, :DocTestSetup, :(using JuliARPES); recursive=true)
+DocMeta.setdocmeta!(ARPES, :DocTestSetup, :(using ARPES); recursive = true)
 
 makedocs(;
-    modules=[JuliARPES],
-    authors="Ryuichi ARafune",
-    sitename="JuliARPES.jl",
-    format=Documenter.HTML(;
-        edit_link="main",
-        assets=String[],
-    ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    modules = [ARPES],
+    authors = "Ryuichi Arafune",
+    sitename = "ARPES.jl",
+    format = Documenter.HTML(; edit_link = "main", assets = String[]),
+    pages = ["Home" => "index.md"],
 )

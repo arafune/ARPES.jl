@@ -1,14 +1,15 @@
 ```@meta
-CurrentModule = JuliARPES
+CurrentModule = ARPES
 ```
 
-# JuliARPES
+# ARPES
 
-Documentation for [JuliARPES](https://github.com/Ryuichi Arafune/JuliARPES.jl).
+Documentation for [ARPES](https://github.com/arafune/ARPES.jl).
 
 ```@index
+
 ```
 
 ```@autodocs
-Modules = [JuliARPES]
+Modules = [ARPES]
 ```
