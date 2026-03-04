@@ -90,7 +90,7 @@ parent(d::ARPESData) = parent(d.intensity)
 eltype(::Type{<:ARPESData{A}}) where {A} = eltype(A)
 ndims(d::ARPESData) = ndims(d.intensity)
 Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
-Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
+Base.Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
 
 dimtrait(::Type{<:ARPESData}) = DimensionalData.HasDimensionalData()
 rebuild(d::ARPESData, data, ddims; kw...) = ARPESData(
