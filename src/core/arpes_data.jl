@@ -92,13 +92,14 @@ Base.ndims(d::ARPESData) = ndims(d.intensity)
 Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
 
-rebuild(d::ARPESData, data, ddims; kw...) = ARPESData(
-    DimensionalData.rebuild(d.intensity, data, ddims; kw...),
-    d.unit,
-    d.analyzer_configuration,
-    d.energy_definition,
-)
-
+function rebuild(d::ARPESData; kw...)
+    return ARPESData(
+        rebuild(d.intensity; kw...),
+        d.unit,
+        d.analyzer_configuration,
+        d.energy_definition,
+    )
+end
 function Makie.convert_arguments(
     P::Type{<:Makie.AbstractPlot},
     data::ARPESData{<:AbstractDimArray,<:IntensityUnit,<:AnalyzerConfiguration},
