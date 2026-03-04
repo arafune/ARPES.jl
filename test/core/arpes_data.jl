@@ -21,6 +21,7 @@ spd_standard = load(file_path2, loc = "SPD")
     @test arpes_ch_resolved[1, 1, 1] ≈ 67.8969
     @test arpes_ch_resolved.unit == CPS()
     @test metadata(arpes_ch_resolved)[:beta] == 0.0
+    @test typeof(parent(arpes_ch_resolved)) == Array{Float64,3}
 end
 
 @testset "ARPESData Makie Conversion" begin
