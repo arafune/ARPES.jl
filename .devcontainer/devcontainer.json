@@ -1,0 +1,64 @@
+{
+  "name": "Julia ARPES Development",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "vscode"
+    },
+    "ghcr.io/julia-actions/julia-devcontainer:1": {
+      "version": "1.12"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "julialang.language-julia",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vsliveshare.vsliveshare"
+      ],
+      "settings": {
+        "julia.executablePath": "/usr/local/julia/bin/julia",
+        "julia.enableTelemetry": false,
+        "julia.symbolCacheDownload": true,
+        "julia.enableCrashReporter": false,
+        "julia.NumThreads": "auto",
+        "julia.format.indent": 4,
+        "editor.formatOnSave": true,
+        "editor.rulers": [92],
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+        "[julia]": {
+          "editor.defaultFormatter": "julialang.language-julia",
+          "editor.tabSize": 4,
+          "editor.insertSpaces": true
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [8000, 8001, 8050, 8051],
+  "portsAttributes": {
+    "8000": {
+      "label": "Julia HTTP Server",
+      "onAutoForward": "notify"
+    },
+    "8050": {
+      "label": "Julia Pluto",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "postCreateCommand": "julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.build(); Pkg.status()' && julia --project=test -e 'using Pkg; Pkg.develop(PackageSpec(path=\".\")); Pkg.instantiate()' && julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=\".\")); Pkg.instantiate()'",
+
+  "remoteUser": "vscode"
+}
