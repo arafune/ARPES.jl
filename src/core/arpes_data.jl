@@ -87,6 +87,19 @@ name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
 parent(d::ARPESData) = parent(d.intensity)
 
+eltype(::Type{<:ARPESData{A}}) where {A} = eltype(A)
+ndims(d::ARPESData) = ndims(d.intensity)
+IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
+Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
+
+dimtrait(::Type{<:ARPESData}) = DimensionalData.HasDimensionalData()
+rebuild(d::ARPESData, data, ddims; kw...) = ARPESData(
+    DimensionalData.rebuild(d.intensity, data, ddims; kw...),
+    d.unit,
+    d.analyzer_configuration,
+    d.energy_definition,
+)
+
 function Makie.convert_arguments(
     P::Type{<:Makie.AbstractPlot},
     data::ARPESData{<:AbstractDimArray,<:IntensityUnit,<:AnalyzerConfiguration},
