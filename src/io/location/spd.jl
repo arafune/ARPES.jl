@@ -2,7 +2,7 @@ using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
 using ..IO: SPDLoader
-using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts
+using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ..IO.Location: to_standardize
 
 """
@@ -114,16 +114,14 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 """
 function _spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
-    # to convert k-space smoothly,
-    # * rename beta -> \xi (and flip the sign?)
 
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
-            return ARPESData(standard_array, Counts())
+            return ARPESData(standard_array, Counts(), TypeI, FinalStateEnergy)
         end
-        return ARPESData(standard_array, CPS())
+        return ARPESData(standard_array, CPS(), TypeI, FinalStateEnergy)
     end
-    return ARPESData(standard_array, Counts())
+    return ARPESData(standard_array, Counts(), TypeI, FinalStateEnergy)
 end
 
 
