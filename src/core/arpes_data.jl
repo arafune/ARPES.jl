@@ -2,7 +2,7 @@ using DimensionalData
 import Base: size, axes, getindex, iterate, parent
 using DimensionalData.Dimensions: @dim
 using Dates
-import DimensionalData: dims, name, metadata
+import DimensionalData: dims, name, metadata, rebuild
 using Makie
 import Makie: convert_arguments
 
@@ -86,13 +86,12 @@ dims(d::ARPESData) = dims(d.intensity)
 name(d::ARPESData) = name(d.intensity)
 metadata(d::ARPESData) = metadata(d.intensity)
 parent(d::ARPESData) = parent(d.intensity)
+Base.eltype(::Type{<:ARPESData{T,U,Conf}}) where {T,U,Conf} = eltype(T)
 
-eltype(::Type{<:ARPESData{A}}) where {A} = eltype(A)
-ndims(d::ARPESData) = ndims(d.intensity)
+Base.ndims(d::ARPESData) = ndims(d.intensity)
 Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
 
-dimtrait(::Type{<:ARPESData}) = DimensionalData.HasDimensionalData()
 rebuild(d::ARPESData, data, ddims; kw...) = ARPESData(
     DimensionalData.rebuild(d.intensity, data, ddims; kw...),
     d.unit,

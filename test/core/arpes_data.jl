@@ -22,7 +22,19 @@ spd_standard = load(file_path2, loc = "SPD")
     @test arpes_ch_resolved.unit == CPS()
     @test metadata(arpes_ch_resolved)[:beta] == 0.0
     @test typeof(parent(arpes_ch_resolved)) == Array{Float64,3}
+
+    @test eltype(typeof(arpes_ch_resolved)) == Float64
+    @test ndims(arpes_ch_resolved) == 3
+
+    @test Base.IndexStyle(typeof(arpes_ch_resolved)) ==
+          Base.IndexStyle(typeof(arpes_ch_resolved.intensity))
+
+    b1 = Base.Broadcast.broadcastable(arpes_ch_resolved)
+    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.intensity)
+    @test typeof(b1) == typeof(b2)
 end
+
+
 
 @testset "ARPESData Makie Conversion" begin
     converted = Makie.convert_arguments(Heatmap, spd_standard)
