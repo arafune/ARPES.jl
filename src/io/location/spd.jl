@@ -55,9 +55,12 @@ const STANDARD_ANGLES = Dict(
     :δ => 0.0,
 )
 
+standardized_metadata = Dict(:hv => :excitation_energy)
+
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
-Location.angle_Shin_convention(::Type{SPDLoader}) = STANDARD_ANGLES
+Location.metadata_convert_rule(::Type{SPDLoader}) =
+    merge(standardized_metadata, STANDARD_ANGLES)
 
 """
     load_data(::Type{SPDLoader}, fpath:String)

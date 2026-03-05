@@ -16,8 +16,8 @@ default_dim_map(::Type{<:LocationLoader}) = Dict{Symbol,Function}()
 default_dim_map(loader::LocationLoader) = default_dim_map(typeof(loader))
 
 """
-    angle_Shin_convention(::Type{<:LocationLoader}) -> Dict
-    angle_Shin_convention(loader::LocationLoader) -> Dict
+    metadata_convert_rule(::Type{<:LocationLoader}) -> Dict
+    metadata_convert_rule(loader::LocationLoader) -> Dict
 
 Returns the angle standardization configuration for a given `LocationLoader` instance by dispatching to its type.
 
@@ -28,9 +28,9 @@ Returns the angle standardization configuration for a given `LocationLoader` ins
 # Returns
 - `Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}`: An empty dictionary.
 """
-angle_Shin_convention(::Type{<:LocationLoader}) =
+metadata_convert_rule(::Type{<:LocationLoader}) =
     Dict{Symbol,Union{Dict{Symbol,Function},Number,Vector{Dict{Symbol,Function}}}}()
-angle_Shin_convention(loader::LocationLoader) = angle_Shin_convention(typeof(loader))
+metadata_convert_rule(loader::LocationLoader) = metadata_convert_rule(typeof(loader))
 
 
 
@@ -60,8 +60,8 @@ function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
     end
 
     metadata_dict = Dict(metadata(raw))
-    shin_converted = convert_Shin_convention(metadata_dict, angle_Shin_convention(loader))
-    new_metadata = merge(metadata_dict, shin_converted)
+    converted_metadata = standardize_metadata(metadata_dict, metadata_convert_rule(loader))
+    new_metadata = merge(metadata_dict, converted_metadata)
 
     return rebuild(raw; dims = new_dims, metadata = new_metadata)
 end
@@ -93,13 +93,14 @@ end
 canonical_dim(loader::LocationLoader, name::Symbol) = canonical_dim(typeof(loader), name)
 
 """
-  convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict) -> Dict{Symbol,Any}
+  standardize_metadata(metadata_dict::Dict, conversion_rule::Dict) -> Dict{Symbol,Any}
 
-Convert metadata keys according to the Shin convention.
+Convert metadata keys according to conversion_rule convention.
 
 Given a `metadata_dict` containing raw metadata and a `conversion_rule` dict specifying how to map and resolve keys,
 this function applies the conversion rules and returns a new dictionary with keys as specified in `conversion_rule`
-and values resolved using `_resolve_Shin_rule`. Only keys with non-`nothing` resolved values are included in the result.
+and values resolved using `_normalize_metadata`.
+Only keys with non-`nothing` resolved values are included in the result.
 
 # Arguments
 - `metadata_dict::Dict`: The input metadata dictionary.
@@ -108,11 +109,11 @@ and values resolved using `_resolve_Shin_rule`. Only keys with non-`nothing` res
 # Returns
 - `Dict{Symbol,Any}`: A dictionary with converted keys and resolved values.
 """
-function convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict)
+function standardize_metadata(metadata_dict::Dict, conversion_rule::Dict)
 
     result = Dict{Symbol,Any}()
     for (target_key, rule) in conversion_rule
-        value = _resolve_Shin_rule(metadata_dict, target_key, rule)
+        value = _normalize_metadata(metadata_dict, target_key, rule)
         value !== nothing && (result[target_key] = value)
     end
 
@@ -120,7 +121,7 @@ function convert_Shin_convention(metadata_dict::Dict, conversion_rule::Dict)
 end
 
 """
- _resolve_Shin_rule: Resolves a rule against metadata.
+ _normalize_metadata: Resolves a rule against metadata.
 
  This function is overloaded to handle different types of `rule`:
    1. Symbol: Returns the value for the symbol key in metadata, or `nothing` if not present.
@@ -137,11 +138,11 @@ end
  Returns:
    The resolved value according to the rule type, or `nothing` if not found.
 """
-function _resolve_Shin_rule(metadata::Dict, _::Symbol, rule::Symbol)
+function _normalize_metadata(metadata::Dict, _::Symbol, rule::Symbol)
     return get(metadata, rule, nothing)
 end
 
-function _resolve_Shin_rule(metadata::Dict, _::Symbol, rule::Dict)
+function _normalize_metadata(metadata::Dict, _::Symbol, rule::Dict)
     for (source_key, f) in rule
         if haskey(metadata, source_key)
             return f(metadata[source_key])
@@ -150,20 +151,20 @@ function _resolve_Shin_rule(metadata::Dict, _::Symbol, rule::Dict)
     return nothing
 end
 
-function _resolve_Shin_rule(metadata::Dict, target_key::Symbol, rule::Function)
+function _normalize_metadata(metadata::Dict, target_key::Symbol, rule::Function)
     haskey(metadata, target_key) || return nothing
     return rule(metadata[target_key])
 end
 
-function _resolve_Shin_rule(metadata::Dict, target_key::Symbol, rule::Vector)
+function _normalize_metadata(metadata::Dict, target_key::Symbol, rule::Vector)
     for subrule in rule
-        value = _resolve_Shin_rule(metadata, target_key, subrule)
+        value = _normalize_metadata(metadata, target_key, subrule)
         value !== nothing && return value
     end
     return nothing
 end
 
-function _resolve_Shin_rule(_::Dict, _::Symbol, rule)
+function _normalize_metadata(_::Dict, _::Symbol, rule)
     return rule
 end
 
