@@ -69,6 +69,7 @@ Container for ARPES data.
 - `name::N`: The name label for the dataset.
 - `metadata::M`: Additional metadata as a dictionary or other structure.
   - metadata should include the following keys:
+    * :intensity_unit - one of the IntensityUnit types (Counts, CPS)
     * :analyzer_configuration - one of the AnalyzerConfiguration types (TypeI, TypeII, etc.)
     * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
     * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use :hν instead of :hv)
@@ -118,14 +119,15 @@ function ARPESData(
     intensity_unit::Type{<:IntensityUnit} = Counts,
     analyzer_config::Type{<:AnalyzerConfiguration} = TypeI,
     energy_def::EnergyDefinition = BindingEnergy,
-    metadata::AbstractDict{Symbol,<:Any} = Dict(),
+    additional_metadata::AbstractDict = Dict(),
 )
     extra_metadata = Dict(
         :analyzer_configuration => analyzer_config,
         :energy_definition => energy_def,
         :intensity_unit => intensity_unit,
     )
-    new_metadata = merge(Dict(metadata(intensity)), extra_metadata, Dict(metadata))
+    new_metadata =
+        merge(Dict(metadata(intensity)), extra_metadata, Dict(additional_metadata))
     return ARPESData(
         parent(intensity),
         intensity.dims,
@@ -152,6 +154,7 @@ axes(d::ARPESData) = axes(d.intensity)
 iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
 getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
 
+Base.eltype(A::ARPESData) = eltype(parent(A))
 Base.ndims(A::ARPESData) = ndims(parent(A))
 Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))

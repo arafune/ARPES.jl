@@ -19,11 +19,11 @@ spd_standard = load(file_path2, loc = "SPD")
     @test axes(arpes_ch_resolved) == (1:40, 1:341, 1:24)
     @test metadata(arpes_ch_resolved)[:lens_voltage] == "40V"
     @test arpes_ch_resolved[1, 1, 1] ≈ 67.8969
-    @test arpes_ch_resolved.unit == CPS()
+    @test metadata(arpes_ch_resolved)[:intensity_unit] == CPS
     @test metadata(arpes_ch_resolved)[:beta] == 0.0
     @test typeof(parent(arpes_ch_resolved)) == Array{Float64,3}
 
-    @test eltype(typeof(arpes_ch_resolved)) == Float64
+    @test eltype(arpes_ch_resolved) == Float64
     @test ndims(arpes_ch_resolved) == 3
 
     @test Base.IndexStyle(typeof(arpes_ch_resolved)) ==

@@ -120,11 +120,26 @@ function _spd_to_standard(raw::DimArray)::ARPESData
 
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
-            return ARPESData(standard_array, Counts, TypeI, FinalStateEnergy)
+            return ARPESData(
+                standard_array;
+                intensity_unit = Counts,
+                analyzer_config = TypeI,
+                energy_def = FinalStateEnergy,
+            )
         end
-        return ARPESData(standard_array, CPS, TypeI, FinalStateEnergy)
+        return ARPESData(
+            standard_array;
+            intensity_unit = CPS,
+            analyzer_config = TypeI,
+            energy_def = FinalStateEnergy,
+        )
     end
-    return ARPESData(standard_array, Counts, TypeI, FinalStateEnergy)
+    return ARPESData(
+        standard_array;
+        intensity_unit = Counts,
+        analyzer_config = TypeI,
+        energy_def = FinalStateEnergy,
+    )
 end
 
 
