@@ -32,6 +32,7 @@ spd_standard = load(file_path2, loc = "SPD")
     b1 = Base.Broadcast.broadcastable(arpes_ch_resolved)
     b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.intensity)
     @test typeof(b1) == typeof(b2)
+    @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
 
 

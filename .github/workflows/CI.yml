@@ -57,7 +57,7 @@ jobs:
           genhtml lcov.info --output-directory coverage_html
 
       - name: Upload coverage HTML
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: matrix.version == '1.12'
         with:
           name: coverage-html
