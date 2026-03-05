@@ -19,22 +19,18 @@ import Makie: convert_arguments
 @dim spin
 
 """
-Abstract type representing the unit of intensity in ARPES data.
+type representing the unit of intensity in ARPES data.
 """
 abstract type IntensityUnit end
-
-"""
-Intensity unit representing raw counts.
-"""
 struct Counts <: IntensityUnit end
-
-"""
-Intensity unit representing counts per second (CPS).
-"""
 struct CPS <: IntensityUnit end
 
-abstract type AnalyzerConfiguration end
 
+
+"""
+type representing the analyzer configuration defined in Rev. Sci. Instrum. **89**, 043903 (2018).
+"""
+abstract type AnalyzerConfiguration end
 struct TypeI <: AnalyzerConfiguration end
 struct TypeII <: AnalyzerConfiguration end
 struct TypeIp <: AnalyzerConfiguration end
@@ -67,6 +63,10 @@ Container for ARPES data.
 - `dims::D`: The dimension descriptor, typically matching the dims of the data array.
 - `name::N`: The name label for the dataset.
 - `metadata::M`: Additional metadata as a dictionary or other structure.
+  - metadata should include the following keys:
+    * :analyzer_configuration - one of the AnalyzerConfiguration types (TypeI, TypeII, etc.)
+    * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
+    * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use hv instead of hv)
 """
 struct ARPESData{T,D,R,N,M}
     data::T
