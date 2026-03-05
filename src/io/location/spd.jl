@@ -55,9 +55,12 @@ const STANDARD_ANGLES = Dict(
     :δ => 0.0,
 )
 
+standardized_metadata = Dict(:hv => :excitation_energy)
+
 Location.dim_alias(::Type{SPDLoader}) = DIM_ALIAS
 Location.default_dim_map(::Type{SPDLoader}) = DEFAULT_DIM_MAP
-Location.angle_Shin_convention(::Type{SPDLoader}) = STANDARD_ANGLES
+Location.metadata_convert_rule(::Type{SPDLoader}) =
+    merge(standardized_metadata, STANDARD_ANGLES)
 
 """
     load_data(::Type{SPDLoader}, fpath:String)
@@ -102,9 +105,9 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 
 - Standardizes the input array using `to_standardize(SPDLoader, raw)`.
 - Determines the appropriate intensity unit (`Counts` or `CPS`) based on the `:d_scale` metadata:
-    - If the unit starts with "count", returns `ARPESData` with `Counts()`.
-    - Otherwise, returns `ARPESData` with `CPS()`.
-- If no `:d_scale` metadata is present, defaults to `Counts()`.
+    - If the unit starts with "count", returns `ARPESData` with `Counts`.
+    - Otherwise, returns `ARPESData` with `CPS`.
+- If no `:d_scale` metadata is present, defaults to `Counts`.
 
 # Arguments
 - `raw::DimArray`: The raw SPD data array to be standardized.
@@ -117,11 +120,26 @@ function _spd_to_standard(raw::DimArray)::ARPESData
 
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
-            return ARPESData(standard_array, Counts(), TypeI, FinalStateEnergy)
+            return ARPESData(
+                standard_array;
+                intensity_unit = Counts,
+                analyzer_config = TypeI,
+                energy_def = FinalStateEnergy,
+            )
         end
-        return ARPESData(standard_array, CPS(), TypeI, FinalStateEnergy)
+        return ARPESData(
+            standard_array;
+            intensity_unit = CPS,
+            analyzer_config = TypeI,
+            energy_def = FinalStateEnergy,
+        )
     end
-    return ARPESData(standard_array, Counts(), TypeI, FinalStateEnergy)
+    return ARPESData(
+        standard_array;
+        intensity_unit = Counts,
+        analyzer_config = TypeI,
+        energy_def = FinalStateEnergy,
+    )
 end
 
 
