@@ -149,10 +149,10 @@ dims(A::ARPESData) = A.dims
 name(A::ARPESData) = A.name
 metadata(A::ARPESData) = A.metadata
 
-size(d::ARPESData) = size(d.intensity)
-axes(d::ARPESData) = axes(d.intensity)
-iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
-getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
+size(A::ARPESData) = size(A.intensity)
+axes(A::ARPESData) = axes(A.intensity)
+iterate(A::ARPESData, args...) = iterate(A.intensity, args...)
+getindex(A::ARPESData, I...) = getindex(A.intensity, I...)
 
 Base.eltype(A::ARPESData) = eltype(parent(A))
 Base.ndims(A::ARPESData) = ndims(parent(A))
