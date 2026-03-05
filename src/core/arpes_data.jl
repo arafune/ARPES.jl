@@ -25,8 +25,6 @@ abstract type IntensityUnit end
 struct Counts <: IntensityUnit end
 struct CPS <: IntensityUnit end
 
-
-
 """
 type representing the analyzer configuration defined in Rev. Sci. Instrum. **89**, 043903 (2018).
 """
@@ -63,7 +61,7 @@ Container for ARPES data.
 - `M`: The type of the metadata field.
 
 # Fields
-- `data::T`: The intensity values, stored as an AbstractArray.
+- `intensity::T`: The intensity values, stored as an AbstractArray.
 - `dims::D`: The dimension descriptor, typically matching the dims of the data array.
     * The energy axis must be eV, and the emission angles must be phi and psi.
       (phi is the emission angle of photoelectrons parallel to the slit direction.)
@@ -73,34 +71,15 @@ Container for ARPES data.
   - metadata should include the following keys:
     * :analyzer_configuration - one of the AnalyzerConfiguration types (TypeI, TypeII, etc.)
     * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
-    * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use hv instead of hv)
+    * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use :hν instead of :hv)
 """
 struct ARPESData{T,D,R,N,M}
-    data::T
+    intensity::T
     dims::D
     refdims::R
     name::N
     metadata::M
 end
-
-
-
-# delegate methods
-# -------------------
-
-Base.parent(A::ARPESData) = A.intensity
-dims(A::ARPESData) = A.dims
-name(A::ARPESData) = A.name
-metadata(A::ARPESData) = A.metadata
-
-size(d::ARPESData) = size(d.intensity)
-axes(d::ARPESData) = axes(d.intensity)
-iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
-getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
-
-Base.ndims(A::ARPESData) = ndims(parent(A))
-Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
-Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
 
 """
   Create ARPESData from a raw intensity array and a dimension descriptor.
@@ -123,8 +102,6 @@ function ARPESData(intensity, dims; name = :ARPES, metadata = Dict(), refdims = 
     return ARPESData(intensity, dims, refdims, name, metadata)
 end
 
-
-
 """
   Construct ARPESData from an AbstractDimArray.
 
@@ -136,16 +113,47 @@ end
 - Copies dims, refdims, name, and metadata from the given array.
 - No additional validation is performed.
 """
-function ARPESData(intensity::AbstractDimArray)
+function ARPESData(
+    intensity::AbstractDimArray;
+    intensity_unit::Type{<:IntensityUnit} = Counts,
+    analyzer_config::Type{<:AnalyzerConfiguration} = TypeI,
+    energy_def::EnergyDefinition = BindingEnergy,
+    metadata::AbstractDict{Symbol,<:Any} = Dict(),
+)
+    extra_metadata = Dict(
+        :analyzer_configuration => analyzer_config,
+        :energy_definition => energy_def,
+        :intensity_unit => intensity_unit,
+    )
+    new_metadata = merge(Dict(metadata(intensity)), extra_metadata, Dict(metadata))
     return ARPESData(
         parent(intensity),
         intensity.dims,
         refdims = intensity.refdims,
         name = intensity.name,
-        metadata = intensity.metadata,
+        metadata = new_metadata,
     )
 end
 
 function Makie.convert_arguments(P::Type{<:Makie.AbstractPlot}, data::ARPESData)
     return Makie.convert_arguments(P, parent(data))
 end
+
+# delegate methods
+# -------------------
+
+Base.parent(A::ARPESData) = A.intensity
+dims(A::ARPESData) = A.dims
+name(A::ARPESData) = A.name
+metadata(A::ARPESData) = A.metadata
+
+size(d::ARPESData) = size(d.intensity)
+axes(d::ARPESData) = axes(d.intensity)
+iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
+getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
+
+Base.ndims(A::ARPESData) = ndims(parent(A))
+Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
+Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
+
+
