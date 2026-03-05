@@ -36,6 +36,16 @@ struct TypeII <: AnalyzerConfiguration end
 struct TypeIp <: AnalyzerConfiguration end
 struct TypeIIp <: AnalyzerConfiguration end
 
+"""
+    @enum EnergyDefinition
+
+Enumeration of possible energy definitions used in ARPES data analysis.
+
+- `BindingEnergy`: Electron binding energy relative to the Fermi level.
+- `FinalStateEnergy`: Energy of the electron in the final state after photoemission (Referred to the Fermi level).
+- `KineticEnergy`: Kinetic energy of the emitted electron (Referred to the vacuum level of the sample).
+- `IntermediateEnergy`: Energy in an intermediate state (e.g., in pump-probe experiments).
+"""
 @enum EnergyDefinition begin
     BindingEnergy
     FinalStateEnergy
