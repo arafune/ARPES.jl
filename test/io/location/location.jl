@@ -58,6 +58,7 @@ end
     conversion_rule_just_replace = Dict(:another_angle => :angle)
     converted_dict = standardize_metadata(metadata_dict, conversion_rule_just_replace)
     @test haskey(converted_dict, :another_angle)
+    @test converted_dict[:another_angle] == 300
 
     donversion_rule_with_nonexistent_key = Dict(:nonexistent => :nonexistent)
 end
