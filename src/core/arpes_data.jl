@@ -51,57 +51,66 @@ end
 Container for ARPES data.
 
 # Type Parameters
-- `T<:AbstractDimArray`: The type of the intensity data array.
-- `U<:IntensityUnit`: The unit of intensity (e.g., Counts, CPS).
-- `Conf`: The analyzer configuration type (should be a subtype of `AnalyzerConfiguration`).
+- `T<:AbstractDimArray`: The type of the data array (intensity values).
+- `D`: The type of the dimension descriptor.
+- `N`: The type of the name field.
+- `M`: The type of the metadata field.
 
 # Fields
-- `intensity::T`: The intensity values, stored as an AbstractDimArray.
-  * the metadata of this array should include the following symbols and value:
-    * :hv - the photon energy in eV.
-    * :workfunction - the work function of the analyzer in eV.
-  * the energy axis must be eV. and the emission angle must be phi and psi.
-    phi is the emission angle of photoelectron parallel with the slit direction.
-  * If the data is after the momentum conversion, the dimensions should be kx, ky, kz, kp.
-- `unit::U`: The unit of intensity, subtype of IntensityUnit.
-- `analyzer_configuration::Conf`: The analyzer configuration type label.
-- `energy_definition::EnergyDefinition`: The definition of energy used in the data (BindingEnergy, KineticEnergy, FinalStateEnergy, IntermediateEnergy).
+- `data::T`: The intensity values, stored as an AbstractDimArray.
+    * The metadata of this array should include the following symbols and values:
+        * :hv - the photon energy in eV.
+        * :workfunction - the work function of the analyzer in eV.
+    * The energy axis must be eV, and the emission angles must be phi and psi.
+      (phi is the emission angle of photoelectrons parallel to the slit direction.)
+    * If the data is after momentum conversion, the dimensions should be kx, ky, kz, kp.
+- `dims::D`: The dimension descriptor, typically matching the dims of the data array.
+- `name::N`: The name label for the dataset.
+- `metadata::M`: Additional metadata as a dictionary or other structure.
 """
-struct ARPESData{T<:AbstractDimArray,U<:IntensityUnit,Conf<:AnalyzerConfiguration}
-    intensity::T
-    unit::U
-    analyzer_configuration::Type{Conf}
-    energy_definition::EnergyDefinition
+struct ARPESData{T,D,R,N,M}
+    data::T
+    dims::D
+    refdims::R
+    name::N
+    metadata::M
+
 end
+
+
 
 # delegate methods
 # -------------------
+
+Base.parent(A::ARPESData) = A.intensity
+dims(A::ARPESData) = A.dims
+name(A::ARPESData) = A.name
+metadata(A::ARPESData) = A.metadata
 
 size(d::ARPESData) = size(d.intensity)
 axes(d::ARPESData) = axes(d.intensity)
 iterate(d::ARPESData, args...) = iterate(d.intensity, args...)
 getindex(d::ARPESData, I...) = getindex(d.intensity, I...)
-dims(d::ARPESData) = dims(d.intensity)
-name(d::ARPESData) = name(d.intensity)
-metadata(d::ARPESData) = metadata(d.intensity)
-parent(d::ARPESData) = parent(d.intensity)
-Base.eltype(::Type{<:ARPESData{T,U,Conf}}) where {T,U,Conf} = eltype(T)
 
-Base.ndims(d::ARPESData) = ndims(d.intensity)
+Base.ndims(A::ARPESData) = ndims(parent(A))
 Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
-Base.Broadcast.broadcastable(d::ARPESData) = Base.Broadcast.broadcastable(d.intensity)
+Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
 
-function rebuild(d::ARPESData; kw...)
+function ARPESData(intensity, dims; name = :ARPES, metadata = Dict(), refdims = nothing)
+    dims = DimensionalData.format(dims, intensity)
+    return ARPESData(intensity, dims, refdims, name, metadata)
+end
+
+function ARPESData(intensity::AbstractDimArray)
     return ARPESData(
-        rebuild(d.intensity; kw...),
-        d.unit,
-        d.analyzer_configuration,
-        d.energy_definition,
+        parent(intensity),
+        intensity.dims,
+        refdims = intensity.refdims,
+        name = intensity.name,
+        metadata = intensity.metadata,
     )
 end
-function Makie.convert_arguments(
-    P::Type{<:Makie.AbstractPlot},
-    data::ARPESData{<:AbstractDimArray,<:IntensityUnit,<:AnalyzerConfiguration},
-)
-    return Makie.convert_arguments(P, data.intensity)
+
+function Makie.convert_arguments(P::Type{<:Makie.AbstractPlot}, data::ARPESData)
+    return Makie.convert_arguments(P, parent(data))
 end
