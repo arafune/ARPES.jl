@@ -79,21 +79,15 @@ struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,
     refdims::R
     name::Na
     metadata::Me
-
     function ARPESData(
         data::A,
-        dims,
-        refdims,
-        name,
-        metadata,
-    ) where {T,N,A<:AbstractArray{T,N}}
-        return new{T,N,typeof(dims),typeof(refdims),A,typeof(name),typeof(metadata)}(
-            data,
-            dims,
-            refdims,
-            name,
-            metadata,
-        )
+        dims::D,
+        refdims::R,
+        name::Na,
+        metadata::Me,
+    ) where {T,N,D,R,A<:AbstractArray{T,N},Na,Me}
+        dims = DimensionalData.format(dims, data)
+        return new{T,N,D,R,A,Na,Me}(data, dims, refdims, name, metadata)
     end
 end
 
@@ -113,9 +107,9 @@ end
 - Normalizes dims via DimensionalData.format(dims, data).
 - Does not perform metadata or axis validation here.
 """
-function ARPESData(data::A, dims, refdims, name, metadata) where {A<:AbstractArray}
-    dims = DimensionalData.format(dims, data)
-    return ARPESData(data, dims, refdims, name, metadata)
+function ARPESData(data, dims; refdims = (), name = :ARPES, metadata = Dict())
+
+    ARPESData(data, dims, refdims, name, metadata)
 end
 
 """
@@ -145,15 +139,15 @@ function ARPESData(
     return ARPESData(
         parent(data),
         data.dims,
-        refdims = data.refdims,
+        refdims = refdims(refdims),
         name = data.name,
         metadata = new_metadata,
     )
 end
 
-function Makie.convert_arguments(P::Type{<:Makie.AbstractPlot}, data::ARPESData)
-    return Makie.convert_arguments(P, parent(data))
-end
+#function Makie.convert_arguments(P::Type{<:Makie.AbstractPlot}, data::ARPESData)
+#    return Makie.convert_arguments(P, parent(data))
+#end
 
 # delegate methods
 # -------------------
@@ -166,11 +160,13 @@ metadata(A::ARPESData) = A.metadata
 size(A::ARPESData) = size(A.data)
 axes(A::ARPESData) = axes(A.data)
 iterate(A::ARPESData, args...) = iterate(A.data, args...)
-getindex(A::ARPESData, I...) = getindex(A.data, I...)
+#getindex(A::ARPESData, I...) = getindex(A.data, I...)
 
 Base.eltype(A::ARPESData) = eltype(parent(A))
 Base.ndims(A::ARPESData) = ndims(parent(A))
-Base.IndexStyle(::Type{<:ARPESData{A}}) where {A} = Base.IndexStyle(A)
+Base.IndexStyle(::Type{<:ARPESData{T,N,D,R,A}}) where {T,N,D,R,A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
 
-
+function DimensionalData.rebuild(A::ARPESData, data, dims, refdims, name, metadata)
+    ARPESData(data, dims; refdims = refdims, name = name, metadata = metadata)
+end
