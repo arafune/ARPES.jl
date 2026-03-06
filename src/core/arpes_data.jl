@@ -55,16 +55,14 @@ end
 Container for ARPES data.
 
 # Type Parameters
-- `A<:AbstractDimArray`: The type of the data array (intensity values).
+- `A<:AbstractArray{T,N}`: The type of the data array (intensity values).
 - `D`: The type of the dimension descriptor.
 - `R`: The type of the reference dimension descriptor.
-- `N`: The type of the name field.
-- `M`: The type of the metadata field.
+- `Na`: The type of the name field.
+- `Me`: The type of the metadata field.
 
 # Fields
 - `data::A`: The intensity values, stored as an AbstractArray.
-- `dims::D`: The dimension descriptor, typically matching the dims of the data array.
-    * The energy axis must be eV, and the emission angles must be phi and psi.
       (phi is the emission angle of photoelectrons parallel to the slit direction.)
     * If the data is after momentum conversion, the dimensions should be kx, ky, kz, kp.
 - `name::N`: The name label for the dataset.
@@ -75,19 +73,19 @@ Container for ARPES data.
     * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
     * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use :hν instead of :hv)
 """
-struct ARPESData{T,N,D,R,A,N,M} <: AbstractDimArray{T,N,D,A}
+struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,A}
     data::A
     dims::D
     refdims::R
-    name::N
-    metadata::M
+    name::Na
+    metadata::Me
 end
 
 """
   Create ARPESData from a raw intensity array and a dimension descriptor.
 
 # Arguments
-- intensity: N-dimensional array of intensity values.
+- data: N-dimensional array of intensity values.
 - dims: Dimension descriptor compatible with DimensionalData.jl.
 
 # Keywords
@@ -96,10 +94,10 @@ end
 - refdims = nothing: Optional reference-dimension descriptor.
 
 # Behavior
-- Normalizes dims via DimensionalData.format(dims, intensity).
+- Normalizes dims via DimensionalData.format(dims, data).
 - Does not perform metadata or axis validation here.
 """
-function ARPESData(data, dims; name = :ARPES, metadata = Dict(), refdims = nothing)
+function ARPESData(data, dims, refdims, name, metadata)
     dims = DimensionalData.format(dims, data)
     return ARPESData(data, dims, refdims, name, metadata)
 end
@@ -108,10 +106,10 @@ end
   Construct ARPESData from an AbstractDimArray.
 
 # Arguments
-- intensity::AbstractDimArray: Array with dims, refdims, name, and metadata.
+- data::AbstractDimArray: Array with dims, refdims, name, and metadata.
 
 # Behavior
-- Uses parent(intensity) as the data field.
+- Uses parent(data) as the data field.
 - Copies dims, refdims, name, and metadata from the given array.
 - No additional validation is performed.
 """
