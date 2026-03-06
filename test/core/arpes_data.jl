@@ -1,5 +1,7 @@
 using Test
 using DimensionalData
+using Interfaces
+using DimensionalData.Interfaces
 using Makie
 using ARPES
 
@@ -34,4 +36,6 @@ spd_standard = load(file_path2, loc = "SPD")
     @test typeof(b1) == typeof(b2)
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
-
+@testset "DimArrayInterface" begin
+    Interfaces.test(DimensionalData.DimArrayInterface, spd_standard)
+end

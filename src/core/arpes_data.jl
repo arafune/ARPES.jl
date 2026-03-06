@@ -149,7 +149,9 @@ end
 
 # delegate methods
 # -------------------
-
+function rebuild(A::ARPESData, data, dims, refdims, name, metadata)
+    ARPESData(data, dims, refdims, name, metadata)
+end
 Base.parent(A::ARPESData) = A.data
 dims(A::ARPESData) = A.dims
 name(A::ARPESData) = A.name
