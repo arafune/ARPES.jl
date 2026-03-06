@@ -67,10 +67,11 @@ Container for ARPES data.
 - `name::Na`: The name label for the dataset.
 - `metadata::Me`: Additional metadata as a dictionary or other structure.
   - metadata should include the following keys:
-    * :intensity_unit - one of the IntensityUnit types (Counts, CPS)
-    * :analyzer_configuration - one of the AnalyzerConfiguration types (TypeI, TypeII, etc.)
-    * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
-    * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use :hν instead of :hv)
+    * :intensity_unit - one of the `IntensityUnit` types (Counts, CPS)
+    * :analyzer_configuration - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
+    * :energy_definition - one of the `EnergyDefinition` enum values (BindingEnergy, FinalStateEnergy, etc.)
+    * :hv - the photon energy in eV (should match the :hv in the data array metadata)
+      (Note: in future, consider to use :hν instead of :hv)
 """
 struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,A}
     data::A
