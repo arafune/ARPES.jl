@@ -6,11 +6,11 @@ import DimensionalData: dims, name, metadata, rebuild
 using Makie
 
 #--- Dimension names used for ARPES ---
-@dim kx "1/Å"
-@dim ky "1/Å"
-@dim kz "1/Å"
-@dim phi "degrees"
-@dim psi "degrees"
+@dim kx "kx  ( Å⁻¹ )"
+@dim ky "ky  ( Å⁻¹ )"
+@dim kz "kz  ( Å⁻¹ )"
+@dim psi "ψ  ( degrees )"
+@dim phi "Φ  ( degrees )"
 @dim eV "eV"
 @dim detector_ch
 @dim ch2
