@@ -62,16 +62,23 @@ Container for ARPES data.
 
 # Fields
 - `data::A`: The intensity values, stored as an AbstractArray.
-      (phi is the emission angle of photoelectrons parallel to the slit direction.)
-    * If the data is after momentum conversion, the dimensions should be kx, ky, kz, kp.
+- `dims`: The dimension descriptor, in the ARPESData nomencalture of the substantial axes such as `eV`, `phi` are defined.
+    * `eV` is the energy dimension, which can be defined as either binding energy or kinetic energy depending on the `energy_definition` in metadata.
+    * `phi` is the emission angle of photoelectrons parallel to the slit direction.
+    * `psi` is the emission angle of photoelectrons perpendicular to the slit direction.
+    * `kx`, `ky`, `kz`, or `kp` are the momentum dimensions, which can be defined based on the angles and photon energy in metadata.
+    * `delay` is the pump-probe delay time, which is used for time-resolved ARPES data.
 - `name::Na`: The name label for the dataset.
 - `metadata::Me`: Additional metadata as a dictionary or other structure.
   - metadata should include the following keys:
-    * :intensity_unit - one of the `IntensityUnit` types (Counts, CPS)
-    * :analyzer_configuration - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
-    * :energy_definition - one of the `EnergyDefinition` enum values (BindingEnergy, FinalStateEnergy, etc.)
-    * :hv - the photon energy in eV (should match the :hv in the data array metadata)
+    * `:intensity_unit` - one of the `IntensityUnit` types (Counts, CPS)
+    * `:analyzer_configuration` - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
+    * `:energy_definition` - one of the `EnergyDefinition` enum values (BindingEnergy, FinalStateEnergy, etc.)
+    * `:hv` - the photon energy in eV (should match the :hv in the data array metadata)
       (Note: in future, consider to use :hν instead of :hv)
+    * `:β`: used for momentum conversion. if the dims include psi, angle `β` is not required.
+    * `:ξ`: used for momentum conversion.
+    * `:δ`: used for momentum conversion.  (About the definition of β, ξ and δ, see Rev. Sci. Instrum. **89**, 043903 (2018).)
 """
 struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,A}
     data::A
