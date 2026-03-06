@@ -64,8 +64,8 @@ Container for ARPES data.
 - `data::A`: The intensity values, stored as an AbstractArray.
       (phi is the emission angle of photoelectrons parallel to the slit direction.)
     * If the data is after momentum conversion, the dimensions should be kx, ky, kz, kp.
-- `name::N`: The name label for the dataset.
-- `metadata::M`: Additional metadata as a dictionary or other structure.
+- `name::Na`: The name label for the dataset.
+- `metadata::Me`: Additional metadata as a dictionary or other structure.
   - metadata should include the following keys:
     * :intensity_unit - one of the IntensityUnit types (Counts, CPS)
     * :analyzer_configuration - one of the AnalyzerConfiguration types (TypeI, TypeII, etc.)
@@ -145,9 +145,6 @@ function ARPESData(
     )
 end
 
-function DimensionalData.rebuild(A::ARPESData, data, dims, refdims, name, metadata)
-    ARPESData(data, dims; refdims = refdims, name = name, metadata = metadata)
-end
 
 # delegate methods
 # -------------------
@@ -160,7 +157,6 @@ metadata(A::ARPESData) = A.metadata
 size(A::ARPESData) = size(A.data)
 axes(A::ARPESData) = axes(A.data)
 iterate(A::ARPESData, args...) = iterate(A.data, args...)
-#getindex(A::ARPESData, I...) = getindex(A.data, I...)
 
 Base.eltype(A::ARPESData) = eltype(parent(A))
 Base.ndims(A::ARPESData) = ndims(parent(A))
