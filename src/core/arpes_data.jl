@@ -79,6 +79,22 @@ struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,
     refdims::R
     name::Na
     metadata::Me
+
+    function ARPESData(
+        data::A,
+        dims,
+        refdims,
+        name,
+        metadata,
+    ) where {T,N,A<:AbstractArray{T,N}}
+        return new{T,N,typeof(dims),typeof(refdims),A,typeof(name),typeof(metadata)}(
+            data,
+            dims,
+            refdims,
+            name,
+            metadata,
+        )
+    end
 end
 
 """
@@ -97,7 +113,7 @@ end
 - Normalizes dims via DimensionalData.format(dims, data).
 - Does not perform metadata or axis validation here.
 """
-function ARPESData(data, dims, refdims, name, metadata)
+function ARPESData(data::A, dims, refdims, name, metadata) where {A<:AbstractArray}
     dims = DimensionalData.format(dims, data)
     return ARPESData(data, dims, refdims, name, metadata)
 end
