@@ -27,10 +27,10 @@ spd_standard = load(file_path2, loc = "SPD")
     @test ndims(arpes_ch_resolved) == 3
 
     @test Base.IndexStyle(typeof(arpes_ch_resolved)) ==
-          Base.IndexStyle(typeof(arpes_ch_resolved.intensity))
+          Base.IndexStyle(typeof(arpes_ch_resolved.data))
 
     b1 = Base.Broadcast.broadcastable(arpes_ch_resolved)
-    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.intensity)
+    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.data)
     @test typeof(b1) == typeof(b2)
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
@@ -47,6 +47,6 @@ end
 @testset "Multiple Plot Types" begin
     for P in [Heatmap, Contour, Surface]
         @test Makie.convert_arguments(P, spd_standard) ==
-              Makie.convert_arguments(P, spd_standard.intensity)
+              Makie.convert_arguments(P, spd_standard.data)
     end
 end

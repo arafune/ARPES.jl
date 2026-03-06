@@ -55,13 +55,14 @@ end
 Container for ARPES data.
 
 # Type Parameters
-- `T<:AbstractDimArray`: The type of the data array (intensity values).
+- `A<:AbstractDimArray`: The type of the data array (intensity values).
 - `D`: The type of the dimension descriptor.
+- `R`: The type of the reference dimension descriptor.
 - `N`: The type of the name field.
 - `M`: The type of the metadata field.
 
 # Fields
-- `intensity::T`: The intensity values, stored as an AbstractArray.
+- `data::A`: The intensity values, stored as an AbstractArray.
 - `dims::D`: The dimension descriptor, typically matching the dims of the data array.
     * The energy axis must be eV, and the emission angles must be phi and psi.
       (phi is the emission angle of photoelectrons parallel to the slit direction.)
@@ -74,8 +75,8 @@ Container for ARPES data.
     * :energy_definition - one of the EnergyDefinition enum values (BindingEnergy, FinalStateEnergy, etc.)
     * :hv - the photon energy in eV (should match the :hv in the data array metadata)  (Note: in future, consider to use :hν instead of :hv)
 """
-struct ARPESData{T,D,R,N,M}
-    intensity::T
+struct ARPESData{T,N,D,R,A,N,M} <: AbstractDimArray{T,N,D,A}
+    data::A
     dims::D
     refdims::R
     name::N
@@ -98,9 +99,9 @@ end
 - Normalizes dims via DimensionalData.format(dims, intensity).
 - Does not perform metadata or axis validation here.
 """
-function ARPESData(intensity, dims; name = :ARPES, metadata = Dict(), refdims = nothing)
-    dims = DimensionalData.format(dims, intensity)
-    return ARPESData(intensity, dims, refdims, name, metadata)
+function ARPESData(data, dims; name = :ARPES, metadata = Dict(), refdims = nothing)
+    dims = DimensionalData.format(dims, data)
+    return ARPESData(data, dims, refdims, name, metadata)
 end
 
 """
@@ -115,7 +116,7 @@ end
 - No additional validation is performed.
 """
 function ARPESData(
-    intensity::AbstractDimArray;
+    data::AbstractDimArray;
     intensity_unit::Type{<:IntensityUnit} = Counts,
     analyzer_config::Type{<:AnalyzerConfiguration} = TypeI,
     energy_def::EnergyDefinition = BindingEnergy,
@@ -126,13 +127,12 @@ function ARPESData(
         :energy_definition => energy_def,
         :intensity_unit => intensity_unit,
     )
-    new_metadata =
-        merge(Dict(metadata(intensity)), extra_metadata, Dict(additional_metadata))
+    new_metadata = merge(Dict(metadata(data)), extra_metadata, Dict(additional_metadata))
     return ARPESData(
-        parent(intensity),
-        intensity.dims,
-        refdims = intensity.refdims,
-        name = intensity.name,
+        parent(data),
+        data.dims,
+        refdims = data.refdims,
+        name = data.name,
         metadata = new_metadata,
     )
 end
@@ -144,15 +144,15 @@ end
 # delegate methods
 # -------------------
 
-Base.parent(A::ARPESData) = A.intensity
+Base.parent(A::ARPESData) = A.data
 dims(A::ARPESData) = A.dims
 name(A::ARPESData) = A.name
 metadata(A::ARPESData) = A.metadata
 
-size(A::ARPESData) = size(A.intensity)
-axes(A::ARPESData) = axes(A.intensity)
-iterate(A::ARPESData, args...) = iterate(A.intensity, args...)
-getindex(A::ARPESData, I...) = getindex(A.intensity, I...)
+size(A::ARPESData) = size(A.data)
+axes(A::ARPESData) = axes(A.data)
+iterate(A::ARPESData, args...) = iterate(A.data, args...)
+getindex(A::ARPESData, I...) = getindex(A.data, I...)
 
 Base.eltype(A::ARPESData) = eltype(parent(A))
 Base.ndims(A::ARPESData) = ndims(parent(A))
