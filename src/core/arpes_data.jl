@@ -4,7 +4,6 @@ using DimensionalData.Dimensions: @dim
 using Dates
 import DimensionalData: dims, name, metadata, rebuild
 using Makie
-import Makie: convert_arguments
 
 #--- Dimension names used for ARPES ---
 @dim kx "1/Å"
@@ -109,6 +108,7 @@ end
 """
 function ARPESData(data, dims; refdims = (), name = :ARPES, metadata = Dict())
 
+    dims = DimensionalData.format(dims, data)
     ARPESData(data, dims, refdims, name, metadata)
 end
 
@@ -139,15 +139,15 @@ function ARPESData(
     return ARPESData(
         parent(data),
         data.dims,
-        refdims = refdims(refdims),
+        refdims = refdims(data),
         name = data.name,
         metadata = new_metadata,
     )
 end
 
-#function Makie.convert_arguments(P::Type{<:Makie.AbstractPlot}, data::ARPESData)
-#    return Makie.convert_arguments(P, parent(data))
-#end
+function DimensionalData.rebuild(A::ARPESData, data, dims, refdims, name, metadata)
+    ARPESData(data, dims; refdims = refdims, name = name, metadata = metadata)
+end
 
 # delegate methods
 # -------------------
@@ -167,6 +167,3 @@ Base.ndims(A::ARPESData) = ndims(parent(A))
 Base.IndexStyle(::Type{<:ARPESData{T,N,D,R,A}}) where {T,N,D,R,A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
 
-function DimensionalData.rebuild(A::ARPESData, data, dims, refdims, name, metadata)
-    ARPESData(data, dims; refdims = refdims, name = name, metadata = metadata)
-end

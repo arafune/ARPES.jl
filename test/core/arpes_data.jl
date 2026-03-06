@@ -35,18 +35,3 @@ spd_standard = load(file_path2, loc = "SPD")
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
 
-
-
-#@testset "ARPESData Makie Conversion" begin
-#    converted = Makie.convert_arguments(Heatmap, spd_standard)
-#    @test length(converted) == 3
-#    f, ax, pl = heatmap(spd_standard; colormap = :inferno, colorrange = (1, 100))
-#    @test pl.colormap[] == :inferno
-#end
-#
-#@testset "Multiple Plot Types" begin
-#    for P in [Heatmap, Contour, Surface]
-#        @test Makie.convert_arguments(P, spd_standard) ==
-#              Makie.convert_arguments(P, spd_standard.data)
-#    end
-#end
