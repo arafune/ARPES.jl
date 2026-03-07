@@ -64,6 +64,8 @@ Container for ARPES data.
 - `data::A`: The intensity values, stored as an AbstractArray.
 - `dims`: The dimension descriptor, in the ARPESData nomencalture of the substantial axes such as `eV`, `phi` are defined.
     * `eV` is the energy dimension, which can be defined as either binding energy or kinetic energy depending on the `energy_definition` in metadata.
+      - Note: the `eV` dim should include the dict as metadata, which includes `:energy_definition` as the key.
+        `energy_definition` should be one of the `EnergyDefinition` types (BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy).
     * `phi` is the emission angle of photoelectrons parallel to the slit direction.
     * `psi` is the emission angle of photoelectrons perpendicular to the slit direction.
     * `kx`, `ky`, `kz`, or `kp` are the momentum dimensions, which can be defined based on the angles and photon energy in metadata.
@@ -73,7 +75,6 @@ Container for ARPES data.
   - metadata should include the following keys:
     * `:intensity_unit` - one of the `IntensityUnit` types (Counts, CPS)
     * `:analyzer_configuration` - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
-    * `:energy_definition` - one of the `EnergyDefinition` enum values (BindingEnergy, FinalStateEnergy, etc.)
     * `:hv` - the photon energy in eV (should match the :hv in the data array metadata)
       (Note: in future, consider to use :hν instead of :hv)
     * `:β`: used for momentum conversion. if the dims include psi, angle `β` is not required.
@@ -115,7 +116,6 @@ end
 - Does not perform metadata or axis validation here.
 """
 function ARPESData(data, dims; refdims = (), name = :ARPES, metadata = Dict())
-
     dims = DimensionalData.format(dims, data)
     ARPESData(data, dims, refdims, name, metadata)
 end
@@ -138,15 +138,23 @@ function ARPESData(
     energy_def::EnergyDefinition = BindingEnergy,
     additional_metadata::AbstractDict = Dict(),
 )
-    extra_metadata = Dict(
-        :analyzer_configuration => analyzer_config,
-        :energy_definition => energy_def,
-        :intensity_unit => intensity_unit,
-    )
+    extra_metadata =
+        Dict(:analyzer_configuration => analyzer_config, :intensity_unit => intensity_unit)
     new_metadata = merge(Dict(metadata(data)), extra_metadata, Dict(additional_metadata))
+    new_dims = map(dims(data)) do d
+        if d isa eV
+            curr_dim_meta = Dict(DimensionalData.metadata(d))
+            new_dim_meta = merge(curr_dim_meta, Dict(:energy_definition => energy_def))
+            curr_lookup = lookup(d)
+            new_lookup = rebuild(curr_lookup; metadata = new_dim_meta)
+            return rebuild(d, new_lookup)
+        else
+            return d
+        end
+    end
     return ARPESData(
         parent(data),
-        data.dims,
+        new_dims,
         refdims = refdims(data),
         name = data.name,
         metadata = new_metadata,
