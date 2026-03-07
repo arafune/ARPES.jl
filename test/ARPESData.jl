@@ -1,5 +1,7 @@
 using Test
 using DimensionalData
+using Interfaces
+using DimensionalData.Interfaces
 using Makie
 using ARPES
 
@@ -19,34 +21,21 @@ spd_standard = load(file_path2, loc = "SPD")
     @test axes(arpes_ch_resolved) == (1:40, 1:341, 1:24)
     @test metadata(arpes_ch_resolved)[:lens_voltage] == "40V"
     @test arpes_ch_resolved[1, 1, 1] ≈ 67.8969
-    @test arpes_ch_resolved.unit == CPS()
+    @test metadata(arpes_ch_resolved)[:intensity_unit] == CPS
     @test metadata(arpes_ch_resolved)[:beta] == 0.0
     @test typeof(parent(arpes_ch_resolved)) == Array{Float64,3}
 
-    @test eltype(typeof(arpes_ch_resolved)) == Float64
+    @test eltype(arpes_ch_resolved) == Float64
     @test ndims(arpes_ch_resolved) == 3
 
     @test Base.IndexStyle(typeof(arpes_ch_resolved)) ==
-          Base.IndexStyle(typeof(arpes_ch_resolved.intensity))
+          Base.IndexStyle(typeof(arpes_ch_resolved.data))
 
     b1 = Base.Broadcast.broadcastable(arpes_ch_resolved)
-    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.intensity)
+    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.data)
     @test typeof(b1) == typeof(b2)
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
-
-
-
-@testset "ARPESData Makie Conversion" begin
-    converted = Makie.convert_arguments(Heatmap, spd_standard)
-    @test length(converted) == 3
-    f, ax, pl = heatmap(spd_standard; colormap = :inferno, colorrange = (1, 100))
-    @test pl.colormap[] == :inferno
-end
-
-@testset "Multiple Plot Types" begin
-    for P in [Heatmap, Contour, Surface]
-        @test Makie.convert_arguments(P, spd_standard) ==
-              Makie.convert_arguments(P, spd_standard.intensity)
-    end
+@testset "DimArrayInterface" begin
+    Interfaces.test(DimensionalData.DimArrayInterface, spd_standard)
 end

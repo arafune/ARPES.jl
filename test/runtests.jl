@@ -4,7 +4,7 @@ using Test
 
 @testset "ARPES.jl" begin
     @testset "Core" begin
-        include("core/arpes_data.jl")
+        include("ARPESData.jl")
     end
     @testset "IO" begin
         @testset "IO basic" begin
