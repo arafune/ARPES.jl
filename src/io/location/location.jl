@@ -1,5 +1,6 @@
 module Location
 using DimensionalData
+using DimensionalData.Dimensions.Lookups: NoMetadata
 using ..IO: LocationLoader, SPDLoader, GenericLoader
 export canonical_dim, dim_alias, default_dim_map
 

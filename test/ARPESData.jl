@@ -2,7 +2,6 @@ using Test
 using DimensionalData
 using Interfaces
 using DimensionalData.Interfaces
-using Makie
 using ARPES
 
 file_path1 = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
