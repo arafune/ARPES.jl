@@ -21,7 +21,7 @@ end
     dim_x_shifted = shift_dim(x_dim, 5)
     @test dim_x_shifted isa DimensionalData.Dimension
     @test dim_x_shifted[1] == 6
-    @teest dim_x_shifted[end] == 8
+    @test dim_x_shifted[end] == 8
     @test length(dim_x_shifted) == length(x_dim)
 end
 
