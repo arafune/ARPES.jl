@@ -68,9 +68,11 @@ end
 
 function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
     if isodd(length(dim_shift_pair))
-        throw((
-            "dim_shift_pair must contain an even number of elements (dimension and shift pairs).",
-        ),)
+        throw(
+            ArgumentError(
+                "dim_shift_pair must contain an even number of elements (dimension and shift pairs).",
+            ),
+        )
     end
     dims = dim_shift_pair[1:2:end]
     shifts = dim_shift_pair[2:2:end]

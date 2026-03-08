@@ -44,5 +44,4 @@ end
     @test_throws ArgumentError shift_dim(data, :eV, 0.1, :ky)
     @test_throws ArgumentError shift_dim(data, :delay, 0.1)
     @test_throws ArgumentError shift_dim(data, ch2, 0.1)
-
 end
