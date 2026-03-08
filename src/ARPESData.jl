@@ -94,8 +94,14 @@ struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,
         name::Na,
         metadata::Me,
     ) where {T,N,D,R,A<:AbstractArray{T,N},Na,Me}
-        dims = DimensionalData.format(dims, data)
-        return new{T,N,D,R,A,Na,Me}(data, dims, refdims, name, metadata)
+        formatted_dims = DimensionalData.format(dims, data)
+        return new{T,N,typeof(formatted_dims),R,A,Na,Me}(
+            data,
+            formatted_dims,
+            refdims,
+            name,
+            metadata,
+        )
     end
 end
 

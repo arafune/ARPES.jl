@@ -7,6 +7,7 @@ export shift_dim
 """
     shift_dim(dim::Dimension, shift_value)
     shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value)
+    shift_dim(arpes_data::ARPESData, dim::Type{<:DimensionalData.Dimension}, shift_value::Real)
     shift_dim(arpes_data::ARPESData, dim::Dimension, shift_value)
     shift_dim(arpes_data::ARPESData, dim_shift_pair...)
 
@@ -35,16 +36,34 @@ function shift_dim(dim::DimensionalData.Dimension, shift_value::Real)
 end
 
 function shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value::Real)
-    target_dim = findfirst(d -> name(d) == dim_label, dims(arpes_data))
-    if isnothing(target_dim)
+    idx = findfirst(d -> name(d) == dim_label, dims(arpes_data))
+
+    if isnothing(idx)
         throw(ArgumentError("Dimension with name $dim_label not found in ARPESData."))
     end
-    return shift_dim(arpes_data, target_dim, shift_value)
+    target_dim = dims(arpes_data)[idx]
+    new_lookup = _shift_lookup(lookup(target_dim), shift_value)
+    shifted_dim = rebuild(target_dim; val = new_lookup)
+    new_dims = Base.setindex(dims(arpes_data), shifted_dim, idx)
+    return rebuild(arpes_data; dims = new_dims)
 end
 
 function shift_dim(arpes_data::ARPESData, dim::DimensionalData.Dimension, shift_value::Real)
-    new_dims = map(d -> d == dim ? shift_dim(d, shift_value) : d, arpes_data.dims)
+    idx = findfirst(d -> d === dim || typeof(d) == typeof(dim), dims(arpes_data))
+    if isnothing(idx)
+        return arpes_data
+    end
+    new_dims =
+        Base.setindex(dims(arpes_data), shift_dim(dims(arpes_data)[idx], shift_value), idx)
     return rebuild(arpes_data; dims = new_dims)
+end
+
+function shift_dim(
+    arpes_data::ARPESData,
+    dim::Type{<:DimensionalData.Dimension},
+    shift_value::Real,
+)
+    return shift_dim(arpes_data, name(dim), shift_value)
 end
 
 function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
@@ -62,8 +81,6 @@ function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
     end
     return arpes_data
 end
-
-
 
 function change_energy_definition(arpes_data::ARPESData, new_definition::EnergyDefinition)
     #    energy_dim = findfirst(d -> name(d) == :eV, dims(arpes_data))

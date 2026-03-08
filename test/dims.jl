@@ -31,12 +31,14 @@ end
 
 @testset "Test for shift_dim on ARPESData" begin
     data = test_ARPESData()
-    #    shifted_phi_data = shift_dim(data, phi, 5,)
-    #    @test shifted_phi_data isa ARPESData
+    shifted_phi_data = shift_dim(data, :phi, 5.0)
+    @test shifted_phi_data isa ARPESData
     #    @test shifted_phi_data.dims[1][1] == 6
     #    @test shifted_phi_data.dims[1][end] == 15
     #    @test shifted_phi_data.dims[2] == data.dims[2]
     #
-    #    shifted_eV_data = shift_dim(data, :eV, -0.5) 
-    #    shilfted_both = shift_dim(data,  :eV, -0.5, phi, 5)
+    shifted_eV_data = shift_dim(data, eV, -0.5)
+    @test shifted_eV_data isa ARPESData
+    shifted_both = shift_dim(data, :eV, -0.5, phi, 5)
+    @test shifted_both isa ARPESData
 end
