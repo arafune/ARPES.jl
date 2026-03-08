@@ -51,7 +51,7 @@ end
 function shift_dim(arpes_data::ARPESData, dim::DimensionalData.Dimension, shift_value::Real)
     idx = findfirst(d -> d === dim || typeof(d) == typeof(dim), dims(arpes_data))
     if isnothing(idx)
-        return arpes_data
+        throw(ArgumentError("Dimension with name $dim_label not found in ARPESData."))
     end
     new_dims =
         Base.setindex(dims(arpes_data), shift_dim(dims(arpes_data)[idx], shift_value), idx)
@@ -68,11 +68,9 @@ end
 
 function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
     if isodd(length(dim_shift_pair))
-        throw(
-            ArgumentError(
-                "dim_shift_pair must contain an even number of elements (dimension and shift pairs).",
-            ),
-        )
+        throw((
+            "dim_shift_pair must contain an even number of elements (dimension and shift pairs).",
+        ),)
     end
     dims = dim_shift_pair[1:2:end]
     shifts = dim_shift_pair[2:2:end]
