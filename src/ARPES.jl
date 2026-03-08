@@ -14,5 +14,5 @@ include("io/io.jl")
 using .IO
 export load
 
-include("dims.jl")
+include("./dims.jl")
 end
