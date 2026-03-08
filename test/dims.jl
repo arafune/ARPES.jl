@@ -37,6 +37,8 @@ end
     #    @test shifted_phi_data.dims[1][end] == 15
     #    @test shifted_phi_data.dims[2] == data.dims[2]
     #
+    shifted_phi_data2 = shift_dim(data, dims(data)[1], 5.0)
+    @test shifted_phi_data2 isa ARPESData
     shifted_eV_data = shift_dim(data, eV, -0.5)
     @test shifted_eV_data isa ARPESData
     shifted_both = shift_dim(data, :eV, -0.5, phi, 5)
