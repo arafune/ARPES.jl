@@ -11,7 +11,7 @@ end
 
 
 @testset "Test for shift_dim" begin
-    x = range(1:3, length = 10)
+    x = range(1, stop = 3, length = 10)
     y = 1:10
     z = 1:10
     data = rand(10, 10, 10)
