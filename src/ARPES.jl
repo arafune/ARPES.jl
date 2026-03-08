@@ -5,6 +5,7 @@ Main module for the ARPES.jl package, providing core types, data structures, and
 for Angle-Resolved Photoemission Spectroscopy (ARPES) data analysis.
 """
 module ARPES
+include("./types.jl")
 include("./ARPESData.jl")
 export kx, ky, kz, phi, psi, eV, detector_ch, ch2, delay, spin
 export CPS, Counts
