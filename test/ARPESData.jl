@@ -2,15 +2,14 @@ using Test
 using DimensionalData
 using Interfaces
 using DimensionalData.Interfaces
-using Makie
 using ARPES
+using ARPES: ARPESData, phi, eV, detector_ch, CPS, TypeI, FinalStateEnergy
 
 file_path1 = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
 file_path2 = joinpath(pkgdir(ARPES), "testdata", "spd_standard.itx")
 
 meta_data = Dict(:beta=>0.0)
 arpes_ch_resolved = load(file_path1, loc = "SPD", extra_metadata = meta_data)
-
 spd_standard = load(file_path2, loc = "SPD")
 
 @testset "ARPESData delegate" begin
@@ -36,6 +35,12 @@ spd_standard = load(file_path2, loc = "SPD")
     @test typeof(b1) == typeof(b2)
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
+
+@testset "test energy_definition in eV metadata" begin
+    @test metadata(dims(spd_standard)[dimnum(spd_standard, :eV)])[:energy_definition] ==
+          FinalStateEnergy
+end
+
 @testset "DimArrayInterface" begin
     Interfaces.test(DimensionalData.DimArrayInterface, spd_standard)
 end

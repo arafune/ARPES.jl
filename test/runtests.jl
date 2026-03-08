@@ -1,13 +1,8 @@
 using ARPES
-using Coverage
 using Test
+using Coverage
 
-file_path1 = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
-file_path2 = joinpath(pkgdir(ARPES), "testdata", "spd_standard.itx")
-
-meta_data = Dict(:beta=>0.0)
-arpes_ch_resolved = load(file_path1, loc = "SPD", extra_metadata = meta_data)  ## Never change in the test
-spd_standard = load(file_path2, loc = "SPD")                                   ## Never change in the test
+include("./fixture.jl")
 
 @testset "ARPES.jl" begin
     @testset "Core" begin
