@@ -49,13 +49,7 @@ function shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value::Real)
 end
 
 function shift_dim(arpes_data::ARPESData, dim::DimensionalData.Dimension, shift_value::Real)
-    idx = findfirst(d -> d === dim || typeof(d) == typeof(dim), dims(arpes_data))
-    if isnothing(idx)
-        throw(ArgumentError("Dimension with name $dim_label not found in ARPESData."))
-    end
-    new_dims =
-        Base.setindex(dims(arpes_data), shift_dim(dims(arpes_data)[idx], shift_value), idx)
-    return rebuild(arpes_data; dims = new_dims)
+    return shift_dim(arpes_data, name(dim), shift_value)
 end
 
 function shift_dim(
