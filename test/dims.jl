@@ -41,4 +41,5 @@ end
     @test shifted_eV_data isa ARPESData
     shifted_both = shift_dim(data, :eV, -0.5, phi, 5)
     @test shifted_both isa ARPESData
+    @test_throws ArgumentError shift_dim(data, :eV, 0.1, :ky)
 end
