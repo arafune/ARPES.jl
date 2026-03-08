@@ -6,20 +6,84 @@ export shift_dim
 
 """
     shift_dim(dim::Dimension, shift_value)
+    shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value)
+    shift_dim(arpes_data::ARPESData, dim::Dimension, shift_value)
+    shift_dim(arpes_data::ARPESData, dim_shift_pair...)
 
-Return a new `Dimension` where the lookup values are shifted by `shift_value`.
+Shift the lookup values of a dimension or multiple dimensions in ARPESData.
 
 # Arguments
 - `dim::Dimension`: The dimension to shift.
-- `shift_value`: The value to add to each element of the dimension's lookup.
+- `shift_value::Real`: The value to add to each element of the dimension's lookup.
+- `arpes_data::ARPESData`: The ARPESData object containing dimensions.
+- `dim_label::Symbol`: The name (type parameter) of the dimension to shift.
+- `dim_shift_pair...`: A sequence of dimension labels (or Dimension objects) and shift values, e.g. `:phi, 1.0, :theta, 2.0`.
 
 # Returns
-- A new `Dimension` with shifted lookup values.
+- A new `Dimension` or `ARPESData` with shifted lookup values.
+
+# Examples
+```julia
+shift_dim(dim, 1.0)
+shift_dim(arpes_data, :phi, 1.0)
+shift_dim(arpes_data, :phi, 1.0, :theta, 2.0)
+```
 """
 function shift_dim(dim::DimensionalData.Dimension, shift_value::Real)
     new_lookup = _shift_lookup(lookup(dim), shift_value)
     return rebuild(dim; val = new_lookup)
 end
+
+function shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value::Real)
+    target_dim = findfirst(d -> name(d) == dim_label, dims(arpes_data))
+    if isnothing(target_dim)
+        throw(ArgumentError("Dimension with name $dim_label not found in ARPESData."))
+    end
+    return shift_dim(arpes_data, target_dim, shift_value)
+end
+
+function shift_dim(arpes_data::ARPESData, dim::DimensionalData.Dimension, shift_value::Real)
+    new_dims = map(d -> d == dim ? shift_dim(d, shift_value) : d, arpes_data.dims)
+    return rebuild(arpes_data; dims = new_dims)
+end
+
+function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
+    if isodd(length(dim_shift_pair))
+        throw(
+            ArgumentError(
+                "dim_shift_pair must contain an even number of elements (dimension and shift pairs).",
+            ),
+        )
+    end
+    dims = dim_shift_pair[1:2:end]
+    shifts = dim_shift_pair[2:2:end]
+    for (dim, shift) in zip(dims, shifts)
+        arpes_data = shift_dim(arpes_data, dim, shift)
+    end
+    return arpes_data
+end
+
+
+
+function change_energy_definition(arpes_data::ARPESData, new_definition::EnergyDefinition)
+    #    energy_dim = findfirst(d -> name(d) == :eV, dims(arpes_data))
+    #    if isnothing(energy_dim)
+    #        throw(ArgumentError("Energy dimension with name :eV not found in ARPESData."))
+    #    end
+    #    new_energy_dim = rebuild(
+    #        dims(arpes_data)[energy_dim];
+    #        val = lookup(dims(arpes_data)[energy_dim]),
+    #        label = new_definition,
+    #    )
+    #    new_dims = map(
+    #        (d, i) -> i == energy_dim ? new_energy_dim : d,
+    #        dims(arpes_data),
+    #        1:length(dims(arpes_data)),
+    #    )
+    #    return rebuild(arpes_data; dims = new_dims)
+end
+
+# -----------Private helper functions-----------
 
 """
     _shift_lookup(lookup, shift_value)

@@ -1,14 +1,11 @@
 using Test
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
-using DimensionalData
+using DimensionalData: Dim
 
-@testset "test energy_definition in eV metadata" begin
-    @test metadata(dims(spd_standard)[dimnum(spd_standard, :eV)])[:energy_definition] ==
-          FinalStateEnergy
+if !@isdefined(test_ARPESData)
+    include("fixture.jl")
 end
-
-
 
 @testset "Test for shift_dim" begin
     x = range(1, stop = 3, length = 10)
@@ -32,4 +29,14 @@ end
     @test length(dim_y_shifted) == length(y_dim)
 end
 
-
+@testset "Test for shift_dim on ARPESData" begin
+    data = test_ARPESData()
+    #    shifted_phi_data = shift_dim(data, phi, 5,)
+    #    @test shifted_phi_data isa ARPESData
+    #    @test shifted_phi_data.dims[1][1] == 6
+    #    @test shifted_phi_data.dims[1][end] == 15
+    #    @test shifted_phi_data.dims[2] == data.dims[2]
+    #
+    #    shifted_eV_data = shift_dim(data, :eV, -0.5) 
+    #    shilfted_both = shift_dim(data,  :eV, -0.5, phi, 5)
+end

@@ -141,6 +141,8 @@ function ARPESData(
     extra_metadata =
         Dict(:analyzer_configuration => analyzer_config, :intensity_unit => intensity_unit)
     new_metadata = merge(Dict(metadata(data)), extra_metadata, Dict(additional_metadata))
+
+    # Add :energy_definition to the metadata of the eV dimension
     new_dims = map(dims(data)) do d
         if d isa eV
             curr_dim_meta = Dict(DimensionalData.metadata(d))
@@ -152,6 +154,7 @@ function ARPESData(
             return d
         end
     end
+
     return ARPESData(
         parent(data),
         new_dims,
