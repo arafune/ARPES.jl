@@ -26,7 +26,11 @@ end
     end
     delete!(metadata(data), :workfunction)
     @test_throws ArgumentError _check_arpesdata(data)
+
+    data = test_spd_standard()
     delete!(metadata(data), :β)
+    @assert !haskey(metadata(data), :β)
+    @assert !hasdim(data, :psi)
     @test_throws ArgumentError _check_arpesdata(data)
 
     data = test_spd_standard()

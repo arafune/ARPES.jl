@@ -75,18 +75,18 @@ function _check_arpesdata(data::ARPESData)
             throw(ArgumentError("Missing required metadata: $meta"))
         end
     end
-    for meta in [:ξ, :δ, :χ]
-        if !haskey(metadata(data), meta)
-            metadata(data)[meta] = 0.0
-            @warn "Missing metadata: $meta. Using default value of 0.0 for conversion."
-        end
-    end
     if !haskey(metadata(data), :β) && !hasdim(data, :psi)
         throw(
             ArgumentError(
                 "Missing required metadata: either :β in metadata or :psi dim must be present",
             ),
         )
+    end
+    for meta in [:ξ, :δ, :χ]
+        if !haskey(metadata(data), meta)
+            metadata(data)[meta] = 0.0
+            @warn "Missing metadata: $meta. Using default value of 0.0 for conversion."
+        end
     end
     return true
 end
