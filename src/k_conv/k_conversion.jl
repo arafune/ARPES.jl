@@ -1,6 +1,6 @@
 module KConversion
 using DimensionalData
-using DimensionalData: dims, hasdim, dimnum
+using DimensionalData: dims, hasdim, dimnum, metadata, name, lookup
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
 using ..ARPES: shift_dim
@@ -57,6 +57,8 @@ function k_conversion(
     # 2. determine k_region if kx, ky are not provided.
     # 3. apply interpolation to get the intensity values on the k grid.
 end
+
+# --- internal functions
 
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present

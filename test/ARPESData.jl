@@ -5,14 +5,13 @@ using DimensionalData.Interfaces
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, CPS, TypeI, FinalStateEnergy
 
-file_path1 = joinpath(pkgdir(ARPES), "testdata", "arpes_ch_resolved.itx")
-file_path2 = joinpath(pkgdir(ARPES), "testdata", "spd_standard.itx")
+if !@isdefined(test_spd_standard)
+    include("fixture.jl")
+end
 
-meta_data = Dict(:beta=>0.0)
-arpes_ch_resolved = load(file_path1, loc = "SPD", extra_metadata = meta_data)
-spd_standard = load(file_path2, loc = "SPD")
 
 @testset "ARPESData delegate" begin
+    arpes_ch_resolved = test_arpes_ch_resolved()
     @test size(arpes_ch_resolved) == (40, 341, 24)
     @test dims(arpes_ch_resolved) ==
           (phi(-10.6875:0.5480769230769231:10.6875), eV(4.5:0.005:6.2), detector_ch(1:1:24))
@@ -37,10 +36,12 @@ spd_standard = load(file_path2, loc = "SPD")
 end
 
 @testset "test energy_definition in eV metadata" begin
+    spd_standard = test_spd_standard()
     @test metadata(dims(spd_standard)[dimnum(spd_standard, :eV)])[:energy_definition] ==
           FinalStateEnergy
 end
 
 @testset "DimArrayInterface" begin
+    spd_standard = test_spd_standard()
     Interfaces.test(DimensionalData.DimArrayInterface, spd_standard)
 end
