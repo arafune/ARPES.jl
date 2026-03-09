@@ -32,19 +32,6 @@ function fast_interpolate end
 
 # --- 2D Bilinear Interpolation ---
 
-# Irregular grid: coords are general vectors
-function fast_interpolate(
-    p0::AbstractArray,
-    p1::AbstractArray,
-    c0::AbstractVector,
-    c1::AbstractVector,
-    values::AbstractMatrix,
-)
-    # Use Gridded interpolation for non-uniform spacing
-    itp = interpolate((c0, c1), values, Gridded(Linear()))
-    return extrapolate(itp, NaN).(p0, p1)
-end
-
 # Regular grid: coords are ranges (e.g., start:step:stop)
 function fast_interpolate(
     p0::AbstractArray,
@@ -59,21 +46,21 @@ function fast_interpolate(
     return extrapolate(sitp, NaN).(p0, p1)
 end
 
-# --- 3D Trilinear Interpolation ---
 
 # Irregular grid: coords are general vectors
 function fast_interpolate(
     p0::AbstractArray,
     p1::AbstractArray,
-    p2::AbstractArray,
     c0::AbstractVector,
     c1::AbstractVector,
-    c2::AbstractVector,
-    values::AbstractArray{T,3},
-) where {T}
-    itp = interpolate((c0, c1, c2), values, Gridded(Linear()))
-    return extrapolate(itp, NaN).(p0, p1, p2)
+    values::AbstractMatrix,
+)
+    # Use Gridded interpolation for non-uniform spacing
+    itp = interpolate((c0, c1), values, Gridded(Linear()))
+    return extrapolate(itp, NaN).(p0, p1)
 end
+
+# --- 3D Trilinear Interpolation ---
 
 # Regular grid: coords are ranges (e.g., start:step:stop)
 function fast_interpolate(
@@ -89,3 +76,18 @@ function fast_interpolate(
     sitp = scale(itp, c0, c1, c2)
     return extrapolate(sitp, NaN).(p0, p1, p2)
 end
+# Irregular grid: coords are general vectors
+function fast_interpolate(
+    p0::AbstractArray,
+    p1::AbstractArray,
+    p2::AbstractArray,
+    c0::AbstractVector,
+    c1::AbstractVector,
+    c2::AbstractVector,
+    values::AbstractArray{T,3},
+) where {T}
+    itp = interpolate((c0, c1, c2), values, Gridded(Linear()))
+    return extrapolate(itp, NaN).(p0, p1, p2)
+end
+
+
