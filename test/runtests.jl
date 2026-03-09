@@ -9,6 +9,9 @@ include("./fixture.jl")
         include("ARPESData.jl")
         include("dims.jl")
     end
+    @testset "k_conv" begin
+        include("k_conv/k_conversion.jl")
+    end
     @testset "IO" begin
         @testset "IO basic" begin
             include("io/io.jl")
