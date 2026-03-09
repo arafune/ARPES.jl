@@ -21,25 +21,35 @@ function k_conversion(
     δ0::Real = 0.0,
     χ0::Real = 0.0,
 )
+    if !(metadata(data)[:energy_definition] in [BindingEnergy, FinalStateEnergy])
+        throw(ArgumentError("Not Impremented for $(metadata(data)[:energy_definition])"))
+    end
     @assert _check_arpesdata(data)
     # 1. required variables
-    # 1.1. workfunction and kinetic energy
-
+    # 1.1. workfunction, photon energy and kinetic energy
     workfunction = metadata(data)[:workfunction]
 
     #  (at present, kz conversion from the photon energy depencence is not implemented,
     #   so hv is not used in the conversion. It is included here for future extension.)
     hv = metadata(data)[:hv]
 
-    if metadata(data)[:energy_definition] == FinalStateEnergy
-        ke = shift_dim(dims(data)[dimnum(data, :eV)], workfunction)
-    elseif metadata(data)[:energy_definition] == BindingEnergy
-        ke = shift_dim(dims(data)[dimnum(data, :eV)], hv-workfunction)
+    if eV_range !== nothing
+        if metadata(data)[:energy_definition] == FinalStateEnergy
+            ke = eV_range - workfunction
+        elseif metadata(data)[:energy_definition] == BindingEnergy
+            ke = hv + eV_range - workfunction
+        end
     else
-        throw(ArgumentError("Not Impremented for $(metadata(data)[:energy_definition])"))
+        if metadata(data)[:energy_definition] == FinalStateEnergy
+            ke = shift_dim(dims(data)[dimnum(data, :eV)], workfunction)
+        elseif metadata(data)[:energy_definition] == BindingEnergy
+            ke = shift_dim(dims(data)[dimnum(data, :eV)], hv-workfunction)
+        end
     end
 
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
+    #  * apply offset
+    #  * degree -> radian
     α = _deg2rad(parent(lookup(dims(data)[dimnum(data, :phi)])))
     if hasdim(data, :psi)
         β = parent(lookup(dims(data)[dimnum(data, :psi)]))
@@ -51,15 +61,32 @@ function k_conversion(
     δ_ = _deg2rad(metadata(data)[:δ] - δ0)
     χ_ = _deg2rad(metadata(data)[:χ] - χ0)
 
-    # 1.3. apply necessary transformations to the angles if needed.
-    #  * apply offset
-    #  * degree -> radian
     # 2. determine k_region if kx, ky are not provided.
+
     # 3. apply interpolation to get the intensity values on the k grid.
+
 end
 
 # --- internal functions
 
+"""
+    _check_arpesdata(data::ARPESData)
+
+Check if the given `ARPESData` object contains the required dimensions and metadata for k-space conversion.
+
+# Arguments
+- `data::ARPESData`: The ARPES data object to check.
+
+# Throws
+- `ArgumentError` if any required dimension (`phi`, `eV`) or metadata (`:workfunction`, `:hv`) is missing.
+- `ArgumentError` if neither `:β` metadata nor `:psi` dimension is present.
+
+# Behavior
+- If optional metadata (`:ξ`, `:δ`, `:χ`) is missing, sets them to `0.0` and emits a warning.
+
+# Returns
+- `true` if all required checks pass.
+"""
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
     required_dims = [phi, eV]
