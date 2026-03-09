@@ -26,6 +26,8 @@ end
     end
     delete!(metadata(data), :workfunction)
     @test_throws ArgumentError _check_arpesdata(data)
+    delete!(metadata(data), :β)
+    @test_throws ArgumentError _check_arpesdata(data)
 
     data = test_spd_standard()
     old = dims(data)[dimnum(data, :eV)]
