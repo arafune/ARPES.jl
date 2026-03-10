@@ -6,10 +6,12 @@ unorm_sinc(x) = x == 0 ? 1 : sinc(x/π)
 function mapping(::Type{TypeI}, Ek, α, β_, χ_, δ_, ξ_)
     k = @. K_INV * sqrt(Ek)
     kx = @. k * (
-        (sin(δ_) * sin(β_) + cos(δ_)*sin(ξ_)*cos(β_))*cos(α) - cos(δ_) * cos(ξ_) * sin(α)
+        (+sin(δ_) * sin(β_) + cos(δ_) * sin(ξ_) * cos(β_)) * cos(α) -
+        cos(δ_) * cos(ξ_) * sin(α)
     )
     ky = @. k * (
-        (-cos(δ_) * sin(β_) + sin(δ_)*sin(ξ_)*cos(β_))*cos(α) - sin(δ_) * cos(ξ_) * sin(α)
+        (-cos(δ_) * sin(β_) + sin(δ_) * sin(ξ_) * cos(β_)) * cos(α) -
+        sin(δ_) * cos(ξ_) * sin(α)
     )
     return kx, ky
 end

@@ -4,8 +4,8 @@ using DimensionalData.Dimensions: @dim
 @dim kx "kx  ( Å⁻¹ )"
 @dim ky "ky  ( Å⁻¹ )"
 @dim kz "kz  ( Å⁻¹ )"
-@dim psi "ψ  ( degrees )"
 @dim phi "Φ  ( degrees )"
+@dim psi "ψ  ( degrees )"
 @dim eV "eV"
 @dim detector_ch
 @dim ch2

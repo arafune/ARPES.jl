@@ -3,7 +3,8 @@ using DimensionalData
 using DimensionalData: dims, hasdim, dimnum, metadata, name, lookup
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
-using ..ARPES: shift_dim
+using ..ARPES: AnalyzerConfiguration, TypeI, TypeII, TypeIp, TypeIIp
+using ..ARPES: shift_dim, negate_dim
 
 include("mapping.jl")
 include("interpolation.jl")
@@ -37,24 +38,27 @@ function k_conversion(
         if metadata(data)[:energy_definition] == FinalStateEnergy
             ke = eV_range - workfunction
         elseif metadata(data)[:energy_definition] == BindingEnergy
+            # negate_eV = ragne(-eV_range[1], step = -step(eV_range), stop = -eV_range[end])
+            # ke = negate_eV - workfunction
             ke = hv + eV_range - workfunction
         end
     else
         if metadata(data)[:energy_definition] == FinalStateEnergy
             ke = shift_dim(dims(data)[dimnum(data, :eV)], workfunction)
         elseif metadata(data)[:energy_definition] == BindingEnergy
+            # negaate_eV = negate_dim(dims(data)[dimnum(data, :eV)])
+            # ke = shift_dim(negate_eV, hv - workfunction)
             ke = shift_dim(dims(data)[dimnum(data, :eV)], hv-workfunction)
         end
     end
 
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
-    #  * apply offset
-    #  * degree -> radian
+    #  * apply offset & and convert degree to radian.
     α = _deg2rad(parent(lookup(dims(data)[dimnum(data, :phi)])))
     if hasdim(data, :psi)
         β = parent(lookup(dims(data)[dimnum(data, :psi)]))
     else
-        β = metadata(data)[:β]
+        β = range(start = metadata(data)[:β], stop = metadata(data)[:β])
     end
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
@@ -63,11 +67,35 @@ function k_conversion(
 
     # 2. determine k_region if kx, ky are not provided.
 
+
+
     # 3. apply interpolation to get the intensity values on the k grid.
 
 end
 
 # --- internal functions
+
+"""
+  _determine_kxky_ragion(α, β_, ξ_, δ_, χ_, ke)
+
+
+"""
+function _determine_kxky_ragion(
+    analyzer_conf::Type{<:AnalyzerConfiguration},
+    α::AbstractArray,
+    β_::AbstractArray,
+    ξ_,
+    δ_,
+    χ_,
+    ke::AbstractArray,
+)
+    # 1. Determine the step of kx and ky  
+    # 2. Deteremine the minimum and maximum of kx and ky
+    #    k min is determined from lowest ke, while k max is determined from the highest ke.
+    # 3. Return the kx and ky range  min_k: step_k: max_k + step_k
+    return kx_range, ky_range
+end
+
 
 """
     _check_arpesdata(data::ARPESData)
