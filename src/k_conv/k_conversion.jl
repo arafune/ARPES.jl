@@ -56,10 +56,10 @@ function k_conversion(
     else
         β = metadata(data)[:β]
     end
-    β_ = _deg2rad(β .- β0)
-    ξ_ = _deg2rad(metadata(data)[:ξ] - ξ0)
-    δ_ = _deg2rad(metadata(data)[:δ] - δ0)
-    χ_ = _deg2rad(metadata(data)[:χ] - χ0)
+    β_ = _deg2rad(β, β0)
+    ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
+    δ_ = _deg2rad(metadata(data)[:δ], δ0)
+    χ_ = _deg2rad(metadata(data)[:χ], χ0)
 
     # 2. determine k_region if kx, ky are not provided.
 
@@ -131,16 +131,18 @@ Convert an AbstractRange, AbstractArray or Real of angles from degrees to radian
 # Returns
 - An AbstractRange of angles in radians.
 """
-function _deg2rad(angle_in_degrees::AbstractRange)
-    return angle_in_degrees * (π / 180)
+function _deg2rad(angle_in_degrees::AbstractRange, offset_deg::Real = 0.0)
+    return ((first(angle_in_degrees)-offset_deg)*(π/180)):(step(angle_in_degrees)*(π/180)):((last(
+        angle_in_degrees,
+    )-offset_deg)*(π/180))
 end
 
-function _deg2rad(angle_in_degrees::AbstractArray)
-    return angle_in_degrees .* (π / 180)
+function _deg2rad(
+    angle_in_degrees::T,
+    offset_deg::Real = 0.0,
+) where {T<:Union{AbstractArray,Real}}
+    return @. (angle_in_degrees - offset_deg) * (π / 180)
 end
 
-function _deg2rad(angle_in_degrees::Real)::Real
-    return angle_in_degrees * (π / 180)
-end
 
 end # module

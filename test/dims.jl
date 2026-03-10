@@ -29,6 +29,28 @@ end
     @test length(dim_y_shifted) == length(y_dim)
 end
 
+@testset "Test for negate_dim" begin
+    x = range(1, stop = 3, length = 10)
+    y = collect(range(-1, stop = 8, length = 10))
+    z = 1:10
+    data = rand(10, 10, 10)
+    da = DimArray(data, (X(x), Y(y), Z(z)))
+    x_dim = da.dims[1]
+    y_dim = da.dims[2]
+
+    dim_x_negated = negate_dim(x_dim)
+    @test dim_x_negated isa DimensionalData.Dimension
+    @test dim_x_negated[1] == -1
+    @test dim_x_negated[end] == -3
+    @test length(dim_x_negated) == length(x_dim)
+
+    dim_y_negated = negate_dim(y_dim)
+    @test dim_y_negated isa DimensionalData.Dimension
+    @test dim_y_negated[1] == 1
+    @test dim_y_negated[end] == -8
+    @test length(dim_y_negated) == length(y_dim)
+end
+
 @testset "Test for shift_dim on ARPESData" begin
     data = test_ARPESData()
     shifted_phi_data = shift_dim(data, :phi, 5.0)

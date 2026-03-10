@@ -15,7 +15,10 @@ end
     @test _deg2rad(0.0) == 0.0
     @test _deg2rad(180.0) ≈ π
     @test _deg2rad(90.0) ≈ π/2
-    @test _deg2rad(0.0:2.0:180.0) ≈ 0.0:_deg2rad(2.0):_deg2rad(180.0)
+    r = _deg2rad(0.0:2.0:180.0, 1.0)
+    @test first(r) == _deg2rad(0.0, 1.0)
+    @test step(r) ≈ _deg2rad(2.0, 0.0)
+    @test last(r) ≈ _deg2rad(180.0, 1.0)
     @test _deg2rad([-90.0, 0.0, 90.0]) ≈ [-π/2, 0, π/2]
 end
 
