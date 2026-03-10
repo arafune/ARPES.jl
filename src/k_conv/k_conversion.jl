@@ -123,8 +123,8 @@ function _determine_kxky_ragion(
         mapping(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
     d_kx = diff(kx_, dims = 1)
     d_ky = diff(ky_, dims = 2)
-    step_kx = !isempty(d_kx) ? minimum(d_kx) : nothing
-    step_ky = !isempty(d_ky) ? minimum(d_ky) : nothing
+    step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
+    step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
     kx_, ky_ = mapping(
         analyzer_conf,
         reshape(ek, :, 1, 1),
