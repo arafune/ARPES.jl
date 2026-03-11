@@ -118,6 +118,7 @@ in which the angle nomenclature follows Rev. Sci. Instrum. **89**, 043903 (2018)
 function _spd_to_standard(raw::DimArray)::ARPESData
     standard_array = to_standardize(SPDLoader, raw)
 
+    additional_metadata::AbstractDict = Dict(:negate_alpha => true)
     if haskey(metadata(standard_array), :d_scale)  #made from itx
         if startswith(metadata(standard_array)[:d_scale][:unit], "count")
             return ARPESData(
@@ -125,6 +126,7 @@ function _spd_to_standard(raw::DimArray)::ARPESData
                 intensity_unit = Counts,
                 analyzer_config = TypeI,
                 energy_def = FinalStateEnergy,
+                additional_metadata = additional_metadata,
             )
         end
         return ARPESData(
@@ -132,6 +134,7 @@ function _spd_to_standard(raw::DimArray)::ARPESData
             intensity_unit = CPS,
             analyzer_config = TypeI,
             energy_def = FinalStateEnergy,
+            additional_metadata = additional_metadata,
         )
     end
     return ARPESData(
@@ -139,6 +142,7 @@ function _spd_to_standard(raw::DimArray)::ARPESData
         intensity_unit = Counts,
         analyzer_config = TypeI,
         energy_def = FinalStateEnergy,
+        additional_metadata = additional_metadata,
     )
 end
 

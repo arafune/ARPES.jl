@@ -1,4 +1,4 @@
-using ARPES: TypeI, TypeII, TypeIp, TypeIIp
+using ARPES: TypeI, TypeII
 const K_INV = 0.5123167219534328
 export momentum_mapping, mapped_kx, mapped_kz, angle_mapping, mapped_α, mapped_β
 
@@ -17,7 +17,7 @@ function momentum_mapping(
     return mapped_kx(analyzer_conf, Ek, angles...), mapped_ky(analyzer_conf, Ek, angles...)
 end
 
-function mapped_kx(::Type{TypeIp}, Ek, α, β_, χ_, ξ_, δ_)
+function mapped_kx(::Type{TypeI}, Ek, α, β_, χ_, ξ_, δ_)
     k = @. K_INV * sqrt(Ek)
     return @. k * (
         (sin(δ_) * sin(β_) + cos(δ_) * sin(ξ_) * cos(β_)) * cos(α) -
@@ -25,7 +25,7 @@ function mapped_kx(::Type{TypeIp}, Ek, α, β_, χ_, ξ_, δ_)
     )
 end
 
-function mapped_ky(::Type{TypeIp}, Ek, α, β_, χ_, ξ_, δ_)
+function mapped_ky(::Type{TypeI}, Ek, α, β_, χ_, ξ_, δ_)
     k = @. K_INV * sqrt(Ek)
     return @. k * (
         (-cos(δ_) * sin(β_) + sin(δ_) * sin(ξ_) * cos(β_)) * cos(α) -
@@ -33,7 +33,7 @@ function mapped_ky(::Type{TypeIp}, Ek, α, β_, χ_, ξ_, δ_)
     )
 end
 
-function mapped_kx(::Type{TypeIIp}, Ek, α, β_, χ_, ξ_, δ_)
+function mapped_kx(::Type{TypeII}, Ek, α, β_, χ_, ξ_, δ_)
     k = @. K_INV * sqrt(Ek)
     return @. k * (
         (sin(δ_) * sin(ξ_) + cos(δ_) * sin(β_) * cos(ξ_)) * cos(α) -
@@ -41,7 +41,7 @@ function mapped_kx(::Type{TypeIIp}, Ek, α, β_, χ_, ξ_, δ_)
     )
 end
 
-function mapped_ky(::Type{TypeIIp}, Ek, α, β_, χ_, ξ_, δ_)
+function mapped_ky(::Type{TypeII}, Ek, α, β_, χ_, ξ_, δ_)
     k = @. K_INV * sqrt(Ek)
     return @. k * (
         (-cos(δ_) * sin(ξ_) + sin(δ_) * sin(β_) * cos(ξ_)) * cos(α) +
