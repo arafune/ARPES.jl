@@ -139,24 +139,24 @@ end
 """
     _ky_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
+        ek::AbstractArray,
         α::AbstractArray,
         β_::AbstractArray,
         χ_,
         ξ_,
         δ_,
-        ek::AbstractArray,
     )
 
 Determine the ky range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
+- `ek::AbstractArray`: Array of kinetic energies.
 - `α::AbstractArray`: Array of alpha angles.
 - `β_::AbstractArray`: Array of beta angles.
 - `χ_`: Chi parameter (type depends on context).
 - `ξ_`: Xi parameter (type depends on context).
 - `δ_`: Delta parameter (type depends on context).
-- `ek::AbstractArray`: Array of kinetic energies.
 
 # Returns
 - `ky_range`:  Range for ky, determined based on the mapping from the provided parameters.
@@ -168,12 +168,12 @@ Determine the ky range for the given analyzer configuration and parameters.
 """
 function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
+    ek::AbstractArray,
     α::AbstractArray,
     β_::AbstractArray,
     χ_,
     ξ_,
     δ_,
-    ek::AbstractArray,
 )
     ek_min = minimum(ek)
     ky_ = mapped_ky(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
