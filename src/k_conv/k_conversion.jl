@@ -56,21 +56,19 @@ function k_conversion(
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
     α = _deg2rad(parent(lookup(dims(data)[dimnum(data, :phi)])))
-    if hasdim(data, :psi)
-        β = parent(lookup(dims(data)[dimnum(data, :psi)]))
-    else
-        β = range(start = metadata(data)[:β], stop = metadata(data)[:β])
-    end
+    β = (
+        hasdim(data, :psi) ? parent(lookup(dims(data)[dimnum(data, :psi)])) :
+        range(start = metadata(data)[:β], stop = metadata(data)[:β])
+    )
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
     δ_ = _deg2rad(metadata(data)[:δ], δ0)
     χ_ = _deg2rad(metadata(data)[:χ], χ0)
 
+    angles_ = (α, β_, χ_, ξ_, δ_)
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
-    kx_range =
-        isnothing(kx_range) ? _kx_range(analyzer_conf, α, β_, χ_, ξ_, δ_, ek) : kx_range
-    ky_range =
-        isnothing(ky_range) ? _ky_range(analyzer_conf, α, β_, χ_, ξ_, δ_, ek) : ky_range
+    kx_range = isnothing(kx_range) ? _kx_range(analyzer_conf, ek, angles_...) : kx_range
+    ky_range = isnothing(ky_range) ? _ky_range(analyzer_conf, ek, angles_...) : ky_range
 
     # 3. apply interpolation to get the intensity values on the k grid.
 
@@ -81,24 +79,24 @@ end
 """
     _kx_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
+        ek::AbstractArray,
         α::AbstractArray,
         β_::AbstractArray,
         χ_,
         ξ_,
         δ_,
-        ek::AbstractArray,
     )
 
 Determine the kx range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
+- `ek::AbstractArray`: Array of kinetic energies.
 - `α::AbstractArray`: Array of alpha angles.
 - `β_::AbstractArray`: Array of beta angles.
 - `χ_`: Chi parameter (type depends on context).
 - `ξ_`: Xi parameter (type depends on context).
 - `δ_`: Delta parameter (type depends on context).
-- `ek::AbstractArray`: Array of kinetic energies.
 
 # Returns
 - `kx_range`:  Range for kx, determined based on the mapping from the provided parameters.
@@ -110,12 +108,12 @@ Determine the kx range for the given analyzer configuration and parameters.
 """
 function _kx_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
+    ek::AbstractArray,
     α::AbstractArray,
     β_::AbstractArray,
     χ_,
     ξ_,
     δ_,
-    ek::AbstractArray,
 )
     ek_min = minimum(ek)
     kx_ = mapped_kx(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
@@ -220,8 +218,7 @@ Check if the given `ARPESData` object contains the required dimensions and metad
 """
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
-    required_dims = [phi, eV]
-    for dim in required_dims
+    for dim in [phi, eV]
         idx = findfirst(d -> name(d) == name(dim), dims(data))
         if idx === nothing
             throw(ArgumentError("Missing required dimension: $(name(dim))"))
@@ -250,17 +247,17 @@ function _check_arpesdata(data::ARPESData)
 end
 
 """
-    _deg2rad(angle_in_degrees::AbstractRange) :: AbstractRange
-    _deg2rad(angle_in_degrees::AbstractArray) :: AbstractArray
-    _deg2rad(angle_in_degrees::Real):: Real
+    _deg2rad(angle_in_degrees::AbstractRange, offset_deg::Real = 0.0) :: AbstractRange
+    _deg2rad(angle_in_degrees::T, offset_deg::Real = 0.0) where {T<:Union{AbstractArray,Real}} :: T
 
 Convert an AbstractRange, AbstractArray or Real of angles from degrees to radians.
 
 # Arguments
-- `angle_in_degrees`: An AbstractRange of angles in degrees.
+- `angle_in_degrees`: An AbstractRange (AbstractArray and Real) of angles in degrees.
+- `offset_deg`: An optional offset in degrees to be subtracted from the input angles before conversion. Default is `0.0`.
 
 # Returns
-- An AbstractRange of angles in radians.
+- An AbstractRange (or AbstractArray or Real) of angles in radians.
 """
 function _deg2rad(angle_in_degrees::AbstractRange, offset_deg::Real = 0.0)
     return ((first(angle_in_degrees)-offset_deg)*(π/180)):(step(angle_in_degrees)*(π/180)):((last(
