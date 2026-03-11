@@ -169,7 +169,7 @@ function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
     ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
-    β_::AbstracVector{<:Real},
+    β_::AbstractVector{<:Real},
     χ_,
     ξ_,
     δ_,
