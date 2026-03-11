@@ -13,8 +13,8 @@ function momentum_mapping(
     ξ_,
     δ_,
 )
-    return mapped_kx(analyzer_conf, Ek, α, β_, χ_, ξ_, δ_),
-    mapped_ky(analyzer_conf, Ek, α, β_, χ_, ξ_, δ_)
+    angles = (α, β_, χ_, ξ_, δ_)
+    return mapped_kx(analyzer_conf, Ek, angles...), mapped_ky(analyzer_conf, Ek, angles...)
 end
 
 function mapped_kx(::Type{TypeIp}, Ek, α, β_, χ_, ξ_, δ_)

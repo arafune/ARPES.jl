@@ -8,15 +8,15 @@ using ..ARPES: shift_dim, negate_dim
 
 include("mapping.jl")
 include("interpolation.jl")
-
+include("conversion_utils.jl")
 export k_conversion
 
 function k_conversion(
     data::ARPESData;
-    kx_range::Union{AbstractArray,Nothing} = nothing,
-    ky_range::Union{AbstractArray,Nothing} = nothing,
-    kz_range::Union{AbstractArray,Nothing} = nothing,
-    eV_range::Union{AbstractArray,Nothing} = nothing,
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
     β0::Real = 0.0,
     ξ0::Real = 0.0,
     δ0::Real = 0.0,
@@ -79,9 +79,9 @@ end
 """
     _kx_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
-        ek::AbstractArray,
-        α::AbstractArray,
-        β_::AbstractArray,
+        ek::AbstractVector,
+        α::AbstractVector,
+        β_::AbstractVector,
         χ_,
         ξ_,
         δ_,
@@ -91,9 +91,9 @@ Determine the kx range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
-- `ek::AbstractArray`: Array of kinetic energies.
-- `α::AbstractArray`: Array of alpha angles.
-- `β_::AbstractArray`: Array of beta angles.
+- `ek::AbstractVector`: Range/Vector of kinetic energies.
+- `α::AbstractVector`:  Range/Vector of alpha angles.
+- `β_::AbstractVector`: Range/Vector of beta angles.
 - `χ_`: Chi parameter (type depends on context).
 - `ξ_`: Xi parameter (type depends on context).
 - `δ_`: Delta parameter (type depends on context).
@@ -108,9 +108,9 @@ Determine the kx range for the given analyzer configuration and parameters.
 """
 function _kx_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractArray,
-    α::AbstractArray,
-    β_::AbstractArray,
+    ek::AbstractVector{<:Real},
+    α::AbstractVector{<:Real},
+    β_::AbstractVector{<:Real},
     χ_,
     ξ_,
     δ_,
@@ -139,9 +139,9 @@ end
 """
     _ky_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
-        ek::AbstractArray,
-        α::AbstractArray,
-        β_::AbstractArray,
+        ek::AbstractVector,
+        α::AbstractVector,
+        β_::AbstractVector,
         χ_,
         ξ_,
         δ_,
@@ -151,9 +151,9 @@ Determine the ky range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
-- `ek::AbstractArray`: Array of kinetic energies.
-- `α::AbstractArray`: Array of alpha angles.
-- `β_::AbstractArray`: Array of beta angles.
+- `ek::AbstractVector`: Range/Vector of kinetic energies.
+- `α::AbstractVector`: Range/Vector of alpha angles.
+- `β_::AbstractVector`: Range/Vector of beta angles.
 - `χ_`: Chi parameter (type depends on context).
 - `ξ_`: Xi parameter (type depends on context).
 - `δ_`: Delta parameter (type depends on context).
@@ -168,9 +168,9 @@ Determine the ky range for the given analyzer configuration and parameters.
 """
 function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractArray,
-    α::AbstractArray,
-    β_::AbstractArray,
+    ek::AbstractVector{<:Real},
+    α::AbstractVector{<:Real},
+    β_::AbstracVector{<:Real},
     χ_,
     ξ_,
     δ_,
