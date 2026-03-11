@@ -28,6 +28,7 @@ function k_conversion(
     @assert _check_arpesdata(data)
     # 1. required variables
     # 1.1. workfunction, photon energy and kinetic energy
+    analyzer_conf = metadata(data)[:analyzer_conf]
     workfunction = metadata(data)[:workfunction]
 
     #  (at present, kz conversion from the photon energy depencence is not implemented,
@@ -38,7 +39,7 @@ function k_conversion(
         if metadata(data)[:energy_definition] == FinalStateEnergy
             ek = eV_range - workfunction
         elseif metadata(data)[:energy_definition] == BindingEnergy
-            # negate_eV = ragne(-eV_range[1], step = -step(eV_range), stop = -eV_range[end])
+            # negate_eV =  negate_dim(dims(data)[dimnum(data, :eV)])
             # ek = negate_eV - workfunction
             ek = hv + eV_range - workfunction
         end
@@ -65,12 +66,11 @@ function k_conversion(
     δ_ = _deg2rad(metadata(data)[:δ], δ0)
     χ_ = _deg2rad(metadata(data)[:χ], χ0)
 
-    # 2. determine k_region if kx, ky are not provided.
-
-    kx_range_, ky_range_ =
-        _determine_kxky_ragion(metadata(data)[:analyzer_conf], α, β_, χ_, ξ_, δ_, ek)
-    kx_range = isnothing(kx_range) ? kx_range_ : kx_range
-    ky_range = isnothing(ky_range) ? ky_range_ : ky_range
+    # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
+    kx_range =
+        isnothing(kx_range) ? _kx_range(analyzer_conf, α, β_, χ_, ξ_, δ_, ek) : kx_range
+    ky_range =
+        isnothing(ky_range) ? _ky_range(analyzer_conf, α, β_, χ_, ξ_, δ_, ek) : ky_range
 
     # 3. apply interpolation to get the intensity values on the k grid.
 
@@ -79,7 +79,7 @@ end
 # --- internal functions
 
 """
-    _determine_kxky_ragion(
+    _kx_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
         α::AbstractArray,
         β_::AbstractArray,
@@ -89,7 +89,7 @@ end
         ek::AbstractArray,
     )
 
-Determine the kx and ky range for the given analyzer configuration and parameters.
+Determine the kx range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
@@ -101,14 +101,14 @@ Determine the kx and ky range for the given analyzer configuration and parameter
 - `ek::AbstractArray`: Array of kinetic energies.
 
 # Returns
-- `(kx_range, ky_range)`: Tuple of ranges for kx and ky, determined based on the mapping from the provided parameters.
+- `kx_range`:  Range for kx, determined based on the mapping from the provided parameters.
 
 # Description
-1. Determines the step size for kx and ky using the minimum kinetic energy.
-2. Computes the minimum and maximum values for kx and ky over the full parameter space.
-3. Constructs and returns the kx and ky ranges using the calculated step sizes.
+1. Determines the step size for kx using the minimum kinetic energy.
+2. Computes the minimum and maximum values for kx over the full parameter space.
+3. Constructs and returns the kx range using the calculated step size.
 """
-function _determine_kxky_ragion(
+function _kx_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
     α::AbstractArray,
     β_::AbstractArray,
@@ -117,15 +117,11 @@ function _determine_kxky_ragion(
     δ_,
     ek::AbstractArray,
 )
-    # 1. Determine the step of kx and ky  
     ek_min = minimum(ek)
-    kx_, ky_ =
-        mapping(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
+    kx_ = mapped_kx(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
     d_kx = diff(kx_, dims = 1)
-    d_ky = diff(ky_, dims = 2)
     step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
-    step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
-    kx_, ky_ = mapping(
+    kx_ = mapped_kx(
         analyzer_conf,
         reshape(ek, :, 1, 1),
         reshape(α, 1, :, 1),
@@ -134,26 +130,74 @@ function _determine_kxky_ragion(
         ξ_,
         δ_,
     )
-
-    # 2. Deteremine the minimum and maximum of kx and ky
-    #    k min is determined from lowest ke, while k max is determined from the highest ke.
-    # 3. Return the kx and ky range  min_k: step_k: max_k + step_k
     min_kx, max_kx = minimum(kx_), maximum(kx_)
-    min_ky, max_ky = minimum(ky_), maximum(ky_)
     if step_kx === nothing || step_kx == 0.0
-        kx_range = min_kx:min_kx
-    else
-        kx_range = range(start = min_kx, stop = max_kx + step_kx, step = step_kx)
+        return min_kx:min_kx
     end
-    if step_ky === nothing || step_ky == 0.0
-        ky_range = min_ky:min_ky
-    else
-        ky_range = range(start = min_ky, stop = max_ky + step_ky, step = step_ky)
-    end
-    return kx_range, ky_range
+    return range(start = min_kx, stop = max_kx + step_kx, step = step_kx)
 
-    return kx_range, ky_range
 end
+
+"""
+    _ky_range(
+        analyzer_conf::Type{<:AnalyzerConfiguration},
+        α::AbstractArray,
+        β_::AbstractArray,
+        χ_,
+        ξ_,
+        δ_,
+        ek::AbstractArray,
+    )
+
+Determine the ky range for the given analyzer configuration and parameters.
+
+# Arguments
+- `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
+- `α::AbstractArray`: Array of alpha angles.
+- `β_::AbstractArray`: Array of beta angles.
+- `χ_`: Chi parameter (type depends on context).
+- `ξ_`: Xi parameter (type depends on context).
+- `δ_`: Delta parameter (type depends on context).
+- `ek::AbstractArray`: Array of kinetic energies.
+
+# Returns
+- `ky_range`:  Range for ky, determined based on the mapping from the provided parameters.
+
+# Description
+1. Determines the step size for ky using the minimum kinetic energy.
+2. Computes the minimum and maximum values for ky over the full parameter space.
+3. Constructs and returns the ky range using the calculated step size.
+"""
+function _ky_range(
+    analyzer_conf::Type{<:AnalyzerConfiguration},
+    α::AbstractArray,
+    β_::AbstractArray,
+    χ_,
+    ξ_,
+    δ_,
+    ek::AbstractArray,
+)
+    ek_min = minimum(ek)
+    ky_ = mapped_ky(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
+    d_ky = diff(ky_, dims = 2)
+    step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
+    ky_ = mapped_ky(
+        analyzer_conf,
+        reshape(ek, :, 1, 1),
+        reshape(α, 1, :, 1),
+        reshape(β_, 1, 1, :),
+        χ_,
+        ξ_,
+        δ_,
+    )
+    min_ky, max_ky = minimum(ky_), maximum(ky_)
+    if step_ky === nothing || step_ky == 0.0
+        return min_ky:min_ky
+    end
+    return range(start = min_ky, stop = max_ky + step_ky, step = step_ky)
+
+end
+
 
 
 """
