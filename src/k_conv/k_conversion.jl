@@ -8,7 +8,6 @@ using ..ARPES: shift_dim, negate_dim
 
 include("mapping.jl")
 include("interpolation.jl")
-include("conversion_utils.jl")
 export k_conversion
 
 function k_conversion(
