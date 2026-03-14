@@ -37,12 +37,6 @@ end
 
 
 
-function _ek_grid(ek::AbstractVector, kx::AbstractVector, ky::AbstractVector) end
-
-function _ek_grid(ek::AbstractVector, kx::AbstractVector, ky::Real)
-
-end
-
 """
     _kx_range(
         analyzer_conf::Type{<:AnalyzerConfiguration},
@@ -89,27 +83,20 @@ Determine the kx range for the given analyzer configuration and parameters.
 """
 function _kx_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
-    β_::AbstractVector{<:Real},
+    β_::Union{AbstractVector{<:Real},Real},
+    ek::AbstractVector{<:Real},
     χ_::Real,
     ξ_::Real,
     δ_::Real,
 )
     ek_min = minimum(ek)
-    kx_ = mapped_kx(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
+
+    kx_ = mapped_kx(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
     d_kx = abs.(diff(kx_, dims = 1))
     step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
     @debug "min_kx, max_kx, step_kx @ minimum ek" minimum(kx_) maximum(kx_) step_kx ek_min
-    kx_ = mapped_kx(
-        analyzer_conf,
-        reshape(ek, :, 1, 1),
-        reshape(α, 1, :, 1),
-        reshape(β_, 1, 1, :),
-        χ_,
-        ξ_,
-        δ_,
-    )
+    kx_ = mapped_kx(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
     min_kx, max_kx = minimum(kx_), maximum(kx_)
     @debug "kx_ shape" size(kx_)
     @debug "min_kx, max_kx, step_kx" min_kx max_kx step_kx
@@ -117,33 +104,6 @@ function _kx_range(
         return min_kx
     end
     return range(start = min_kx, stop = max_kx, step = step_kx)
-
-end
-
-function _kx_range(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractVector{<:Real},
-    α::AbstractVector{<:Real},
-    β_::Real,
-    χ_::Real,
-    ξ_::Real,
-    δ_::Real,
-)
-    ek_min = minimum(ek)
-    @debug "ek_min for kx range" ek_min
-    kx_ = mapped_kx(analyzer_conf, ek_min, α, β_, χ_, ξ_, δ_)
-    d_kx = abs.(diff(kx_))
-    step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
-    @debug "min_kx, max_kx, step_kx @ minimum ek" minimum(kx_) maximum(kx_) step_kx ek_min
-    kx_ = mapped_kx(analyzer_conf, reshape(ek, :, 1), reshape(α, 1, :), β_, χ_, ξ_, δ_)
-    min_kx, max_kx = minimum(kx_), maximum(kx_)
-    @debug "kx_ size" size(kx_)
-    @debug "min_kx, max_kx, step_kx" min_kx max_kx step_kx
-    if step_kx === nothing || step_kx == 0.0
-        return min_kx
-    end
-    return range(start = min_kx, stop = max_kx, step = step_kx)
-
 end
 
 """
@@ -172,9 +132,9 @@ Determine the ky range for the given analyzer configuration and parameters.
 
 # Arguments
 - `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
-- `ek::AbstractVector`: Range/Vector of kinetic energies.
 - `α::AbstractVector`: Range/Vector of alpha angles.
 - `β_::AbstractVector`: Range/Vector of beta angles.
+- `ek::AbstractVector`: Range/Vector of kinetic energies.
 - `χ_`: Chi parameter (type depends on context).
 - `ξ_`: Xi parameter (type depends on context).
 - `δ_`: Delta parameter (type depends on context).
@@ -191,26 +151,18 @@ Determine the ky range for the given analyzer configuration and parameters.
 """
 function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
     β_::AbstractVector{<:Real},
+    ek::AbstractVector{<:Real},
     χ_::Real,
     ξ_::Real,
     δ_::Real,
 )
     ek_min = minimum(ek)
-    ky_ = mapped_ky(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
+    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
     d_ky = abs.(diff(ky_, dims = 2))
     step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
-    ky_ = mapped_ky(
-        analyzer_conf,
-        reshape(ek, :, 1, 1),
-        reshape(α, 1, :, 1),
-        reshape(β_, 1, 1, :),
-        χ_,
-        ξ_,
-        δ_,
-    )
+    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
     min_ky, max_ky = minimum(ky_), maximum(ky_)
     if step_ky === nothing || step_ky == 0.0
         return min_ky
@@ -220,21 +172,19 @@ end
 
 function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
-    ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
     β_::Real,
+    ek::AbstractVector{<:Real},
     χ_::Real,
     ξ_::Real,
     δ_::Real,
 )
     ek_min = minimum(ek)
-    ky_ = mapped_ky(analyzer_conf, ek_min, α, β_, χ_, ξ_, δ_)
+    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
     d_ky = abs.(diff(ky_))
     step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
-    ky_ = mapped_ky(analyzer_conf, reshape(ek, :, 1), reshape(α, 1, :), β_, χ_, ξ_, δ_)
-    @debug "Length ky_ along β dimension" size(ky_)
+    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
     min_ky, max_ky = minimum(ky_), maximum(ky_)
-    @debug "min_ky, max_ky, step_ky" min_ky max_ky step_ky
     if step_ky === nothing || step_ky == 0.0
         return min_ky
     end

@@ -67,15 +67,38 @@ function k_conversion(
     χ_ = _deg2rad(metadata(data)[:χ], χ0)
 
     @debug "Kinetic energy ref to analyzer, and angles" ek α β_ χ_ ξ_ δ_
-    angles_ = (α, β_, χ_, ξ_, δ_)
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
-    kx_range = isnothing(kx_range) ? _kx_range(analyzer_conf, ek, angles_...) : kx_range
-    ky_range = isnothing(ky_range) ? _ky_range(analyzer_conf, ek, angles_...) : ky_range
+    kx_range =
+        isnothing(kx_range) ? _kx_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : kx_range
+    ky_range =
+        isnothing(ky_range) ? _ky_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : ky_range
 
     @debug "kx_range" kx_range
     @debug "ky_range" ky_range
     # 3. apply interpolation to get the intensity values on the k grid.
-
+    #   3.1 corresponding \alpha and \beta
+    kx_grid, ky_grid, ek_grid = reshape_for_nd(kx_range, ky_range, ek)
+    @debug "size of ek_grid, kx_grid, ky_grid" size(ek_grid) size(kx_grid) size(ky_grid)
+    α_range = mapped_α(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
+    β_range = mapped_β(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
+    @debug "size of α_range, β_range" size(α_range) size(β_range)
+    #   3.2 interpolate
+    @debug "typeof ek_grid, α_range, β_range, parent(lookup(data, :eV)), α, β, parent(data)" typeof(
+        ek_grid,
+    ) typeof(α_range) typeof(β_range) typeof(parent(lookup(data, :eV))) typeof(α) typeof(β) typeof(
+        parent(data),
+    )
+    data_k = _interpolate(
+        α_range,
+        β_range,
+        ek_grid,
+        α,
+        β,
+        parent(lookup(data, :eV)),
+        parent(data),
+    )
+    @debug "size of data_k" size(data_k)
+    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
 end
 
 # --- internal functions
@@ -105,6 +128,5 @@ end
 function _deg2rad(angle_deg::T, offset_deg::Real = 0.0) where {T<:Union{AbstractArray,Real}}
     return @. (angle_deg - offset_deg) * (π / 180)
 end
-
 
 end # module

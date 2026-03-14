@@ -1,7 +1,7 @@
 using Interpolations
 
 """
-    fast_interpolate(p0, p1, [p2], c0, c1, [c2], values)
+    _interpolate(p0, p1, [p2], c0, c1, [c2], values)
 
 Perform n-dimensional linear interpolation on a 2D or 3D grid. 
 
@@ -33,14 +33,15 @@ function fast_interpolate end
 # --- 2D Bilinear Interpolation ---
 
 # Regular grid: coords are ranges (e.g., start:step:stop)
-function fast_interpolate(
-    p0::AbstractArray,
-    p1::AbstractArray,
-    c0::AbstractRange,
-    c1::AbstractRange,
-    values::AbstractMatrix,
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    c0::AbstractRange{<:Real},
+    c1::AbstractRange{<:Real},
+    values::AbstractMatrix{<:Real},
 )
     # Use BSpline interpolation for optimized performance on uniform grids
+    @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
     itp = interpolate(values, BSpline(Linear()))
     sitp = scale(itp, c0, c1)
     return extrapolate(sitp, NaN).(p0, p1)
@@ -48,14 +49,15 @@ end
 
 
 # Irregular grid: coords are general vectors
-function fast_interpolate(
-    p0::AbstractArray,
-    p1::AbstractArray,
-    c0::AbstractVector,
-    c1::AbstractVector,
-    values::AbstractMatrix,
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    c0::AbstractVector{<:Real},
+    c1::AbstractVector{<:Real},
+    values::AbstractMatrix{<:Real},
 )
     # Use Gridded interpolation for non-uniform spacing
+    @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
     itp = interpolate((c0, c1), values, Gridded(Linear()))
     return extrapolate(itp, NaN).(p0, p1)
 end
@@ -63,31 +65,106 @@ end
 # --- 3D Trilinear Interpolation ---
 
 # Regular grid: coords are ranges (e.g., start:step:stop)
-function fast_interpolate(
-    p0::AbstractArray,
-    p1::AbstractArray,
-    p2::AbstractArray,
-    c0::AbstractRange,
-    c1::AbstractRange,
-    c2::AbstractRange,
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    p2::AbstractArray{<:Real},
+    c0::AbstractRange{<:Real},
+    c1::AbstractRange{<:Real},
+    c2::AbstractRange{<:Real},
     values::AbstractArray{T,3},
-) where {T}
+) where {T<:Real}
+    @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
     itp = interpolate(values, BSpline(Linear()))
     sitp = scale(itp, c0, c1, c2)
     return extrapolate(sitp, NaN).(p0, p1, p2)
 end
-# Irregular grid: coords are general vectors
-function fast_interpolate(
-    p0::AbstractArray,
-    p1::AbstractArray,
-    p2::AbstractArray,
-    c0::AbstractVector,
-    c1::AbstractVector,
-    c2::AbstractVector,
+
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    p2::AbstractArray{<:Real},
+    c0::AbstractVector{<:Real},
+    c1::AbstractVector{<:Real},
+    c2::AbstractVector{<:Real},
     values::AbstractArray{T,3},
-) where {T}
+) where {T<:Real}
+    @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
     itp = interpolate((c0, c1, c2), values, Gridded(Linear()))
     return extrapolate(itp, NaN).(p0, p1, p2)
+end
+
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    _,
+    c0::AbstractRange{<:Real},
+    c1::AbstractRange{<:Real},
+    _,
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
+end
+
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    _,
+    c0::AbstractVector{<:Real},
+    c1::AbstractVector{<:Real},
+    _,
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
+end
+
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    _,
+    p1::AbstractArray{<:Real},
+    c0::AbstractRange{<:Real},
+    _,
+    c1::AbstractRange{<:Real},
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
+end
+
+function _interpolate(
+    p0::AbstractArray{<:Real},
+    _,
+    p1::AbstractArray{<:Real},
+    c0::AbstractVector{<:Real},
+    _,
+    c1::AbstractVector{<:Real},
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
+end
+
+
+function _interpolate(
+    _,
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    _,
+    c0::AbstractRange{<:Real},
+    c1::AbstractRange{<:Real},
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
+end
+
+function _interpolate(
+    _,
+    p0::AbstractArray{<:Real},
+    p1::AbstractArray{<:Real},
+    _,
+    c0::AbstractVector{<:Real},
+    c1::AbstractVector{<:Real},
+    values::AbstractMatrix{<:Real},
+)
+    _interpolate(p0, p1, c0, c1, values)
 end
 
 
