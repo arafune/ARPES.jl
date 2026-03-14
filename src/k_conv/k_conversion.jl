@@ -60,10 +60,7 @@ function k_conversion(
         haskey(metadata(data), :negate_alpha) && metadata(data)[:negate_alpha] == true ?
         _deg2rad(parent(negate_dim(dims(data, :phi)))) :
         _deg2rad(parent(lookup(dims(data)[dimnum(data, :phi)])))
-    β = (
-        hasdim(data, :psi) ? parent(dims(data, :psi)) :
-        range(start = metadata(data)[:β], stop = metadata(data)[:β])
-    )
+    β = hasdim(data, :psi) ? parent(dims(data, :psi)) : metadata(data)[:β]
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
     δ_ = _deg2rad(metadata(data)[:δ], δ0)
@@ -84,29 +81,29 @@ end
 # --- internal functions
 
 """
-    _deg2rad(angle_in_degrees::AbstractRange, offset_deg::Real = 0.0) :: AbstractRange
-    _deg2rad(angle_in_degrees::T, offset_deg::Real = 0.0) where {T<:Union{AbstractArray,Real}} :: T
+    _deg2rad(angle_deg::AbstractRange, offset_deg::Real = 0.0) :: AbstractRange
+    _deg2rad(angle_deg::T, offset_deg::Real = 0.0) where {T<:Union{AbstractArray,Real}} :: T
 
 Convert an AbstractRange, AbstractArray or Real of angles from degrees to radians.
 
 # Arguments
-- `angle_in_degrees`: An AbstractRange (AbstractArray and Real) of angles in degrees.
-- `offset_deg`: An optional offset in degrees to be subtracted from the input angles before conversion. Default is `0.0`.
+- `angle_deg`: An AbstractRange (AbstractArray and Real) of angles in degrees.
+- `offset_deg`: An optional offset in degrees to be subtracted from the input angles
+              before conversion. Default is `0.0`.
 
 # Returns
 - An AbstractRange (or AbstractArray or Real) of angles in radians.
 """
-function _deg2rad(angle_in_degrees::AbstractRange, offset_deg::Real = 0.0)
-    return ((first(angle_in_degrees)-offset_deg)*(π/180)):(step(angle_in_degrees)*(π/180)):((last(
-        angle_in_degrees,
-    )-offset_deg)*(π/180))
+function _deg2rad(angle_deg::AbstractRange, offset_deg::Real = 0.0)
+    return range(
+        (first(angle_deg) - offset_deg) * (π/180);
+        step = step(angle_deg) * (π/180),
+        stop = (last(angle_deg) - offset_deg) * (π/180),
+    )
 end
 
-function _deg2rad(
-    angle_in_degrees::T,
-    offset_deg::Real = 0.0,
-) where {T<:Union{AbstractArray,Real}}
-    return @. (angle_in_degrees - offset_deg) * (π / 180)
+function _deg2rad(angle_deg::T, offset_deg::Real = 0.0) where {T<:Union{AbstractArray,Real}}
+    return @. (angle_deg - offset_deg) * (π / 180)
 end
 
 

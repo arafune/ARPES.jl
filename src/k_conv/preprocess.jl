@@ -1,3 +1,44 @@
+"""
+    reshape_for_nd(arrs...)
+
+Reshape each input vector in `arrs` so that they become broadcastable across N
+dimensions, where N is the number of input arrays. Each array is reshaped to have
+its length along a unique dimension and singleton dimensions elsewhere, enabling
+broadcasting in element-wise operations.
+
+# Arguments
+- `arrs...`: A variable number of 1D arrays or vectors.
+
+# Returns
+- An N-tuple of reshaped arrays, each suitable for broadcasting in N-dimensional
+  operations.
+
+# Example
+```julia
+x = [1, 2, 3]
+y = [4, 5]
+reshape_for_nd(x, y)
+# returns (3×1 Array, 1×2 Array)
+```
+"""
+function reshape_for_nd(arrs...)
+    N = length(arrs)
+
+    return ntuple(i -> begin
+        a = vec(arrs[i])
+        shape = ntuple(j -> j == i ? length(a) : 1, N)
+        reshape(a, shape)
+    end, N)
+end
+
+
+
+
+function _ek_grid(ek::AbstractVector, kx::AbstractVector, ky::AbstractVector) end
+
+function _ek_grid(ek::AbstractVector, kx::AbstractVector, ky::Real)
+
+end
 
 """
     _kx_range(
@@ -5,10 +46,21 @@
         ek::AbstractVector,
         α::AbstractVector,
         β_::AbstractVector,
-        χ_,
-        ξ_,
-        δ_,
+        χ_::Real,
+        ξ_::Real,
+        δ_::Real,
     )
+
+    _kx_range(
+        analyzer_conf::Type{<:AnalyzerConfiguration},
+        ek::AbstractVector,
+        α::AbstractVector,
+        β_::Real,
+        χ_::Real,
+        ξ_::Real,
+        δ_::Real,
+    )
+
 
 Determine the kx range for the given analyzer configuration and parameters.
 
@@ -22,7 +74,10 @@ Determine the kx range for the given analyzer configuration and parameters.
 - `δ_`: Delta parameter (type depends on context).
 
 # Returns
-- `kx_range`:  Range for kx, determined based on the mapping from the provided parameters.
+- `kx_range`: Range for kx, determined based on the mapping from the provided parameters.
+            if the step size cannot be determined (e.g., due to insufficient data
+            in most case, :α is a single value),
+            returns the minimum kx value.
 
 # Description
 1. Determines the step size for kx using the minimum kinetic energy.
@@ -34,9 +89,9 @@ function _kx_range(
     ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
     β_::AbstractVector{<:Real},
-    χ_,
-    ξ_,
-    δ_,
+    χ_::Real,
+    ξ_::Real,
+    δ_::Real,
 )
     ek_min = minimum(ek)
     kx_ = mapped_kx(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
@@ -56,7 +111,33 @@ function _kx_range(
     @debug "kx_ shape" size(kx_)
     @debug "min_kx, max_kx, step_kx" min_kx max_kx step_kx
     if step_kx === nothing || step_kx == 0.0
-        return min_kx:min_kx
+        return min_kx
+    end
+    return range(start = min_kx, stop = max_kx, step = step_kx)
+
+end
+
+function _kx_range(
+    analyzer_conf::Type{<:AnalyzerConfiguration},
+    ek::AbstractVector{<:Real},
+    α::AbstractVector{<:Real},
+    β_::Real,
+    χ_::Real,
+    ξ_::Real,
+    δ_::Real,
+)
+    ek_min = minimum(ek)
+    @debug "ek_min for kx range" ek_min
+    kx_ = mapped_kx(analyzer_conf, ek_min, α, β_, χ_, ξ_, δ_)
+    d_kx = abs.(diff(kx_))
+    step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
+    @debug "min_kx, max_kx, step_kx @ minimum ek" minimum(kx_) maximum(kx_) step_kx ek_min
+    kx_ = mapped_kx(analyzer_conf, reshape(ek, :, 1), reshape(α, 1, :), β_, χ_, ξ_, δ_)
+    min_kx, max_kx = minimum(kx_), maximum(kx_)
+    @debug "kx_ size" size(kx_)
+    @debug "min_kx, max_kx, step_kx" min_kx max_kx step_kx
+    if step_kx === nothing || step_kx == 0.0
+        return min_kx
     end
     return range(start = min_kx, stop = max_kx, step = step_kx)
 
@@ -68,10 +149,21 @@ end
         ek::AbstractVector,
         α::AbstractVector,
         β_::AbstractVector,
-        χ_,
-        ξ_,
-        δ_,
+        χ_::Real,
+        ξ_::Real,
+        δ_::Real,
     )
+
+    _ky_range(
+        analyzer_conf::Type{<:AnalyzerConfiguration},
+        ek::AbstractVector,
+        α::AbstractVector,
+        β_::Real,
+        χ_::Real,
+        ξ_::Real,
+        δ_::Real,
+    )
+
 
 Determine the ky range for the given analyzer configuration and parameters.
 
@@ -86,6 +178,8 @@ Determine the ky range for the given analyzer configuration and parameters.
 
 # Returns
 - `ky_range`:  Range for ky, determined based on the mapping from the provided parameters.
+             if the step size cannot be determined (e.g., due to insufficient data.
+             in most case, :β is a single value), returns the minimum ky value.
 
 # Description
 1. Determines the step size for ky using the minimum kinetic energy.
@@ -97,13 +191,13 @@ function _ky_range(
     ek::AbstractVector{<:Real},
     α::AbstractVector{<:Real},
     β_::AbstractVector{<:Real},
-    χ_,
-    ξ_,
-    δ_,
+    χ_::Real,
+    ξ_::Real,
+    δ_::Real,
 )
     ek_min = minimum(ek)
     ky_ = mapped_ky(analyzer_conf, ek_min, reshape(α, :, 1), reshape(β_, 1, :), χ_, ξ_, δ_)
-    d_ky = diff(ky_, dims = 2)
+    d_ky = abs.(diff(ky_, dims = 2))
     step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
     ky_ = mapped_ky(
         analyzer_conf,
@@ -116,12 +210,33 @@ function _ky_range(
     )
     min_ky, max_ky = minimum(ky_), maximum(ky_)
     if step_ky === nothing || step_ky == 0.0
-        return min_ky:min_ky
+        return min_ky
     end
     return range(start = min_ky, stop = max_ky, step = step_ky)
-
 end
 
+function _ky_range(
+    analyzer_conf::Type{<:AnalyzerConfiguration},
+    ek::AbstractVector{<:Real},
+    α::AbstractVector{<:Real},
+    β_::Real,
+    χ_::Real,
+    ξ_::Real,
+    δ_::Real,
+)
+    ek_min = minimum(ek)
+    ky_ = mapped_ky(analyzer_conf, ek_min, α, β_, χ_, ξ_, δ_)
+    d_ky = abs.(diff(ky_))
+    step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
+    ky_ = mapped_ky(analyzer_conf, reshape(ek, :, 1), reshape(α, 1, :), β_, χ_, ξ_, δ_)
+    @debug "Length ky_ along β dimension" size(ky_)
+    min_ky, max_ky = minimum(ky_), maximum(ky_)
+    @debug "min_ky, max_ky, step_ky" min_ky max_ky step_ky
+    if step_ky === nothing || step_ky == 0.0
+        return min_ky
+    end
+    return range(start = min_ky, stop = max_ky, step = step_ky)
+end
 
 """
     _check_arpesdata(data::ARPESData)
