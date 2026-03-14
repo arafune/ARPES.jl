@@ -11,6 +11,7 @@ include("./fixture.jl")
     end
     @testset "k_conv" begin
         include("k_conv/k_conversion.jl")
+        include("k_conv/preprocess.jl")
     end
     @testset "IO" begin
         @testset "IO basic" begin
