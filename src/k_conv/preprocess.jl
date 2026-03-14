@@ -1,36 +1,39 @@
 """
-    reshape_for_nd(arrs...)
+     reshape_for_nd(arrs...)
 
-Reshape each input vector in `arrs` so that they become broadcastable across N
-dimensions, where N is the number of input arrays. Each array is reshaped to have
-its length along a unique dimension and singleton dimensions elsewhere, enabling
-broadcasting in element-wise operations.
+Reshapes each input array in `arrs` for N-dimensional broadcasting.
+
+For each array argument, this function reshapes it so that its length occupies a unique dimension, with all other dimensions set to 1. This enables element-wise broadcasting across all input arrays. Non-array arguments are returned unchanged.
 
 # Arguments
-- `arrs...`: A variable number of 1D arrays or vectors.
+- `arrs...`: A variable number of arguments, typically arrays, but may include non-array values.
 
 # Returns
-- An N-tuple of reshaped arrays, each suitable for broadcasting in N-dimensional
-  operations.
+- A tuple where each array is reshaped for broadcasting, and non-array arguments are unchanged.
 
 # Example
 ```julia
-x = [1, 2, 3]
-y = [4, 5]
-reshape_for_nd(x, y)
+a = [1, 2, 3]
+b = [4, 5]
+reshape_for_nd(a, b)
 # returns (3×1 Array, 1×2 Array)
 ```
 """
-function reshape_for_nd(arrs...)
-    N = length(arrs)
+function reshape_for_nd(arrs::Union{AbstractArray,Real}...)
+    arrays_count = count(a -> a isa AbstractArray, arrs)
 
-    return ntuple(i -> begin
-        a = vec(arrs[i])
-        shape = ntuple(j -> j == i ? length(a) : 1, N)
-        reshape(a, shape)
-    end, N)
+    i = 0
+    map(arrs) do a
+        if a isa AbstractArray
+            i += 1
+            v = vec(a)
+            shape = ntuple(j -> j == i ? length(v) : 1, arrays_count)
+            reshape(v, shape)
+        else
+            a
+        end
+    end
 end
-
 
 
 
