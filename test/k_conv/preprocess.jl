@@ -31,7 +31,7 @@ using ARPES.KConversion: _check_arpesdata, reshape_for_nd
     # Further tests can be added here to check the correctness of the conversion.
 end
 
-@testset "TEst for reshape_for_nd" begin
+@testset "Test for reshape_for_nd" begin
     x = [1, 2, 3]
     y = reshape_for_nd(x, 2)
     @test size(y[1]) == (3,)
@@ -44,9 +44,20 @@ end
     @test (length(result[1]), length(result[2]), length(result[3])) ==
           (length(x), length(y), length(z))
     @test result[1] == reshape(x, :, 1, 1)
-    #@test result[1, 1, 1] == (x[1], y[1], z[1])
-    #@test result[end, end, end] == (x[end], y[end], z[end])
-
-
 end
 
+@testset "Test _kx_range _ky_rangel" begin
+    ek = 0.7990000000000004:0.002:1.9990000000000003
+    α = 0.19966566642815128:-0.0020943951023931952:-0.21711895894809455
+    β_ = 0.0
+    χ_ = 0.0
+    ξ_ = -0.0
+    δ_ = 0.0
+
+    kx_range = _kx_range(TypeI, ek, α, β_, χ_, ξ_, δ_)
+    @test kx_range[1] ≈ -0.1436676048385842
+    @test step(kx_range) ≈ 0.0009368123759122965
+    @test kx_range[end] ≈ 0.15517554307743836
+    @test _ky_range(TypeI, ek, α, β_, χ_, ξ_, δ_) == 0.0
+
+end
