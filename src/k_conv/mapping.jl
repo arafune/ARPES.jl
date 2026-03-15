@@ -1,6 +1,7 @@
 using ARPES: TypeI, TypeII
 const K_INV = 0.5123167219534328
-export momentum_mapping, mapped_kx, mapped_kz, angle_mapping, mapped_α, mapped_β
+export momentum_mapping, mapped_kx, mapped_ky, angle_mapping, mapped_α, mapped_β
+using ..ARPES: AnalyzerConfiguration
 
 unorm_sinc(x) = x == 0 ? 1 : sinc(x/π)
 

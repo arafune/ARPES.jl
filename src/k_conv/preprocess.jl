@@ -1,3 +1,7 @@
+using DimensionalData: Dimension
+using ..ARPES: EnergyDefinition
+using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
+
 """
      reshape_for_nd(arrs...)
 
@@ -34,6 +38,72 @@ function reshape_for_nd(arrs::Union{AbstractArray,Real}...)
         end
     end
 end
+
+"""
+    _ek_range(energy_def::EnergyDefinition, ek, workfunction::Real, hv::Real)
+
+Return a shifted kinetic energy axis depending on the energy definition.
+
+- If `energy_def` is `FinalStateEnergy`, shift by `-workfunction`.
+- If `energy_def` is `BindingEnergy`, shift by `hv - workfunction`.
+
+# Arguments
+- `energy_def`: The energy definition type (`FinalStateEnergy` or `BindingEnergy`).
+- `ek`: The kinetic energy axis (can be `Dimension`, `AbstractRange`, or `AbstractVector`).
+- `workfunction`: The work function value.
+- `hv`: The photon energy.
+
+# Returns
+A shifted kinetic energy axis of AbstractArray.
+"""
+function _ek_range(
+    energy_def::EnergyDefinition,
+    ek::Dimension,
+    workfunction::Real,
+    hv::Real,
+)
+    if energy_def == FinalStateEnergy
+        return parent(shift_dim(ek, -workfunction))
+    elseif energy_def == BindingEnergy
+        return parent(shift_dim(ek, hv - workfunction))
+    end
+end
+
+function _ek_range(
+    energy_def::EnergyDefinition,
+    ek::AbstractRange,
+    workfunction::Real,
+    hv::Real,
+)
+    if energy_def == FinalStateEnergy
+        return range(
+            first(ek) - workfunction;
+            step = step(ek),
+            stop = last(ek) - workfunction,
+        )
+    elseif energy_def == BindingEnergy
+        return range(
+            first(ek) + hv - workfunction;
+            step = step(ek),
+            stop = last(ek) + hv - workfunction,
+        )
+    end
+end
+
+function _ek_range(
+    energy_def::EnergyDefinition,
+    ek::AbstractVector,
+    workfunction::Real,
+    hv::Real,
+)
+    if energy_def == FinalStateEnergy
+        return @. ek - workfunction
+    elseif energy_def == BindingEnergy
+        return @. ek + hv - workfunction
+    end
+end
+
+
 
 
 

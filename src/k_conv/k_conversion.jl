@@ -2,6 +2,7 @@ module KConversion
 using DimensionalData
 using DimensionalData: dims, hasdim, metadata, name, lookup
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
+using ..ARPES: EnergyDefinition
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
 using ..ARPES: AnalyzerConfiguration, TypeI, TypeII, TypeIp, TypeIIp
 using ..ARPES: shift_dim, negate_dim
@@ -25,7 +26,7 @@ function k_conversion(
 )
     energy_definition = metadata(dims(data, :eV))[:energy_definition]
     if !(energy_definition in [BindingEnergy, FinalStateEnergy])
-        throw(ArgumentError("Not Impremented for $(metadata(data)[:energy_definition])"))
+        throw(ArgumentError("Not Impremented for $energy_definition"))
     end
     @assert _check_arpesdata(data)
     # 1. required variables
@@ -37,25 +38,11 @@ function k_conversion(
     #   so hv is not used in the conversion. It is included here for future extension.)
     hv = metadata(data)[:hv]
 
-    if energy_definition == FinalStateEnergy
-        ek_original = shift_dim(dims(data, :eV), -workfunction)
-    elseif energy_definition == BindingEnergy
-        # negate_eV = negate_dim(dims(data, :eV))
-        # ek_original = negate_eV - workfunction
-        ek_original = shift_dim(dims(data, :eV), hv - workfunction)
-    end
-    if eV_range !== nothing
-        if energy_definition == FinalStateEnergy
-            ek = eV_range - workfunction
-        elseif energy_definition == BindingEnergy
-            # negate_eV =  negate_dim(dims(data, :eV))
-            # ek = negate_eV - workfunction
-            ek = hv + eV_range - workfunction
-        end
-    else
-        ek = ek_original
-    end
-    ek = parent(ek)
+    ek_original = _ek_range(energy_definition, dims(data, :eV), workfunction, hv)
+    ek =
+        eV_range === nothing ? ek_original :
+        _ek_range(energy_definition, eV_range, workfunction, hv)
+
     @debug "Kinetic energy ref to analyzer" ek
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
