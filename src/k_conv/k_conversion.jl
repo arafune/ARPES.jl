@@ -1,6 +1,6 @@
 module KConversion
 using DimensionalData
-using DimensionalData: dims, hasdim, dimnum, metadata, name, lookup
+using DimensionalData: dims, hasdim, metadata, name, lookup
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
 using ..ARPES: AnalyzerConfiguration, TypeI, TypeII, TypeIp, TypeIIp
@@ -9,6 +9,7 @@ using ..ARPES: shift_dim, negate_dim
 include("mapping.jl")
 include("interpolation.jl")
 include("preprocess.jl")
+include("postprocess.jl")
 export k_conversion
 
 function k_conversion(
@@ -36,22 +37,23 @@ function k_conversion(
     #   so hv is not used in the conversion. It is included here for future extension.)
     hv = metadata(data)[:hv]
 
+    if energy_definition == FinalStateEnergy
+        ek_original = shift_dim(dims(data, :eV), -workfunction)
+    elseif energy_definition == BindingEnergy
+        # negate_eV = negate_dim(dims(data, :eV))
+        # ek_original = negate_eV - workfunction
+        ek_original = shift_dim(dims(data, :eV), hv - workfunction)
+    end
     if eV_range !== nothing
         if energy_definition == FinalStateEnergy
             ek = eV_range - workfunction
         elseif energy_definition == BindingEnergy
-            # negate_eV =  negate_dim(dims(data)[dimnum(data, :eV)])
+            # negate_eV =  negate_dim(dims(data, :eV))
             # ek = negate_eV - workfunction
             ek = hv + eV_range - workfunction
         end
     else
-        if energy_definition == FinalStateEnergy
-            ek = shift_dim(dims(data)[dimnum(data, :eV)], -workfunction)
-        elseif energy_definition == BindingEnergy
-            # negaate_eV = negate_dim(dims(data)[dimnum(data, :eV)])
-            # ek = shift_dim(negate_eV, hv - workfunction)
-            ek = shift_dim(dims(data)[dimnum(data, :eV)], hv-workfunction)
-        end
+        ek = ek_original
     end
     ek = parent(ek)
     @debug "Kinetic energy ref to analyzer" ek
@@ -74,35 +76,19 @@ function k_conversion(
     ky_range =
         isnothing(ky_range) ? _ky_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : ky_range
 
-    @debug "kx_range" kx_range
-    @debug "ky_range" ky_range
+    @debug "kx_range, ky_range" kx_range ky_range
     # 3. apply interpolation to get the intensity values on the k grid.
     #   3.1 corresponding \alpha and \beta
     kx_grid, ky_grid, ek_grid = reshape_for_nd(kx_range, ky_range, ek)
 
-    @debug "kx_grid, ky_grid, ek_grid" size(kx_grid) size(ky_grid) size(ek_grid)
     @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
     α_range = mapped_α(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     β_range = mapped_β(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     @debug "size of α_range, β_range" size(α_range) size(β_range)
     #   3.2 interpolate
-    @debug "typeof ek_grid, α_range, β_range, parent(lookup(data, :eV)), α, β, parent(data)" typeof(
-        ek_grid,
-    ) typeof(α_range) typeof(β_range) typeof(parent(lookup(data, :eV))) typeof(α) typeof(β) typeof(
-        parent(data),
-    )
-    #@debug "α_range, β_range, parent(lookup(data, :eV))" α_range β_range parent(
-    #    lookup(data, :eV),
-    #)
-    data_k = _interpolate(
-        α_range,
-        β_range,
-        ek_grid,
-        α,
-        β,
-        parent(lookup(data, :eV)),
-        parent(data),
-    )
+    @debug "typoef(ek_original)" typeof(ek_original)
+    data_k =
+        _interpolate(α_range, β_range, ek_grid, α, β, parent(ek_original), parent(data))
     return data_k
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
 end

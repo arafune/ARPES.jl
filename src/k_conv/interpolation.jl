@@ -42,15 +42,19 @@ function _interpolate(
 )
     # Use BSpline interpolation for optimized performance on uniform grids
     @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
+    @debug "Input Range Check" extrema(p0) extrema(p1) extrema(c0) extrema(c1) size(values)
     values = step(c0) < 0 ? reverse(values, dims = 1) : values
     c0 = step(c0) < 0 ? reverse(c0) : c0
     values = step(c1) < 0 ? reverse(values, dims = 2) : values
     c1 = step(c1) < 0 ? reverse(c1) : c1
+    @debug "Post-Normalization" c0_range=extrema(c0) c1_range=extrema(c1)
 
     @debug "c0, c1" c0 c1
     itp = interpolate(values, BSpline(Linear()))
     sitp = scale(itp, c0, c1)
-    return extrapolate(sitp, NaN).(p0, p1)
+    res = extrapolate(sitp, NaN).(p0, p1)
+    @debug "Result Summary" count_nan=count(isnan, res) total_elements=length(res)
+    return res
 end
 
 
@@ -64,6 +68,8 @@ function _interpolate(
 )
     # Use Gridded interpolation for non-uniform spacing
     @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
+    c0 = collect(c0)
+    c1 = collect(c1)
     itp = interpolate((c0, c1), values, Gridded(Linear()))
     return extrapolate(itp, NaN).(p0, p1)
 end
@@ -103,6 +109,9 @@ function _interpolate(
     values::AbstractArray{T,3},
 ) where {T<:Real}
     @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
+    c0 = collect(c0)
+    c1 = collect(c1)
+    c2 = collect(c2)
     itp = interpolate((c0, c1, c2), values, Gridded(Linear()))
     return extrapolate(itp, NaN).(p0, p1, p2)
 end
