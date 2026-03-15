@@ -42,17 +42,7 @@ end
         analyzer_conf::Type{<:AnalyzerConfiguration},
         ek::AbstractVector,
         α::AbstractVector,
-        β_::AbstractVector,
-        χ_::Real,
-        ξ_::Real,
-        δ_::Real,
-    )
-
-    _kx_range(
-        analyzer_conf::Type{<:AnalyzerConfiguration},
-        ek::AbstractVector,
-        α::AbstractVector,
-        β_::Real,
+        β_::Union{AbstractVector{<:Real},Real},
         χ_::Real,
         ξ_::Real,
         δ_::Real,
@@ -111,22 +101,11 @@ end
         analyzer_conf::Type{<:AnalyzerConfiguration},
         ek::AbstractVector,
         α::AbstractVector,
-        β_::AbstractVector,
+        β_::Union{AbstractVector{<:Real},Real},
         χ_::Real,
         ξ_::Real,
         δ_::Real,
     )
-
-    _ky_range(
-        analyzer_conf::Type{<:AnalyzerConfiguration},
-        ek::AbstractVector,
-        α::AbstractVector,
-        β_::Real,
-        χ_::Real,
-        ξ_::Real,
-        δ_::Real,
-    )
-
 
 Determine the ky range for the given analyzer configuration and parameters.
 

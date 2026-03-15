@@ -42,6 +42,12 @@ function _interpolate(
 )
     # Use BSpline interpolation for optimized performance on uniform grids
     @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
+    values = step(c0) < 0 ? reverse(values, dims = 1) : values
+    c0 = step(c0) < 0 ? reverse(c0) : c0
+    values = step(c1) < 0 ? reverse(values, dims = 2) : values
+    c1 = step(c1) < 0 ? reverse(c1) : c1
+
+    @debug "c0, c1" c0 c1
     itp = interpolate(values, BSpline(Linear()))
     sitp = scale(itp, c0, c1)
     return extrapolate(sitp, NaN).(p0, p1)
@@ -75,6 +81,13 @@ function _interpolate(
     values::AbstractArray{T,3},
 ) where {T<:Real}
     @debug "size(values), length(c0), length(c1)" size(values) length(c0) length(c1)
+    values = step(c0) < 0 ? reverse(values, dims = 1) : values
+    c0 = step(c0) < 0 ? reverse(c0) : c0
+    values = step(c1) < 0 ? reverse(values, dims = 2) : values
+    c1 = step(c1) < 0 ? reverse(c1) : c1
+    values = step(c2) < 0 ? reverse(values, dims = 3) : values
+    c2 = step(c2) < 0 ? reverse(c2) : c2
+
     itp = interpolate(values, BSpline(Linear()))
     sitp = scale(itp, c0, c1, c2)
     return extrapolate(sitp, NaN).(p0, p1, p2)

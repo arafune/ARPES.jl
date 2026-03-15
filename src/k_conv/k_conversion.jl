@@ -54,12 +54,13 @@ function k_conversion(
         end
     end
     ek = parent(ek)
+    @debug "Kinetic energy ref to analyzer" ek
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
     α =
         haskey(metadata(data), :negate_alpha) && metadata(data)[:negate_alpha] == true ?
         _deg2rad(parent(negate_dim(dims(data, :phi)))) :
-        _deg2rad(parent(lookup(dims(data)[dimnum(data, :phi)])))
+        _deg2rad(parent(lookup(data, :phi)))
     β = hasdim(data, :psi) ? parent(dims(data, :psi)) : metadata(data)[:β]
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
@@ -78,7 +79,9 @@ function k_conversion(
     # 3. apply interpolation to get the intensity values on the k grid.
     #   3.1 corresponding \alpha and \beta
     kx_grid, ky_grid, ek_grid = reshape_for_nd(kx_range, ky_range, ek)
-    @debug "size of ek_grid, kx_grid, ky_grid" size(ek_grid) size(kx_grid) size(ky_grid)
+
+    @debug "kx_grid, ky_grid, ek_grid" size(kx_grid) size(ky_grid) size(ek_grid)
+    @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
     α_range = mapped_α(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     β_range = mapped_β(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     @debug "size of α_range, β_range" size(α_range) size(β_range)
@@ -88,6 +91,9 @@ function k_conversion(
     ) typeof(α_range) typeof(β_range) typeof(parent(lookup(data, :eV))) typeof(α) typeof(β) typeof(
         parent(data),
     )
+    #@debug "α_range, β_range, parent(lookup(data, :eV))" α_range β_range parent(
+    #    lookup(data, :eV),
+    #)
     data_k = _interpolate(
         α_range,
         β_range,
@@ -97,7 +103,7 @@ function k_conversion(
         parent(lookup(data, :eV)),
         parent(data),
     )
-    @debug "size of data_k" size(data_k)
+    return data_k
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
 end
 
