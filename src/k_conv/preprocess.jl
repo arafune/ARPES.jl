@@ -152,7 +152,7 @@ Determine the ky range for the given analyzer configuration and parameters.
 function _ky_range(
     analyzer_conf::Type{<:AnalyzerConfiguration},
     α::AbstractVector{<:Real},
-    β_::AbstractVector{<:Real},
+    β_::Union{AbstractVector{<:Real},Real},
     ek::AbstractVector{<:Real},
     χ_::Real,
     ξ_::Real,
@@ -160,28 +160,7 @@ function _ky_range(
 )
     ek_min = minimum(ek)
     ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
-    d_ky = abs.(diff(ky_, dims = 2))
-    step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
-    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
-    min_ky, max_ky = minimum(ky_), maximum(ky_)
-    if step_ky === nothing || step_ky == 0.0
-        return min_ky
-    end
-    return range(start = min_ky, stop = max_ky, step = step_ky)
-end
-
-function _ky_range(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
-    α::AbstractVector{<:Real},
-    β_::Real,
-    ek::AbstractVector{<:Real},
-    χ_::Real,
-    ξ_::Real,
-    δ_::Real,
-)
-    ek_min = minimum(ek)
-    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
-    d_ky = abs.(diff(ky_))
+    d_ky = abs.(diff(ky_, dims = β_ isa Real ? 1 : 2))
     step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
     ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
     min_ky, max_ky = minimum(ky_), maximum(ky_)
