@@ -79,4 +79,17 @@ end
     data_5d = add_dim(data_4d, :β)
     @test size(data_5d) == (10, 10, 10, 1, 1)
     @test hasdim(data_5d, :β) == true
+    data_6d = add_dim(data_5d, "δ", 0.0)
+    @test size(data_6d) == (10, 10, 10, 1, 1, 1)
+    @test hasdim(data_6d, :δ) == true
+    @test_throws ArgumentError add_dim(data, :phi, 1.0)
+    @test_throws ArgumentError add_dim(data, :χ)
+end
+
+@testset "Test for rename_dim" begin
+    data = test_ARPESData()
+    renamed_data = rename_dim(data, :phi => :angle)
+    @test hasdim(renamed_data, :angle) == true
+    @test hasdim(renamed_data, :phi) == false
+    @test_throws ArgumentError rename_dim(data, :delay => :time)
 end

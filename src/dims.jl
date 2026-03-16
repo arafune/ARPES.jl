@@ -2,7 +2,7 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export add_dim, shift_dim, negate_dim
+export add_dim, shift_dim, negate_dim, rename_dim
 
 """
     add_dim(arpes_data::ARPESData, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
@@ -41,15 +41,16 @@ add_dim(data::ARPESData, dim_label::String, val::Real; unit::Union{Nothing, Stri
 function rename_dim(data, old::Symbol, new::Symbol)
     hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
     hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
-
     ds = dims(data)
     i = findfirst(d -> name(d) == old, ds)
+
     d  = ds[i]
-    d2 = Dim{new}(lookup(d))
+    d2 = Dim{new}(lookup(d); metadata=metadata(d))
 
     return rebuild(data; dims=Base.setindex(ds, d2, i))
 end
 
+rename_dim(data, p::Pair{<:Symbol,<:Symbol}) = rename_dim(data, first(p), last(p))
 
 
 """
