@@ -10,8 +10,9 @@ include("./fixture.jl")
         include("dims.jl")
     end
     @testset "k_conv" begin
-        include("k_conv/k_conversion.jl")
         include("k_conv/preprocess.jl")
+        include("k_conv/interpolation.jl")
+        include("k_conv/k_conversion.jl")
     end
     @testset "IO" begin
         @testset "IO basic" begin
