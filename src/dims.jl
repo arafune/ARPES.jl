@@ -2,7 +2,7 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export shift_dim, negate_dim, add_dim
+export add_dim, shift_dim, negate_dim
 
 """
     add_dim(arpes_data::ARPESData, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
@@ -26,6 +26,14 @@ function add_dim(arpes_data::ARPESData, dim_label::Symbol, val::Real=NaN; unit::
     new_arpesdata = reshape(parent(arpes_data), (size(arpes_data)..., 1))
     newdim = Dim{dimname}((val), metadata=Dict(:unit => unit)) 
     return rebuild(arpes_data; new_arpesdata, dims=(dims(arpes_data)..., newdim))
+end
+
+function add_dim(arpes_data::ARPESData, dim_label::Symbol; unit::Union{Nothing, String}=nothing)
+    if !haskey(metadta(arpes_data), dim_label)
+        throw(ArgumentError("A dimension with the name $dim_label does not exist in metadata of ARPESData."))
+    end
+    val = metadta(arpes_data)[dim_label]
+    return add_dim(arpes_data, dim_label, val; unit=unit)
 end
 
 add_dim(arpes_data::ARPESData, dim_label::String, val::Real=NaN; unit::Union{Nothing, String}=nothing) = add_dim(arpes_data, Symbol(dim_label), val; unit=unit)
