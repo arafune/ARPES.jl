@@ -13,6 +13,14 @@ using ARPES.KConversion: _interpolate
     @test isapprox(res[1], 2.5 + 15.0; atol = 1e-8)
     @test isapprox(res[2], 4.0 + 35.0; atol = 1e-8)
 
+    c0_array = collect(c0)
+    c1_array = collect(c1)
+
+
+    res1_1 = _interpolate(p0, p1, c0_array, c1_array, values)
+    @test length(res1_1) == 2
+    @test isapprox(res, res1_1, atol = 1e-8)
+
     res2 = _interpolate([0.0], [0.0], c0, c1, values)
     @test isnan(res2[1])
 
@@ -55,6 +63,15 @@ using ARPES.KConversion: _interpolate
     @test length(res3d) == 2
     @test isapprox(res3d[1], 2.5 + 15.0 + 150.0; atol = 1e-8)
     @test isapprox(res3d[2], 3.0 + 25.0 + 350.0; atol = 1e-8)
+
+    c0_3d_array = collect(c0_3d)
+    c1_3d_array = collect(c1_3d)
+    c2_3d_array = collect(c2_3d)
+    res3d_1 =
+        _interpolate(p0_3d, p1_3d, p2_3d, c0_3d_array, c1_3d_array, c2_3d_array, values3d)
+    @test length(res3d_1) == 2
+    @test isapprox(res3d, res3d_1, atol = 1e-8)
+
 
     # Out-of-bounds for 3D
     res3d_oob = _interpolate([0.0], [0.0], [0.0], c0_3d, c1_3d, c2_3d, values3d)
