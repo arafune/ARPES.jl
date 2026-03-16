@@ -1,7 +1,7 @@
 using Test
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
-using DimensionalData: Dim
+using DimensionalData: Dim, hasdim
 
 if !@isdefined(test_ARPESData)
     include("fixture.jl")
@@ -68,4 +68,28 @@ end
     @test_throws ArgumentError shift_dim(data, :eV, 0.1, :ky)
     @test_throws ArgumentError shift_dim(data, :delay, 0.1)
     @test_throws ArgumentError shift_dim(data, ch2, 0.1)
+end
+
+
+@testset "Test for add_dim" begin
+    data = test_ARPESData()
+    data_4d = add_dim(data, :w, 0.0)
+    @test size(data_4d)== (10, 10, 10, 1)
+    @test hasdim(data_4d, :w) == true
+    data_5d = add_dim(data_4d, :β)
+    @test size(data_5d) == (10, 10, 10, 1, 1)
+    @test hasdim(data_5d, :β) == true
+    data_6d = add_dim(data_5d, "δ", 0.0)
+    @test size(data_6d) == (10, 10, 10, 1, 1, 1)
+    @test hasdim(data_6d, :δ) == true
+    @test_throws ArgumentError add_dim(data, :phi, 1.0)
+    @test_throws ArgumentError add_dim(data, :χ)
+end
+
+@testset "Test for rename_dim" begin
+    data = test_ARPESData()
+    renamed_data = rename_dim(data, :phi => :angle)
+    @test hasdim(renamed_data, :angle) == true
+    @test hasdim(renamed_data, :phi) == false
+    @test_throws ArgumentError rename_dim(data, :delay => :time)
 end

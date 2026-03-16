@@ -2,7 +2,56 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export shift_dim, negate_dim
+export add_dim, shift_dim, negate_dim, rename_dim
+
+"""
+    add_dim(arpes_data::ARPESData, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
+
+Add a new dimension to the `arpes_data` object with the specified `dim_label` and value `val`.
+Optionally, a unit can be provided for the new dimension. Throws an error if the dimension already exists.
+
+# Arguments
+- `arpes_data::ARPESData`: The ARPESData object to modify.
+- `dim_label::Symbol`: The label for the new dimension.
+- `val::Real=NaN`: The value for the new dimension (default is NaN).
+- `unit::Union{Nothing, String}=nothing`: Optional unit for the new dimension.
+
+# Returns
+- A new ARPESData object with the added dimension.
+"""
+function add_dim(data::ARPESData, dim_label::Symbol, val::Real; unit::Union{Nothing, String}=nothing)
+    if hasdim(data, dim_label)
+        throw(ArgumentError("A dimension with the name $dim_label already exists in ARPESData."))
+    end
+    new_data = reshape(parent(data), size(data)..., 1)
+    newdim = Dim{dim_label}([val], metadata=Dict(:unit => unit)) 
+    return rebuild(data;  data=new_data, dims=(dims(data)..., newdim))
+end
+
+function add_dim(data::ARPESData, dim_label::Symbol; unit::Union{Nothing, String}=nothing)
+    if !haskey(metadata(data), dim_label)
+        throw(ArgumentError("A dimension with the name $dim_label does not exist in metadata of ARPESData."))
+    end
+    val = metadata(data)[dim_label]
+    return add_dim(data, dim_label, val; unit=unit)
+end
+
+add_dim(data::ARPESData, dim_label::String, val::Real; unit::Union{Nothing, String}=nothing) = add_dim(data, Symbol(dim_label), val; unit=unit)
+
+function rename_dim(data, old::Symbol, new::Symbol)
+    hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
+    hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
+    ds = dims(data)
+    i = findfirst(d -> name(d) == old, ds)
+
+    d  = ds[i]
+    d2 = Dim{new}(lookup(d); metadata=metadata(d))
+
+    return rebuild(data; dims=Base.setindex(ds, d2, i))
+end
+
+rename_dim(data, p::Pair{<:Symbol,<:Symbol}) = rename_dim(data, first(p), last(p))
+
 
 """
     shift_dim(dim::Dimension, shift_value)
