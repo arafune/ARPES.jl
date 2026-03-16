@@ -38,6 +38,21 @@ end
 
 add_dim(arpes_data::ARPESData, dim_label::String, val::Real=NaN; unit::Union{Nothing, String}=nothing) = add_dim(arpes_data, Symbol(dim_label), val; unit=unit)
 
+
+function rename_dim(data, old::Symbol, new::Symbol)
+    hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
+    hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
+
+    ds = dims(data)
+    i = findfirst(d -> name(d) == old, ds)
+    d  = ds[i]
+    d2 = Dim{new}(lookup(d))
+
+    return rebuild(data; dims=Base.setindex(ds, d2, i))
+end
+
+
+
 """
     shift_dim(dim::Dimension, shift_value)
     shift_dim(arpes_data::ARPESData, dim_label::Symbol, shift_value)
