@@ -50,6 +50,22 @@ using ARPES.KConversion: _interpolate
     res8 = _interpolate([2.0], [20.0], c0n, c1n, valuesn)
     @test isapprox(res8[1], 2.0 + 20.0; atol = 1e-8)
 
+    dummy1 = 0.3
+    dummy2 = 0.4
+    result_pseudo_3d_1 = _interpolate(p0, p1, dummy1, c0, c1, dummy2, values)
+    result_pseudo_3d_2 = _interpolate(p0, dummy1, p1, c0, dummy2, c1, values)
+    result_pseudo_3d_3 = _interpolate(dummy1, p0, p1, dummy2, c0, c1, values)
+    @test isapprox(result_pseudo_3d_1, res, atol = 1e-8)
+    @test isapprox(result_pseudo_3d_2, res, atol = 1e-8)
+    @test isapprox(result_pseudo_3d_3, res, atol = 1e-8)
+
+    result_pseudo_3d_4 = _interpolate(p0, p1, dummy1, c0_array, c1_array, dummy2, values)
+    result_pseudo_3d_5 = _interpolate(p0, dummy1, p1, c0, dummy2, c1_array, values)
+    result_pseudo_3d_6 = _interpolate(dummy1, p0, p1, dummy2, c0_array, c1_array, values)
+    @test isapprox(result_pseudo_3d_4, res, atol = 1e-8)
+    @test isapprox(result_pseudo_3d_5, res, atol = 1e-8)
+    @test isapprox(result_pseudo_3d_6, res, atol = 1e-8)
+
     # 3D tests
     c0_3d = 1.0:1.0:4.0
     c1_3d = 10.0:10.0:40.0
@@ -84,4 +100,5 @@ using ARPES.KConversion: _interpolate
     values3d_r = reverse(reverse(reverse(values3d, dims = 1), dims = 2), dims = 3)
     res3d_rev = _interpolate([2.0], [20.0], [200.0], c0r_3d, c1r_3d, c2r_3d, values3d_r)
     @test isapprox(res3d_rev[1], 2.0 + 20.0 + 200.0; atol = 1e-8)
+
 end
