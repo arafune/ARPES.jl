@@ -2,7 +2,7 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export shift_dim
+export shift_dim, negate_dim
 
 """
     shift_dim(dim::Dimension, shift_value)
@@ -76,6 +76,16 @@ function shift_dim(arpes_data::ARPESData, dim_shift_pair...)
     return arpes_data
 end
 
+"""
+  negate_dim(dim::Dimension)
+
+Negate the lookup values of a dimension.
+"""
+function negate_dim(dim::DimensionalData.Dimension)
+    new_lookup = _negate_lookup(lookup(dim))
+    return rebuild(dim; val = new_lookup)
+end
+
 function change_energy_definition(arpes_data::ARPESData, new_definition::EnergyDefinition)
     #    energy_dim = findfirst(d -> name(d) == :eV, dims(arpes_data))
     #    if isnothing(energy_dim)
@@ -110,7 +120,18 @@ Return a new lookup array by adding `shift_value` to each element of `lookup`.
 """
 function _shift_lookup(l::Lookup, shift)
     p = parent(l)
-    return _process_index(p, shift)
+    return _shift_index(p, shift)
+end
+
+"""
+    _negate_lookup(l::Lookup)
+
+Negates the indices represented by the given `Lookup` object `l`.
+Returns the negated index by calling `_negate_index` on the parent of `l`.
+"""
+function _negate_lookup(l::Lookup)
+    p = parent(l)
+    return _negate_index(p)
 end
 
 """
@@ -128,10 +149,23 @@ Otherwise, throw an error.
 # Throws
 - An error if the index type is not supported.
 """
-function _process_index(index::AbstractRange, shift)
+function _shift_index(index::AbstractRange, shift)
     return range(index[1] + shift, step = step(index), length = length(index))
 end
 
-function _process_index(index::AbstractArray, shift)
+function _shift_index(index::AbstractArray, shift)
     return index .+ shift
+end
+
+"""
+    _negate_index(index)
+
+Negate the given index. If the index is a range or array, return the negated version.
+"""
+function _negate_index(index::AbstractRange)
+    return range(- index[1], step = -step(index), length = length(index))
+end
+
+function _negate_index(index::AbstractArray)
+    return -index
 end
