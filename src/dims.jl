@@ -2,7 +2,33 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export shift_dim, negate_dim
+export shift_dim, negate_dim, add_dim
+
+"""
+    add_dim(arpes_data::ARPESData, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
+
+Add a new dimension to the `arpes_data` object with the specified `dim_label` and value `val`.
+Optionally, a unit can be provided for the new dimension. Throws an error if the dimension already exists.
+
+# Arguments
+- `arpes_data::ARPESData`: The ARPESData object to modify.
+- `dim_label::Symbol`: The label for the new dimension.
+- `val::Real=NaN`: The value for the new dimension (default is NaN).
+- `unit::Union{Nothing, String}=nothing`: Optional unit for the new dimension.
+
+# Returns
+- A new ARPESData object with the added dimension.
+"""
+function add_dim(arpes_data::ARPESData, dim_label::Symbol, val::Real=NaN; unit::Union{Nothing, String}=nothing)
+    if hasdim(arpes_data, dim_label)
+        throw(ArgumentError("A dimension with the name $dim_label already exists in ARPESData."))
+    end
+    new_arpesdata = reshape(parent(arpes_data), (size(arpes_data)..., 1))
+    newdim = Dim{dimname}((val), metadata=Dict(:unit => unit)) 
+    return rebuild(arpes_data; new_arpesdata, dims=(dims(arpes_data)..., newdim))
+end
+
+add_dim(arpes_data::ARPESData, dim_label::String, val::Real=NaN; unit::Union{Nothing, String}=nothing) = add_dim(arpes_data, Symbol(dim_label), val; unit=unit)
 
 """
     shift_dim(dim::Dimension, shift_value)
