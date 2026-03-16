@@ -146,4 +146,3 @@ function _spd_to_standard(raw::DimArray)::ARPESData
     )
 end
 
-

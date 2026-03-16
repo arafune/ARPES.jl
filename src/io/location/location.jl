@@ -1,3 +1,28 @@
+"""
+  Location
+
+A module for handling location-specific data loading and standardization.
+This module provides functionality for converting ARPESData from DimArray
+to standardized form according to canonical dimension mappings and metadata conversion rules.
+
+The `Location` module includes functions for:
+
+- Mapping dimension constructor functions to their alias symbols for different `LocationLoader` types.
+- Mapping dimension alias symbols to their constructor functions for different `LocationLoader` types.
+- Standardizing dimensions of raw `DimArray` data according to canonical dimension mappings.
+- Converting metadata keys according to specified conversion rules.
+
+The module also includes the `spd.jl` file, which contains the implementation for loading SPD data.
+Additional location-specific loaders can be implemented and included in this module as needed.
+
+
+In the file of Location module, `load_data` function must be fefined for each specific loader type, 
+in which the function defined in Format module should be called to read the data in its original form,
+and then the `to_standardize` function should be used to convert it to the standardized form.
+Further, The `canonical_dim`, `dim_alias`, `default_dim_map`, and `metadata_convert_rule` functions should be
+implemented to provide the necessary mappings and conversion rules for that loader.
+"""
+
 module Location
 using DimensionalData
 using DimensionalData.Dimensions.Lookups: NoMetadata

@@ -17,6 +17,14 @@ function _build_arpesband(
         name = metadata_original[:name],
         metadata = metadata_original,
     )
+    arpes_data = ARPESData(
+        da;
+        intensity_unit = metadata_original[:intensity_unit],
+        analyzer_config = metadata_original[:analyzer_configuration],
+        energy_def = energy_def,
+        additional_metadata = Dict(),
+    )
+    return arpes_data
 end
 
 function _build_arpesband(
@@ -35,6 +43,14 @@ function _build_arpesband(
         name = metadata_original[:name],
         metadata = metadata_original,
     )
+    arpes_data = ARPESData(
+        da;
+        intensity_unit = metadata_original[:intensity_unit],
+        analyzer_config = metadata_original[:analyzer_configuration],
+        energy_def = energy_def,
+        additional_metadata = Dict(),
+    )
+    return arpes_data
 end
 
 

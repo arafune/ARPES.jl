@@ -38,10 +38,9 @@ function k_conversion(
     #   so hv is not used in the conversion. It is included here for future extension.)
     hv = metadata(data)[:hv]
 
+    eV_range = isnothing(eV_range) ? parent(lookup(data, :eV)) : eV_range
     ek_original = _ek_range(energy_definition, dims(data, :eV), workfunction, hv)
-    ek =
-        eV_range === nothing ? ek_original :
-        _ek_range(energy_definition, eV_range, workfunction, hv)
+    ek = _ek_range(energy_definition, eV_range, workfunction, hv)
 
     @debug "Kinetic energy ref to analyzer" ek
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
@@ -73,11 +72,17 @@ function k_conversion(
     β_range = mapped_β(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     @debug "size of α_range, β_range" size(α_range) size(β_range)
     #   3.2 interpolate
-    @debug "typoef(ek_original)" typeof(ek_original)
     data_k =
         _interpolate(α_range, β_range, ek_grid, α, β, parent(ek_original), parent(data))
-    return data_k
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
+    return _build_arpesband(
+        data_k,
+        kx_range,
+        ky_range,
+        eV_range,
+        metadata(data),
+        energy_definition,
+    )
 end
 
 # --- internal functions
