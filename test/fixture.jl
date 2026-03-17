@@ -1,4 +1,23 @@
+using DimensionalData
 using ARPES: ARPESData, phi, eV, Z, FinalStateEnergy
+
+function test_DimArray3D()
+    x = range(1.0, stop = 3.0, length = 3)
+    y = collect(range(5, stop = 8, length = 4))
+    z = 10.0:14.0
+    data = 1.0:60.0 |> collect |> d->reshape(d, 3, 4, 5)
+    da = DimArray(data, (X = x, Y = y, Z = z))
+    return da
+end
+
+function test_DimArray2D()
+    x = range(1.0, stop = 3.0, length = 3)
+    y = collect(range(5, stop = 8, length = 4))
+    data = 1.0:12.0 |> collect |> d->reshape(d, 3, 4)
+    da = DimArray(data, (X = x, Y = y))
+    return da
+end
+
 
 function test_ARPESData()
     x = range(-5, stop = 9, length = 10)
