@@ -2,11 +2,23 @@ using Test
 using ARPES
 using ARPES: add_dim, cat_arpes
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
+using ARPES: _is_equal_spacing, _shift_irregular
 using DimensionalData: Dim, hasdim, lookup
 
 if !@isdefined(test_ARPESData)
     include("fixture.jl")
 end
+
+@testset "test for shift (1)" begin
+    test_dim2D_1 = test_DimArray2D()
+    test_dim3D_1 = test_DimArray3D()
+    shift_2d_1 = shift(test_dim2D_1, :Y, -0.5)
+    @test isequal(parent(shift_2d_1), [2.5 5.5 8.5 NaN; 3.5 6.5 9.5 NaN; 4.5 7.5 10.5 NaN])
+
+    shift_2d_2 = _shift_irregular(test_dim2D_1, :Y, -0.5)
+    @test isequal(parent(shift_2d_2), [2.5 5.5 8.5 NaN; 3.5 6.5 9.5 NaN; 4.5 7.5 10.5 NaN])
+end
+
 
 @testset "Test for vstack_arpes" begin
     # Originally, stack_arpes function was designed to stack ARPESData objects
@@ -32,3 +44,13 @@ end
     @test parent(lookup(stack_1_to_3_alt, :w)) == [1.0, 0.0, 3.0]
     @test_throws ArgumentError cat_arpes(data_2_1, data_1_1, data3; dims = :w)
 end
+
+@testset "Test for _is_equal_spacing" begin
+    @test _is_equal_spacing([1])
+    @test _is_equal_spacing([1, 2, 3])
+    @test _is_equal_spacing([1.0, 2.0, 3.0, 4.0, 5.0])
+    @test !_is_equal_spacing([1, 2, 4])
+    @test !_is_equal_spacing([1.0, 2.0, 4.0])
+    @test _is_equal_spacing([1, 2]; atol = 0.5)
+end
+
