@@ -6,10 +6,14 @@ for Angle-Resolved Photoemission Spectroscopy (ARPES) data analysis.
 """
 module ARPES
 include("./types.jl")
+include("./dict.jl")
 include("./ARPESData.jl")
+export merge_consensus
 export kx, ky, kz, phi, psi, eV, detector_ch, ch2, delay, spin
 export CPS, Counts
 export ARPESData
+
+include("./data.jl")
 
 include("io/io.jl")
 using .IO
