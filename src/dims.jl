@@ -19,24 +19,42 @@ Optionally, a unit can be provided for the new dimension. Throws an error if the
 # Returns
 - A new ARPESData object with the added dimension.
 """
-function add_dim(data::ARPESData, dim_label::Symbol, val::Real; unit::Union{Nothing, String}=nothing)
+function add_dim(
+    data::ARPESData,
+    dim_label::Symbol,
+    val::Real;
+    unit::Union{Nothing,String} = nothing,
+)
     if hasdim(data, dim_label)
-        throw(ArgumentError("A dimension with the name $dim_label already exists in ARPESData."))
+        throw(
+            ArgumentError(
+                "A dimension with the name $dim_label already exists in ARPESData.",
+            ),
+        )
     end
     new_data = reshape(parent(data), size(data)..., 1)
-    newdim = Dim{dim_label}([val], metadata=Dict(:unit => unit)) 
-    return rebuild(data;  data=new_data, dims=(dims(data)..., newdim))
+    newdim = Dim{dim_label}([val], metadata = Dict(:unit => unit))
+    return rebuild(data; data = new_data, dims = (dims(data)..., newdim))
 end
 
-function add_dim(data::ARPESData, dim_label::Symbol; unit::Union{Nothing, String}=nothing)
+function add_dim(data::ARPESData, dim_label::Symbol; unit::Union{Nothing,String} = nothing)
     if !haskey(metadata(data), dim_label)
-        throw(ArgumentError("A dimension with the name $dim_label does not exist in metadata of ARPESData."))
+        throw(
+            ArgumentError(
+                "A dimension with the name $dim_label does not exist in metadata of ARPESData.",
+            ),
+        )
     end
     val = metadata(data)[dim_label]
-    return add_dim(data, dim_label, val; unit=unit)
+    return add_dim(data, dim_label, val; unit = unit)
 end
 
-add_dim(data::ARPESData, dim_label::String, val::Real; unit::Union{Nothing, String}=nothing) = add_dim(data, Symbol(dim_label), val; unit=unit)
+add_dim(
+    data::ARPESData,
+    dim_label::String,
+    val::Real;
+    unit::Union{Nothing,String} = nothing,
+) = add_dim(data, Symbol(dim_label), val; unit = unit)
 
 function rename_dim(data, old::Symbol, new::Symbol)
     hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
@@ -44,10 +62,10 @@ function rename_dim(data, old::Symbol, new::Symbol)
     ds = dims(data)
     i = findfirst(d -> name(d) == old, ds)
 
-    d  = ds[i]
-    d2 = Dim{new}(lookup(d); metadata=metadata(d))
+    d = ds[i]
+    d2 = Dim{new}(lookup(d); metadata = metadata(d))
 
-    return rebuild(data; dims=Base.setindex(ds, d2, i))
+    return rebuild(data; dims = Base.setindex(ds, d2, i))
 end
 
 rename_dim(data, p::Pair{<:Symbol,<:Symbol}) = rename_dim(data, first(p), last(p))
