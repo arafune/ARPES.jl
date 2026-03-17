@@ -1,4 +1,4 @@
-using DimensionalData
+using DimensionalData: Dimension
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
@@ -22,7 +22,7 @@ Concatenate multiple `ARPESData` objects along the specified dimension.
 cat_arpes(data1, data2; dims=:energy)
 ```
 """
-function cat_arpes(args::ARPESData...; dims::Union{Symbol,Dim})
+function cat_arpes(args::ARPESData...; dims::Union{Symbol,Dimension})
     missing_indices = findall(d -> !hasdim(d, dims), args)
     if !isempty(missing_indices)
         error_msg = "Dimension :$dims not found in the following argument(s): $(join(missing_indices, ", "))"
