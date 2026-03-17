@@ -30,4 +30,5 @@ end
     stack_1_to_3_alt = cat_arpes(data_2_1, data_1_1, data_3_1; dims = :w)
     #cat_arpes(data_2_1, data_1_1, data_3_1; dims = Dim{:w}([1.0, 0.0, 3.0]))
     @test parent(lookup(stack_1_to_3_alt, :w)) == [1.0, 0.0, 3.0]
+    @test_throws ArgumentError cat_arpes(data_2_1, data_1_1, data3; dims = :w)
 end
