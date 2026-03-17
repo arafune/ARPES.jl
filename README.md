@@ -5,6 +5,7 @@
 
 ARPES.jl is a Julia package for working with **Angle-Resolved Photoemission Spectroscopy (ARPES)** data.
 It provides core data structures, dimensional axes utilities, I/O helpers, and **k-space conversion** utilities.
+It aims to enable consistent workflows via `ARPESData`, an extension of [DimensionalData.jl](https://rafaqz.github.io/DimensionalData.jl) based data container.
 
 > Julia compatibility: Julia 1.12 (see `Project.toml`)
 
@@ -32,7 +33,7 @@ Pkg.develop(url="https://github.com/arafune/ARPES.jl")
 using ARPES
 
 # Load ARPES data (file formats depend on the IO backends implemented in `src/io/`)
-data = load("path/to/data")
+data = load("path/to/data", loc="LOCATION")
 
 # k-space conversion (see `k_conversion`)
 kdata = k_conversion(data)
@@ -45,6 +46,11 @@ kdata = k_conversion(data)
 From `src/ARPES.jl`, the package exports:
 
 - Axes / dimensions: `kx`, `ky`, `kz`, `phi`, `psi`, `eV`, `detector_ch`, `ch2`, `delay`, `spin`
+  - `phi` : Emission angle of photoelectron along the analyzer slit direction.
+  - `psi` : Emission angle of photoelectron perpendicular to the analyzer slit direction.
+  - `kx`, `ky`, `kz` : Momentum components of the photoelectron, defined in the sample's reciprocal space.
+  - `eV` : Energy of the photoelectron in electron volts.
+
 - Units / signals: `CPS`, `Counts`
 - Core data type: `ARPESData`
 - I/O: `load`
