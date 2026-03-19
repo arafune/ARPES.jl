@@ -35,16 +35,16 @@ function shift(
         error_msg = "The dimension of the $data object must be larger than two-dimensional for this operation."
         throw(ArgumentError(error_msg))
     end
+    if !hasdim(data, other_dim)
+        error_msg = "Dimension :$other_dim not found in the data object."
+        throw(ArgumentError(error_msg))
+    end
     if length(values) != size(data, other_dim)
         error_msg = "Length of values vector ($(length(values))) does not match the size of the other dimension ($(size(data, other_dim)))."
         throw(ArgumentError(error_msg))
     end
     if !hasdim(data, shift_dim)
         error_msg = "Dimension :$shift_dim not found in the data object."
-        throw(ArgumentError(error_msg))
-    end
-    if !hasdim(data, other_dim)
-        error_msg = "Dimension :$other_dim not found in the data object."
         throw(ArgumentError(error_msg))
     end
 
