@@ -35,7 +35,34 @@ end
     @test_throws ArgumentError shift(shift_amount_along_y, :Y, :W, [-0.5])
 end
 
+function test_DimArray3D_irregular()
+    x = range(1.0, stop = 3.0, length = 3)
+    y = collect(range(5, stop = 8, length = 4))
+    z = [10.0, 10.9, 12.0, 13.0, 14.0]
+    data = 1.0:60.0 |> collect |> d->reshape(d, 3, 4, 5)
+    da = DimArray(data, (X = x, Y = y, Z = z))
+    return da
+end
 
+function test_DimArray3D_irregular_unordered()
+    x = range(1.0, stop = 3.0, length = 3)
+    y = collect(range(5, stop = 8, length = 4))
+    z = [10.0, 12.0, 10.9, 13.0, 14.0]
+    data = 1.0:60.0 |> collect |> d->reshape(d, 3, 4, 5)
+    da = DimArray(data, (X = x, Y = y, Z = z))
+    return da
+end
+
+
+@testset "Test for shift (2): Irregura DimArray" begin
+    test_dim3D_2 = test_DimArray3D_irregular()
+
+    shift_3d_2_2 = shift(test_dim3D_2, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
+    @test all(isnan, shift_3d_2_2[Z=At(14)])
+
+    test_dim3D_3 = test_DimArray3D_irregular_unordered()
+    @test_throws ArgumentError shift(test_dim3D_3, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
+end
 
 
 @testset "Test for cat_arpes" begin

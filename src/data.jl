@@ -53,7 +53,7 @@ function shift(
 
     coords_vec = collect(dims(data, shift_dim))
     if !_is_equal_spacing(coords_vec)
-        return _shift_irregular(data, shift_dim, values)
+        return _shift_irregular(data, shift_dim, other_dim, values)
     end
     c1 = coords_vec[1]
     Δ = coords_vec[2] - c1
@@ -156,47 +156,41 @@ end
 function _shift_irregular(
     data::AbstractDimArray,
     shift_dim::Union{Symbol,Dimension},
+    other_dim::Union{Symbol,Dimension},
     values::AbstractVector{<:Real},
 )
-
     sdim = dimnum(data, shift_dim)
+    odim = dimnum(data, other_dim)
 
-    coords_vec = collect(dims(data, shift_dim))
-    N = length(coords_vec)
-    @assert length(values) == N
-
-    # Check monotonicity (either strictly increasing or decreasing)
-    if !(all(diff(coords_vec) .> 0) || all(diff(coords_vec) .< 0))
+    coords = collect(parent(dims(data, shift_dim)))
+    if !(all(diff(coords) .> 0) || all(diff(coords) .< 0))
         throw(ArgumentError("shift_dim must be monotonic"))
     end
+    A = parent(data)
 
-    # Build inverse mapping: coordinate → index via linear interpolation
-    idxs = collect(1:N)
-    coord_to_index = extrapolate(interpolate((coords_vec,), idxs, Gridded(Linear())), NaN)
+    result = similar(A)
 
-    # Interpolator for the data itself (linear, on-grid)
-    itp = extrapolate(interpolate(data, BSpline(Linear()), OnGrid()), NaN)
-
-    result = similar(data)
-    inds = CartesianIndices(data)
+    inds = CartesianIndices(A)
 
     result .= (i -> begin
-        # Original physical coordinate along shift_dim
-        x = coords_vec[i[sdim]]
+        idx = Tuple(i)
 
-        # Apply shift in physical units
-        x_shifted = x - values[i[sdim]]
+        shift_val = values[i[odim]]
 
-        # Convert shifted coordinate to fractional index (irregular grid)
-        target_idx = coord_to_index(x_shifted)
+        slice = view(A, ntuple(d -> d == sdim ? Colon() : idx[d], ndims(A))...)
 
-        idx_tuple = Tuple(i)
-        itp(Base.setindex(idx_tuple, target_idx, sdim)...)
-    end).(inds)
+        itp = extrapolate(interpolate((coords,), slice, Gridded(Linear())), NaN)
 
-    return DimArray(result; dims = dims(data))
+        x = coords[i[sdim]]
+        x_shifted = x - shift_val
+
+        return itp(x_shifted)
+    end).(
+        inds,
+    )
+
+    return DimArray(result, dims(data))
 end
-
 
 """
     _shift_irregular(data::AbstractDimArray,
