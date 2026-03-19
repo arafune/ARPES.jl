@@ -258,7 +258,7 @@ end
 # --------------------------------------------
 
 # Ensure `dimsel` fixes exactly one dimension (so A[dimsel] is (n-1)-D).
-function _target_slice(A::AbstractDimArray, dimsel)
+function _get_validated_slice(A, dimsel)
     fullN = ndims(A)
     target = A[dimsel]
     sliceN = ndims(target)
@@ -278,13 +278,18 @@ end
 Return a new `DimArray` by copying `A` and replacing the (n-1)-D slice
 specified by `dimsel` (e.g. `Ti(At(t0))`) with `X`.
 
+# NOTE:
+# Only values of `X` are written. The resulting array keeps `A`'s dims/metadata.
+
+- `dimsel` must fix exactly one dimension (e.g. `Ti(At(t0))`),
+  leaving all other dimensions unmodified.
+
 Checks performed (always):
-- `dimsel` must reduce dimensionality by exactly 1
+- `dimsel` must fix exactly one dimension
 - `size(A[dimsel]) == size(X)`
 """
 function rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractArray)
-    target = _target_slice(A, dimsel)
-
+    target = _get_validated_slice(A, dimsel)
     size(target) == size(X) ||
         throw(DimensionMismatch("size(A[dimsel])=$(size(target)) != size(X)=$(size(X))"))
 
@@ -294,20 +299,21 @@ function rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractArray)
 end
 
 """
-    rebuild_with_slice(A::DimArray, dimsel, X::DimArray) -> DimArray
+    rebuild_with_slice(A::DimArray, dimsel, X::AbstractDimArray) -> DimArray
 
 Same as the `AbstractArray` method, but also checks dimension metadata.
 
 Checks performed (always):
-- `dimsel` must reduce dimensionality by exactly 1
 - `size(A[dimsel]) == size(X)`
 - `dims(A[dimsel]) == dims(X)`
+- `dimsel` must fix exactly one dimension (e.g. `Ti(At(t0))`)
+- Selecting multiple indices or no indices is not allowed
 
 Write policy:
 - Writes `parent(X)` so that the returned array keeps `A`'s dims/metadata.
 """
-function rebuild_with_slice(A::AbstractDimArray, dimsel, X::DimArray)
-    target = _target_slice(A, dimsel)
+function rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractDimArray)
+    target = _get_validated_slice(A, dimsel)
 
     size(target) == size(X) ||
         throw(DimensionMismatch("size(A[dimsel])=$(size(target)) != size(X)=$(size(X))"))

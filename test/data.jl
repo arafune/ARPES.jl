@@ -3,11 +3,100 @@ using ARPES
 using ARPES: add_dim, cat_arpes
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ARPES: _is_equal_spacing, _shift_irregular
+using DimensionalData
 using DimensionalData: Dim, hasdim, lookup
 
 if !@isdefined(test_ARPESData)
     include("fixture.jl")
 end
+
+
+@testset "Test for rebuild_with_slice" begin
+    # --- setup ---
+    x = range(1.0, stop = 3.0, length = 3)
+    y = collect(range(5, stop = 8, length = 4))
+    z = [10.0, 10.9, 12.0, 13.0, 14.0]
+
+    data = reshape(collect(1.0:60.0), 3, 4, 5)
+    A = DimArray(data, (X = x, Y = y, Z = z))
+
+    # valid selector (fix Z dimension)
+    dimsel = Z(At(z[3]))  # -> 3rd slice
+
+    # -----------------------------
+    # 1. Normal case (AbstractArray)
+    # -----------------------------
+    target = A[dimsel]
+    X = fill(999.0, size(target))
+
+    B = rebuild_with_slice(A, dimsel, X)
+
+    @test B !== A                       # ensure non-mutating
+    @test parent(B[dimsel]) == X        # values replaced correctly
+    @test dims(B) == dims(A)            # metadata preserved
+
+    # -----------------------------
+    # 2. Normal case (AbstractDimArray)
+    # -----------------------------
+    X_dim = DimArray(X, dims(target))
+
+    B2 = rebuild_with_slice(A, dimsel, X_dim)
+
+    @test parent(B2[dimsel]) == X       # values replaced correctly
+    @test dims(B2) == dims(A)           # metadata preserved
+
+    # -----------------------------
+    # 3. Size mismatch (both methods)
+    # -----------------------------
+    badX = fill(1.0, size(target, 1), size(target, 2) + 1)
+
+    @test_throws DimensionMismatch rebuild_with_slice(A, dimsel, badX)
+    @test_throws DimensionMismatch rebuild_with_slice(
+        A,
+        dimsel,
+        DimArray(badX, dims(target)),
+    )
+
+    # -----------------------------
+    # 4. Dimension metadata mismatch (DimArray only)
+    # -----------------------------
+    tdims = dims(target)
+
+    # modify only coordinate values of the first dimension
+    d1 = tdims[1]
+    d2 = tdims[2]
+
+    # extract raw values
+    vals = collect(d1)
+
+    # shift values slightly
+    wrong_vals = vals .+ 1e-6
+
+    # reconstruct dimension properly
+    wrong_d1 = rebuild(d1, wrong_vals)
+
+    wrong_dims = (wrong_d1, d2)
+
+    X_bad_dim = DimArray(X, wrong_dims)
+
+    @test_throws ArgumentError rebuild_with_slice(A, dimsel, X_bad_dim)
+
+    # -----------------------------
+    # 5. Invalid dimsel: fixes no dimension
+    # -----------------------------
+    bad_sel0 = (:)
+
+    @test_throws ArgumentError rebuild_with_slice(A, bad_sel0, X)
+
+    # -----------------------------
+    # 6. Invalid dimsel: fixes multiple dimensions
+    # -----------------------------
+    bad_sel2 = (DimensionalData.X(At(x[1])), DimensionalData.Y(At(y[1])))
+
+    @test_throws ArgumentError rebuild_with_slice(A, bad_sel2, X)
+
+end
+
 
 @testset "test for shift (1)" begin
     test_dim2D_1 = test_DimArray2D()
