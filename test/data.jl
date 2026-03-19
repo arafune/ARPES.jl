@@ -27,6 +27,12 @@ end
     @test all(isnan, shift_3d_2[Z=At(14)])
     shift_amount_along_y = DimArray([-0.5, -1.0, -1.5, -2.0], Y([5.0, 6.0, 7.0, 8]))
     @test isequal(parent(shift_3d_2), shift(test_dim3D_1, :Z, shift_amount_along_y))
+
+    @test_throws ArgumentError shift(test_dim3D_1, :Z, test_dim2D_1)
+    @test_throws ArgumentError shift(test_dim3D_1, :Z, :X, [-0.5, -1.0])
+    @test_throws ArgumentError shift(test_dim3D_1, :W, :Y, [-0.5, -1.0, -1.5, -2.0])
+    @test_throws ArgumentError shift(test_dim3D_1, :Z, :W, [-0.5, -1.0, -1.5, -2.0])
+    @test_throws ArgumentError shift(shift_amount_along_y, :Y, :W, [-0.5])
 end
 
 
