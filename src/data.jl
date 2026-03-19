@@ -143,11 +143,12 @@ function shift(
     shift_dim::Union{Symbol,Dimension},
     values::AbstractDimArray,
 )
+    @debug "values are AbstractDimArray"
     if ndims(values) != 1
         error_msg = "Values must be a one-dimensional array."
         throw(ArgumentError(error_msg))
     end
-    other_dim = name(dims(data))[1]
+    other_dim = name(dims(values))[1]
     values = parent(values)
     shift(data, shift_dim, other_dim, values)
 end
