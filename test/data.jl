@@ -59,9 +59,11 @@ end
 
     shift_3d_2_2 = shift(test_dim3D_2, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
     @test all(isnan, shift_3d_2_2[Z=At(14)])
+    shift_3d_2_3 = shift(test_dim3D_2, :Z, -0.5)
 
     test_dim3D_3 = test_DimArray3D_irregular_unordered()
     @test_throws ArgumentError shift(test_dim3D_3, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
+    @test_throws ArgumentError shift(test_dim3D_3, :Z, -0.5)
 end
 
 
