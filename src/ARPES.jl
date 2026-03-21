@@ -20,6 +20,7 @@ using .IO
 export load
 
 include("./dims.jl")
+include("./filter.jl")
 include("./k_conv/k_conversion.jl")
 using .KConversion
 export k_conversion

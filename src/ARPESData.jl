@@ -135,12 +135,7 @@ dims(A::ARPESData) = A.dims
 name(A::ARPESData) = A.name
 metadata(A::ARPESData) = A.metadata
 
-size(A::ARPESData) = size(A.data)
-axes(A::ARPESData) = axes(A.data)
-iterate(A::ARPESData, args...) = iterate(A.data, args...)
-
 Base.eltype(A::ARPESData) = eltype(parent(A))
-Base.ndims(A::ARPESData) = ndims(parent(A))
 Base.IndexStyle(::Type{<:ARPESData{T,N,D,R,A}}) where {T,N,D,R,A} = Base.IndexStyle(A)
 Base.Broadcast.broadcastable(A::ARPESData) = Base.Broadcast.broadcastable(parent(A))
 
