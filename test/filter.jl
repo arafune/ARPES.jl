@@ -1,6 +1,7 @@
 using Test
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
+using ARPES: _apply_along_dim
 using DimensionalData
 using DimensionalData: Dim, hasdim, lookup
 using Random
@@ -83,6 +84,7 @@ end
     Random.seed!(123)
 
     noise = 0.1 .* randn(length(t))
+    signal = sin.(t)
     noisy = signal .+ noise
 
     A = DimArray(noisy, (Dim{:t}(t),))
@@ -107,6 +109,8 @@ end
 end
 
 @testset "nan handling" begin
+    t = sort(rand(100) .* 10)
+    signal = sin.(t)
     y = copy(signal)
     y[50] = NaN
 
@@ -145,7 +149,7 @@ end
     # -------------------------------
     x = 1:4
     y = 1:3
-    data = reshape(collect(1:12), 4, 3)
+    data = reshape(collect(1.0:12.0), 4, 3)
 
     A2 = DimArray(data, (Dim{:x}(x), Dim{:y}(y)))
 
@@ -207,7 +211,7 @@ end
     B3d = _apply_along_dim(A3, :x, v -> v .- mean(v))
 
     for j = 1:3, k = 1:2
-        @test mean(parent(B3d)[:, j, k]) ≈ 0
+        @test mean(parent(B3d)[:, j, k]) ≈ 0 atol=1e-12
     end
 
     @test size(B3d) == size(A3)

@@ -12,6 +12,7 @@ include("./fixture.jl")
         include("ARPESData.jl")
         include("dims.jl")
         include("data.jl")
+        include("filter.jl")
     end
     @testset "k_conv" begin
         include("k_conv/preprocess.jl")

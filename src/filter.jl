@@ -71,7 +71,7 @@ function kalman_smooth_dim_llpf(A::AbstractDimArray, dim; R = 1.0, q = 1.0, mode
 
         # Initial state
         x̂ = zeros(nx)
-        P = Matrix(I, nx, nx) * 1e3
+        P = Matrix{Float64}(LinearAlgebra.I, nx, nx) * 1e3
 
         x_est = zeros(nx, n)
 
@@ -79,9 +79,9 @@ function kalman_smooth_dim_llpf(A::AbstractDimArray, dim; R = 1.0, q = 1.0, mode
             dt = Δt[t]
 
             if model == :rw
-                F = [1.0]
-                Q = [q * max(dt, 1e-12)]
-                H = [1.0]
+                F = reshape([1.0], 1, 1)
+                Q = reshape([q * max(dt, 1e-12)], 1, 1)
+                H = reshape([1.0], 1, 1)
             else # :cv
                 F = [
                     1.0 dt;
@@ -91,7 +91,7 @@ function kalman_smooth_dim_llpf(A::AbstractDimArray, dim; R = 1.0, q = 1.0, mode
                     dt^3/3 dt^2/2;
                     dt^2/2 dt
                 ]
-                H = [1.0 0.0]
+                H = reshape([1.0 0.0], 1, 2)
             end
 
             # Predict
@@ -100,10 +100,11 @@ function kalman_smooth_dim_llpf(A::AbstractDimArray, dim; R = 1.0, q = 1.0, mode
 
             # Update (skip NaN)
             if !isnan(y[t])
-                S = H * P * H' + R
+                S = (H*P*H')[1] + R
                 K = P * H' / S
-                x̂ = x̂ + K * (y[t] - H * x̂)
-                P = (I - K * H) * P
+                residual = y[t] - (H*x̂)[1]
+                x̂ = x̂ + K * residual
+                P = (LinearAlgebra.I - K * H) * P
             end
 
             x_est[:, t] = x̂
