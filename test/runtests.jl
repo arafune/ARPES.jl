@@ -11,7 +11,7 @@ include("./fixture.jl")
     @testset "Core" begin
         include("ARPESData.jl")
         include("dims.jl")
-        include("data.jl")
+        include("transform.jl")
         include("filter.jl")
     end
     @testset "k_conv" begin

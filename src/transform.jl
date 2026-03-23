@@ -57,7 +57,7 @@ function shift(
     end
     c1 = coords_vec[1]
     Δ = coords_vec[2] - c1
-    itp = extrapolate(interpolate(data, BSpline(Linear()), OnGrid()), NaN)
+    itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
 
     result = similar(data)
     inds = CartesianIndices(data)
@@ -106,7 +106,7 @@ function shift(data::AbstractDimArray, shift_dim::Union{Symbol,Dimension}, value
     c1 = coords_vec[1]
     Δ = coords_vec[2] - c1
 
-    itp = extrapolate(interpolate(data, BSpline(Linear()), OnGrid()), NaN)
+    itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
 
     result = similar(data)
     inds = CartesianIndices(data)
@@ -233,7 +233,7 @@ function _shift_irregular(
     coord_to_index = extrapolate(interpolate((coords_vec,), idxs, Gridded(Linear())), NaN)
 
     # Interpolator for data (index space)
-    itp = extrapolate(interpolate(data, BSpline(Linear()), OnGrid()), NaN)
+    itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
 
     result = similar(data)
     inds = CartesianIndices(data)
@@ -361,12 +361,4 @@ function cat_arpes(args::ARPESData...; dims::Union{Symbol,Dimension})
     return cat(args...; dims = target_dims)
 end
 
-_default_rtol(T) = T <: AbstractFloat ? √eps(T) : 0
 
-function _is_equal_spacing(x::AbstractVector; atol = 0.0, rtol = _default_rtol(eltype(x)))
-    if length(x) < 2
-        return true
-    end
-    diffs = diff(x)
-    return all(isapprox.(diff(diffs), 0; atol = atol, rtol = rtol))
-end
