@@ -186,40 +186,55 @@ function sg_filter_dim(
     polyorder::Int = 2,
     pixel = true,
 )
+    # 1. Determine n_pixels (must be odd)
     if pixel
         n_pixels = Int(window)
     else
-        s = step(dims(A, dim))
+        s = abs(step(dims(A, dim)))
         n_pixels = round(Int, window / s)
         n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
     end
-    @assert isodd(n_pixels) "Compute pixel window size ($n_pixels) must be odd"
-    @assert polyorder < n_pixels "polyorder must be < window  n_pixels is $n_pixels"
+
+    @assert isodd(n_pixels) "Window size ($n_pixels) must be odd"
+    @assert polyorder < n_pixels "polyorder ($polyorder) must be less than window ($n_pixels)"
 
     half = div(n_pixels, 2)
 
-    # Precompute convolution coefficients
-    x = collect((-half):half)
-    X = hcat([x .^ k for k = 0:polyorder]...)
-    # pseudo-inverse
-    coeff = (X'X) \ X'
-    # smoothing kernel (0th derivative at center)
-    kernel = coeff[1, :]
+    # 2. Precompute the Vandermonde matrix and its pseudo-inverse for a fixed window
+    x_grid = collect((-half):half)
+    X = hcat([x_grid .^ k for k = 0:polyorder]...)
+    # The pseudo-inverse matrix (polyorder+1 x n_pixels)
+    # Each row `m` gives the coefficients for the `(m-1)`-th derivative
+    B = (X'X) \ X'
 
     function sg_1d(y)
         n = length(y)
         out = similar(y)
         for i = 1:n
-            lo = max(1, i - half)
-            hi = min(n, i + half)
+            # Find the window that includes index i. 
+            # Clamp the center so the window [center-half : center+half] stays within 1:n.
+            center = clamp(i, half + 1, n - half)
+            lo, hi = center - half, center + half
 
-            # edge handling: shrink window
-            xx = collect(lo:hi) .- i
-            Xloc = hcat([xx .^ k for k = 0:polyorder]...)
-            coeffloc = (Xloc'Xloc) \ Xloc'
-            k = coeffloc[1, :]
+            # Distance from the window center to the current point i
+            # (ranges from -half at the very left edge to +half at the right edge)
+            relative_pos = i - center
 
-            out[i] = sum(k .* y[lo:hi])
+            # --- The Key Fix ---
+            # To get the smoothed value at `relative_pos`, we need to evaluate 
+            # the fitted polynomial: P(x) = c0 + c1*x + c2*x^2 + ...
+            # This is equivalent to taking a weighted sum of the window, 
+            # where weights are: w = B[1,:] + B[2,:]*x + B[3,:]*x^2 + ...
+
+            weights = zeros(eltype(B), n_pixels)
+            for k = 0:polyorder
+                # B[k+1, :] gives the weights for the k-th derivative term
+                # We scale it by (relative_pos^k / k!) if we were doing derivatives, 
+                # but for polynomial evaluation at `relative_pos`:
+                weights .+= B[k+1, :] .* (relative_pos^k)
+            end
+
+            out[i] = sum(weights .* y[lo:hi])
         end
         return out
     end
