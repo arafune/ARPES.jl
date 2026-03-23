@@ -1,11 +1,25 @@
 using Test
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
-using ARPES: _apply_along_dim
+using ARPES: _apply_along_dim, _is_equal_spacing
 using DimensionalData
 using DimensionalData: Dim, hasdim, lookup
 using Random
 using Statistics
+
+
+
+@testset "Test for _is_equal_spacing" begin
+    @test _is_equal_spacing([1])
+    @test _is_equal_spacing([1, 2, 3])
+    @test _is_equal_spacing([1.0, 2.0, 3.0, 4.0, 5.0])
+    @test !_is_equal_spacing([1, 2, 4])
+    @test !_is_equal_spacing([1.0, 2.0, 4.0])
+    @test _is_equal_spacing([1, 2]; atol = 0.5)
+    @test_logs (:warn, r"x is not equally spaced") begin
+    _is_equal_spacing([1.0, 2.0, 2.5]; atol=0.0, rtol=0.0, verbose=true)
+    end
+end
 
 
 @testset "_apply_along_dim" begin
