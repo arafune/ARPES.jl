@@ -182,7 +182,7 @@ Apply a Savitzky-Golay filter along the specified dimension.
 function sg_filter_dim(
     A::AbstractDimArray,
     dim;
-    window::Int,
+    window::Real,
     polyorder::Int = 2,
     pixel = true,
 )
@@ -194,8 +194,7 @@ function sg_filter_dim(
         n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
     end
     @assert isodd(n_pixels) "Compute pixel window size ($n_pixels) must be odd"
-
-    @assert polyorder < n_pixels "polyorder must be < window"
+    @assert polyorder < n_pixels "polyorder must be < window  n_pixels is $n_pixels"
 
     half = div(n_pixels, 2)
 

@@ -155,6 +155,18 @@ end
     @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
 end
 
+@testset "sg_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = sg_filter_dim(A, :t, window = 0.4, polyorder = 2, pixel = false)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
+end
+
+
 @testset "kalman_smooth_dim_llpf" begin
     using Random
     Random.seed!(123)
