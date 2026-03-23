@@ -1,5 +1,4 @@
 using DimensionalData
-using DimensionalData: AbstractDimArray
 using ..ARPES: _apply_along_dim
 
 

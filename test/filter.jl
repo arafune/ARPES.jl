@@ -191,9 +191,11 @@ end
     Z_rnd = DimArray(sin.(t_rnd), (Dim{:t}(t_rnd)))
     A_rnd = DimArray(sin.(t_rnd) .+ noise_level .* randn(n), (Dim{:t}(t_rnd)))
     B_rnd = kalman_smooth_dim_llpf(A_rnd, :t, R = 0.01, q = 0.1)
+    B_rnd_cv = kalman_smooth_dim_llpf(A_rnd, :t, R = 0.01, q = 0.1, model=:cv)
 
     @test size(B_rnd) == size(A_rnd)
     @test sum((Z_rnd-B_rnd) .^ 2) < sum((Z_rnd-A_rnd) .^ 2)
+    @test sum((Z_rnd-B_rnd_cv) .^ 2) < sum((Z_rnd-A_rnd) .^ 2)
 end
 @testset "kalman non-uniform dt" begin
     t = sort(rand(100) .* 10)
