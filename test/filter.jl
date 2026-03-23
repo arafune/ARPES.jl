@@ -7,19 +7,28 @@ using DimensionalData: Dim, hasdim, lookup
 using Random
 using Statistics
 
-# 1. Basic setting
-#
-#using Random
+# Basic setting
+
+function _random_monotonic_vector(n::Int, start = 0.0, stop = 10.0)
+    @assert n>1 "n must be greater than 1)"
+    v = rand(n-2)
+
+    while length(unique(v)) < n-2
+        push!(v, rand())
+        v = unique(v)
+    end
+
+    v = sort(vcat(0.0, 1.0, v))
+    return v .* (stop - start) .+ start
+end
 
 Random.seed!(123)
 
 n = 200
 t = range(0, 10, length = n)
-noise_level = 0.1
+t_rnd = _random_monotonic_vector(n, 0, 10)
 
-# -------------------------------
-# Signals
-# -------------------------------
+noise_level = 0.1
 
 # Sine wave
 signal_sine = sin.(t)
@@ -30,10 +39,6 @@ gaussian(x, μ, σ) = exp.(-((x .- μ) .^ 2) ./ (2σ^2))
 
 signal_gauss = gaussian(t, 5.0, 0.5)
 noisy_gauss = signal_gauss .+ noise_level .* randn(n)
-
-# -------------------------------
-# Test data
-# -------------------------------
 
 test_data = (
     sine = (clean = signal_sine, noisy = noisy_sine),
@@ -51,6 +56,18 @@ test_data = (
     @test var(B) < var(A)
 end
 
+@testset "boxcar_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = boxcar_filter_dim(A, :t, window = 5)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
+end
+
+
 @testset "gaussian_filter_dim" begin
     A = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
     B = gaussian_filter_dim(A, :t, sigma = 2.0)
@@ -61,12 +78,35 @@ end
     @test var(diff(parent(B))) < var(diff(parent(A)))
 end
 
+
+@testset "gaussian_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = gaussian_filter_dim(A, :t, sigma = 5)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
+end
+
 @testset "binomial_filter_dim" begin
     A = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
     B = binomial_filter_dim(A, :t, order = 4)
 
     @test size(B) == size(A)
     @test var(B) < var(A)
+end
+
+@testset "binomial_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = binomial_filter_dim(A, :t, order = 4)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
 end
 
 @testset "sg_filter_dim polynomial preservation" begin
@@ -77,6 +117,17 @@ end
     B = sg_filter_dim(A, :t, window = 7, polyorder = 2)
 
     @test parent(B) ≈ parent(A) atol=1e-10
+end
+
+@testset "sg_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = sg_filter_dim(A, :t, window = 7, polyorder = 2)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
 end
 
 @testset "kalman_smooth_dim_llpf" begin
