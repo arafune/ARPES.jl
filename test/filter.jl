@@ -67,6 +67,18 @@ end
     @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
 end
 
+@testset "boxcar_filter_dim with noise" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = boxcar_filter_dim(A, :t, window = 0.1, pixel = false)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
+end
+
+
 
 @testset "gaussian_filter_dim" begin
     A = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
@@ -89,6 +101,19 @@ end
 
     @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
 end
+
+@testset "gaussian_filter_dim with noise with physical value" begin
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+    B = gaussian_filter_dim(A, :t, sigma = 0.05, pixel = false)
+
+    @test size(B) == size(A)
+    @test dims(B) == dims(A)
+
+    @test sum((Z-B) .^ 2) < sum((Z-A) .^ 2)
+end
+
+
 
 @testset "binomial_filter_dim" begin
     A = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))

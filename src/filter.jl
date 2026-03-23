@@ -134,13 +134,11 @@ Apply a boxcar (moving average) filter along the specified dimension.
 # Returns
 - Smoothed DimArray
 """
-function boxcar_filter_dim(A::AbstractDimArray, dim; window::Int, pixel = true)
+function boxcar_filter_dim(A::AbstractDimArray, dim; window::Real, pixel = true)
     if pixel
         n_pixels = Int(window)
     else
-        # その次元のステップサイズ（間隔）を取得
         s = step(dims(A, dim))
-        # 物理幅をステップサイズで割り、最も近い奇数のピクセル数に変換
         n_pixels = round(Int, window / s)
         n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
     end
@@ -191,9 +189,7 @@ function sg_filter_dim(
     if pixel
         n_pixels = Int(window)
     else
-        # その次元のステップサイズ（間隔）を取得
         s = step(dims(A, dim))
-        # 物理幅をステップサイズで割り、最も近い奇数のピクセル数に変換
         n_pixels = round(Int, window / s)
         n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
     end
