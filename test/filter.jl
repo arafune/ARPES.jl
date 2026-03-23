@@ -197,6 +197,7 @@ end
     @test sum((Z_rnd-B_rnd) .^ 2) < sum((Z_rnd-A_rnd) .^ 2)
     @test sum((Z_rnd-B_rnd_cv) .^ 2) < sum((Z_rnd-A_rnd) .^ 2)
 end
+
 @testset "kalman non-uniform dt" begin
     t = sort(rand(100) .* 10)
     signal = sin.(t)

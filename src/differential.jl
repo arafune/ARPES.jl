@@ -1,8 +1,11 @@
 using DimensionalData
 using ..ARPES: _apply_along_dim
 
+export differential
 
-function differential(A::AbstractDimArray, dim, order::Integer)
+function differential(A::AbstractDimArray, dim; order::Integer=1)
+# NOTE: higher-order derivatives for nonuniform grids
+# are computed by repeated first derivatives (approximate)
     order < 0 && error("order must be ≥ 0")
     order == 0 && return A
 
@@ -10,7 +13,7 @@ function differential(A::AbstractDimArray, dim, order::Integer)
     x = collect(d)
 
     if _is_equal_spacing(x)
-        Δx = float(x[2] - x[1])
+        Δx = x[2] - x[1]
         f = y -> _diff_uniform(y, Δx, order)
     else
         f = y -> _diff_nonuniform(y, x, order)
