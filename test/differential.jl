@@ -15,6 +15,8 @@ using Statistics
   Z_diff_1 = differential(Z, :t)
   cos_rnd = cos.(t_rnd)
   cos_clean = cos.(test_data.t)
+  @test maximum(parent(Z_rnd_diff_1) - cos_rnd) <  0.005
+  @test maximum(parent(Z_diff_1) - cos_clean) <  0.005
 end
 
 
