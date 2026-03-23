@@ -134,9 +134,20 @@ Apply a boxcar (moving average) filter along the specified dimension.
 # Returns
 - Smoothed DimArray
 """
-function boxcar_filter_dim(A::AbstractDimArray, dim; window::Int)
-    @assert isodd(window) "window size must be odd"
-    half = div(window, 2)
+function boxcar_filter_dim(A::AbstractDimArray, dim; window::Int, pixel = true)
+    if pixel
+        n_pixels = Int(window)
+    else
+        # その次元のステップサイズ（間隔）を取得
+        s = step(dims(A, dim))
+        # 物理幅をステップサイズで割り、最も近い奇数のピクセル数に変換
+        n_pixels = round(Int, window / s)
+        n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
+    end
+    @assert isodd(n_pixels) "Compute pixel window size ($n_pixels) must be odd"
+    @assert n_pixels >= 1 "Window size is too small for the given dimension step"
+
+    half = div(n_pixels, 2)
 
     function boxcar_1d(y)
         n = length(y)
@@ -170,12 +181,27 @@ Apply a Savitzky-Golay filter along the specified dimension.
 # Returns
 - Smoothed DimArray
 """
-function sg_filter_dim(A::AbstractDimArray, dim; window::Int, polyorder::Int)
+function sg_filter_dim(
+    A::AbstractDimArray,
+    dim;
+    window::Int,
+    polyorder::Int = 2,
+    pixel = true,
+)
+    if pixel
+        n_pixels = Int(window)
+    else
+        # その次元のステップサイズ（間隔）を取得
+        s = step(dims(A, dim))
+        # 物理幅をステップサイズで割り、最も近い奇数のピクセル数に変換
+        n_pixels = round(Int, window / s)
+        n_pixels = iseven(n_pixels) ? n_pixels + 1 : n_pixels
+    end
+    @assert isodd(n_pixels) "Compute pixel window size ($n_pixels) must be odd"
 
-    @assert isodd(window) "window size must be odd"
-    @assert polyorder < window "polyorder must be < window"
+    @assert polyorder < n_pixels "polyorder must be < window"
 
-    half = div(window, 2)
+    half = div(n_pixels, 2)
 
     # Precompute convolution coefficients
     x = collect((-half):half)
@@ -262,9 +288,11 @@ end
 # Gaussian filter
 # -------------------------------
 """
-    gaussian_filter_dim(A::AbstractDimArray, dim; sigma::Real, radius::Int=ceil(Int, 3sigma))
+    gaussian_filter_dim(A::AbstractDimArray, dim; sigma::Real, radius::Int=ceil(Int, 3sigma), pixel=true)
 
 Apply a Gaussian smoothing filter along the specified dimension.
+
+If `pixel=false`, `sigma` is interpreted in physical units of the dimension.
 
 # Arguments
 - A: Input DimArray
@@ -279,14 +307,31 @@ function gaussian_filter_dim(
     A::AbstractDimArray,
     dim;
     sigma::Real,
-    radius::Int = ceil(Int, 3sigma),
+    radius::Int = 0,
+    pixel = true,
 )
     @assert sigma > 0 "sigma must be positive"
 
-    x = collect((-radius):radius)
-    kernel = exp.(-(x .^ 2) ./ (2sigma^2))
+    # 1. Convert physical sigma to pixel-based sigma if necessary
+    sigma_pix = if pixel
+        Float64(sigma)
+    else
+        # Get the absolute step size of the dimension (e.g., eV or degrees)
+        s = abs(step(dims(A, dim)))
+        sigma / s
+    end
+
+    # 2. Determine the kernel radius
+    # Default to 3 * sigma to cover 99.7% of the Gaussian distribution
+    r = radius > 0 ? radius : ceil(Int, 3 * sigma_pix)
+
+    # 3. Create the Gaussian kernel
+    x = collect((-r):r)
+    kernel = exp.(-(x .^ 2) ./ (2 * sigma_pix^2))
+    # Pre-normalize, though we will re-normalize at boundaries
     kernel ./= sum(kernel)
 
+    # Internal function to process a 1D slice
     function gaussian_1d(y)
         n = length(y)
         out = similar(y)
@@ -294,13 +339,16 @@ function gaussian_filter_dim(
             acc = zero(eltype(y))
             wsum = zero(eltype(y))
             for j = 1:length(kernel)
-                idx = i + (j - radius - 1)
+                # Data index corresponding to the kernel index j
+                idx = i + x[j]
+
                 if 1 ≤ idx ≤ n
                     w = kernel[j]
                     acc += w * y[idx]
                     wsum += w
                 end
             end
+            # Re-normalize to handle boundary truncation correctly
             out[i] = acc / wsum
         end
         return out
