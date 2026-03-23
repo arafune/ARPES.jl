@@ -10,6 +10,7 @@ include("./fixture.jl")
     end
     @testset "Core" begin
         include("ARPESData.jl")
+        include("utils.jl")
         include("dims.jl")
         include("transform.jl")
         include("filter.jl")
