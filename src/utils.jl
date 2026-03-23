@@ -3,12 +3,38 @@ using DimensionalData: AbstractDimArray, rebuild
 
 _default_rtol(T) = T <: AbstractFloat ? √eps(T) : 0
 
-function _is_equal_spacing(x::AbstractVector; atol = 0.0, rtol = _default_rtol(eltype(x)))
+function _is_equal_spacing(x::AbstractVector; atol = 0.0, rtol = _default_rtol(eltype(x)), verbose=false)
     if length(x) < 2
+        verbose && @info "length(x) < 2 => true"
         return true
     end
-    diffs = diff(x)
-    return all(isapprox.(diff(diffs), 0; atol = atol, rtol = rtol))
+    
+    d= diff(x)
+    dmin, dmax = extrema(d)
+    scale = max(abs(dmin), abs(dmax))
+    allowed = max(atol, rtol * scale)
+    spread = dmax - dmin
+
+    ok = spread ≤ allowed
+
+    if verbose && !ok
+        required_atol = max(0.0, spread - rtol * scale)
+        @warn """
+        x is not equally spaced under current tolerances.
+          spread = dmax - dmin = $(spread)
+          dmin=$(dmin), dmax=$(dmax)
+          current atol=$(atol)
+          rtol=$(rtol), scale=$(scale) => rtol*scale=$(rtol*scale)
+          allowed=max(atol, rtol*scale)=$(allowed)
+
+        To make this pass with the same rtol, set:
+          atol ≥ $(required_atol)   (minimum additional absolute tolerance needed)
+        (Or increase rtol.)
+        """
+    end
+
+    return ok
+
 end
 
 # -------------------------------
