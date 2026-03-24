@@ -42,6 +42,23 @@ function _is_equal_spacing(
 
 end
 
+function _step(x::AbstractRange)
+    return step(x)
+end
+
+function _step(
+    x::AbstractVector;
+    atol = 0.0,
+    rtol = _default_rtol(eltype(x)),
+    verbose = false,
+)
+    if _is_equal_spacing(x; atol = atol, rtol = rtol, verbose = verbose)
+        return x[2] - x[1]
+    else
+        throw(ArgumentError("x is not equally spaced."))
+    end
+end
+
 # -------------------------------
 # Utility: apply 1D function along a dimension
 # -------------------------------
