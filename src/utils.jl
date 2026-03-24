@@ -3,13 +3,18 @@ using DimensionalData: AbstractDimArray, rebuild
 
 _default_rtol(T) = T <: AbstractFloat ? √eps(T) : 0
 
-function _is_equal_spacing(x::AbstractVector; atol = 0.0, rtol = _default_rtol(eltype(x)), verbose=false)
+function _is_equal_spacing(
+    x::AbstractVector;
+    atol = 0.0,
+    rtol = _default_rtol(eltype(x)),
+    verbose = false,
+)
     if length(x) < 2
         verbose && @info "length(x) < 2 => true"
         return true
     end
-    
-    d= diff(x)
+
+    d = diff(x)
     dmin, dmax = extrema(d)
     scale = max(abs(dmin), abs(dmax))
     allowed = max(atol, rtol * scale)
@@ -69,6 +74,30 @@ function _apply_along_dim(A::AbstractDimArray, dim, f::Function)
         r = f(y)
 
         # Write back into the slice
+        out[idx...] .= r
+    end
+
+    return rebuild(A, out)
+end
+
+
+function _apply_along_dims(A::AbstractDimArray, dims, f::Function)
+    ds = DimensionalData.dims(A, dims)
+    dim_indices = DimensionalData.dimnum(A, ds)
+
+    out = similar(parent(A))
+
+    # loopする側（それ以外の次元）
+    other_axes = ntuple(i -> i in dim_indices ? Base.OneTo(1) : axes(A, i), ndims(A))
+
+    @views for I in CartesianIndices(other_axes)
+        idx = ntuple(i -> i in dim_indices ? Colon() : I[i], ndims(A))
+
+        # slice（ND）
+        block = copy(A[idx...])
+
+        r = f(block)
+
         out[idx...] .= r
     end
 
