@@ -22,7 +22,7 @@ export load
 
 include("./dims.jl")
 include("./filter.jl")
-include("./differential.jl")
+include("./derivative.jl")
 include("./k_conv/k_conversion.jl")
 using .KConversion
 export k_conversion

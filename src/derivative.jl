@@ -1,9 +1,9 @@
 using DimensionalData
 using ..ARPES: _apply_along_dim
 
-export differential
+export derivative
 
-function differential(A::AbstractDimArray, dim; order::Integer=1)
+function derivative(A::AbstractDimArray, dim; order::Integer=1)
 # NOTE: higher-order derivatives for nonuniform grids
 # are computed by repeated first derivatives (approximate)
     order < 0 && error("order must be ≥ 0")
