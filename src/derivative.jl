@@ -2,7 +2,7 @@ using LinearAlgebra
 using DimensionalData
 using DimensionalData: rebuild
 using DimensionalData: DimArray
-using ..ARPES: _apply_along_dim
+using ..ARPES: _apply_along_dim, _apply_along_dims
 
 export derivative
 
@@ -189,14 +189,19 @@ Normalize `A` by the local gradient modulus computed over the specified pair of
 dimensions.
 
 This operation returns `A ./ _gradient_modulus(A)` rebuilt as a dimensional
-array with the original metadata preserved.
+array with the original metadata preserved. For arrays with additional
+dimensions, the normalization is applied independently to each block selected by
+`dims`.
 """
 function minimum_gradient(
     A::AbstractDimArray,
     dims::Tuple{T,T},
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
-    gradients = A ./ _gradient_modulus(A)
-    return rebuild(A, data = gradients)
+    return _apply_along_dims(A, dims, _minimum_gradient_2d)
+end
+
+function _minimum_gradient_2d(A::AbstractDimArray)
+    return parent(A) ./ _gradient_modulus(A)
 end
 
 """
@@ -268,7 +273,9 @@ Compute the 1D maximum-curvature transform of `A` along `dim`.
 
 This method uses the first and second derivatives along `dim` to enhance
 dispersive features. The tuning parameter `alpha` must be positive and controls
-the regularization strength in the curvature denominator.
+the regularization strength in the curvature denominator. For arrays with
+additional dimensions, the transform is applied independently to each slice
+along `dim`.
 """
 function maximum_curvature(
     A::AbstractDimArray,
@@ -277,12 +284,8 @@ function maximum_curvature(
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
     @assert alpha > 0
     dim = DimensionalData.dims(A, dim)
-    dx = _step(dim)
-    df = derivative(A, dim)
-    d2f = derivative(A, dim, order = 2)
-    denominator = (alpha * abs(minimum(df)) ^ 2 .+ d2f .^ 2) .^ 1.5
-    curv = d2f ./ denominator
-    return rebuild(A, data = curv)
+    x = collect(dim)
+    return _apply_along_dim(A, dim, y -> _maximum_curvature_1d(y, x, alpha))
 end
 
 """
@@ -293,7 +296,9 @@ Compute the 2D maximum-curvature transform of `A` over the dimension pair
 
 First- and second-order derivatives, including the mixed derivative, are used
 to build the 2D curvature expression. `alpha` must be positive, and `weight2d`
-controls the relative scaling between the two dimensions.
+controls the relative scaling between the two dimensions. For arrays with
+additional dimensions, the transform is applied independently to each block
+selected by `dims`.
 """
 function maximum_curvature(
     A::AbstractDimArray,
@@ -301,26 +306,50 @@ function maximum_curvature(
     alpha::Real = 0.1,
     weight2d::Real = 1.0,
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
-    @assert weight2d != 0
     @assert alpha > 0
+    @assert weight2d != 0
+    return _apply_along_dims(A, dims, block -> _maximum_curvature_2d(block, dims, alpha, weight2d))
+end
+
+function _maximum_curvature_1d(y::AbstractVector, x::AbstractVector, alpha::Real)
+    df, d2f = if _is_equal_spacing(x)
+        dx = _step(x)
+        _diff_uniform(y, dx, 1), _diff_uniform(y, dx, 2)
+    else
+        _diff_nonuniform(y, x, 1), _diff_nonuniform(y, x, 2)
+    end
+    denominator = (alpha * abs(minimum(df))^2 .+ d2f.^2).^1.5
+    return d2f ./ denominator
+end
+
+function _maximum_curvature_2d(
+    A::AbstractDimArray,
+    dims::Tuple{T,T},
+    alpha::Real,
+    weight2d::Real,
+) where {T<:Union{DimensionalData.Dimension,Symbol}}
     dim1 = DimensionalData.dims(A, dims[1])
     dim2 = DimensionalData.dims(A, dims[2])
-    dx, dy = _step(dim1), _step(dim2)
+    dx, dy = _step(collect(dim1)), _step(collect(dim2))
     df = derivative(A, dim1), derivative(A, dim2)
     d2f = (
         derivative(A, dim1, order = 2),
         derivative(A, dim2, order = 2),
         derivative(df[1], dim2),
     )
+    df1 = parent(df[1])
+    df2 = parent(df[2])
+    d2f1 = parent(d2f[1])
+    d2f2 = parent(d2f[2])
+    d2f12 = parent(d2f[3])
     weight = weight2d > 0 ? (dx / dy)^2 * weight2d : (dx / dy)^2 / abs(weight2d)
     avg_x = abs(minimum(df[1]))
     avg_y = abs(minimum(df[2]))
-    avg = maximum(avg_x^2, weight * avg_y^2)
+    avg = max(avg_x^2, weight * avg_y^2)
     numerator =
-        (alpha * avg + weight * df[1] .* df[2]) .* d2f[2] -
-        2 * weight * df[1] .* df[2] .* d2f[3] +
-        weight * (alpha * avg + df[2] .* df[2]) .* d2f[1]
-    denominator = (alpha * avg + weight * df[1] .^ 2 + df[2] .^ 2) .^ 1.5
-    curv = numerator ./ denominator
-    return rebuild(A, data = curv)
+        (alpha * avg .+ weight .* df1 .* df2) .* d2f2 -
+        2 .* weight .* df1 .* df2 .* d2f12 +
+        weight .* (alpha * avg .+ df2 .* df2) .* d2f1
+    denominator = (alpha * avg .+ weight .* df1 .^ 2 .+ df2 .^ 2) .^ 1.5
+    return numerator ./ denominator
 end
