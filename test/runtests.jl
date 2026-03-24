@@ -10,8 +10,11 @@ include("./fixture.jl")
     end
     @testset "Core" begin
         include("ARPESData.jl")
+        include("utils.jl")
         include("dims.jl")
-        include("data.jl")
+        include("transform.jl")
+        include("filter.jl")
+        include("derivative.jl")
     end
     @testset "k_conv" begin
         include("k_conv/preprocess.jl")
