@@ -13,6 +13,30 @@ include("preprocess.jl")
 include("postprocess.jl")
 export k_conversion
 
+"""
+    k_conversion(data::ARPESData; kx_range=nothing, ky_range=nothing, kz_range=nothing,
+                 eV_range=nothing, β0=0.0, ξ0=0.0, δ0=0.0, χ0=0.0)
+
+Convert angle-resolved ARPES data to momentum-space coordinates.
+
+The input must contain `eV` and `phi`, and either a `psi` dimension or a dataset-level
+`:β` metadata entry. The dataset metadata is expected to include
+`:analyzer_configuration`, `:workfunction`, `:hv`, `:ξ`, `:δ`, and `:χ`.
+The `eV` dimension metadata must include `:energy_definition`.
+
+# Keywords
+- `kx_range`, `ky_range`, `kz_range`: Optional target momentum axes. If omitted, the code
+  estimates suitable in-plane momentum ranges from the input geometry.
+- `eV_range`: Optional target energy axis. Defaults to the input `eV` lookup.
+- `β0`, `ξ0`, `δ0`, `χ0`: Additional angular offsets in degrees applied during mapping.
+
+# Returns
+- `ARPESData`: A new dataset sampled on momentum-space axes.
+
+# Notes
+- The current implementation supports `BindingEnergy` and `FinalStateEnergy`.
+- The output preserves the dataset-level metadata from the input.
+"""
 function k_conversion(
     data::ARPESData;
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,

@@ -58,6 +58,24 @@ add_dim(
     unit::Union{Nothing,String} = nothing,
 ) = add_dim(data, Symbol(dim_label), val; unit = unit)
 
+"""
+    rename_dim(data::AbstractDimArray, old::Symbol, new::Symbol)
+    rename_dim(data::AbstractDimArray, p::Pair{<:Symbol,<:Symbol})
+
+Rename a dimension in a dimensional array while preserving its lookup values and metadata.
+
+# Arguments
+- `data::AbstractDimArray`: Input dimensional array.
+- `old::Symbol`: Existing dimension label.
+- `new::Symbol`: New dimension label.
+- `p::Pair`: Convenience form such as `:theta => :phi`.
+
+# Returns
+- A rebuilt dimensional array with the renamed dimension.
+
+# Errors
+- Throws `ArgumentError` if `old` does not exist or if `new` already exists.
+"""
 function rename_dim(data, old::Symbol, new::Symbol)
     hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
     hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
