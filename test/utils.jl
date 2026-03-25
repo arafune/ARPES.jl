@@ -223,7 +223,6 @@ end
 
     @test _step(d_range) == step(r)
 
-
     # -------------------------------
     # 2. Equally spaced Vector Dimension
     # -------------------------------
@@ -231,7 +230,6 @@ end
     d_vec_eq = Dim{:x}(v_eq)
 
     @test _step(d_vec_eq) ≈ 0.5
-
 
     # -------------------------------
     # 3. Non-equally spaced Vector Dimension

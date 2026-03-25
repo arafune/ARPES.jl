@@ -2,7 +2,7 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export add_dim, shift_dim, negate_dim, rename_dim
+export add_dim, convert_dim, shift_dim, negate_dim, rename_dim
 
 """
     add_dim(data::AbstractDimArray, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
@@ -57,6 +57,70 @@ add_dim(
     val::Real;
     unit::Union{Nothing,String} = nothing,
 ) = add_dim(data, Symbol(dim_label), val; unit = unit)
+
+"""
+    convert_dim(dim::DimensionalData.Dimension, f::Function)
+    convert_dim(dim::DimensionalData.Dimension, dim_label::Symbol, f::Function)
+    convert_dim(dim::DimensionalData.Dimension, dim_label::String, f::Function)
+
+Apply a coordinate transform `f` to the lookup values of a dimension and return a new
+dimension with preserved metadata.
+
+# Arguments
+- `dim::DimensionalData.Dimension`: An existing dimension object whose lookup values are
+  transformed. For example, this can be a value such as `Dim{:x}(0:0.5:10)` taken from a
+  dimensional array or constructed directly.
+- `dim_label::Symbol` / `dim_label::String`: The label to use for the returned dimension.
+  Pass the current label to keep the same dimension name, or a different label if the
+  transformed axis should be renamed at the same time.
+- `f::Function`: A function applied elementwise to the lookup values of `dim`.
+
+# Returns
+- A new `DimensionalData.Dimension` with transformed coordinates and the same metadata as
+  `dim`.
+
+If the transformed coordinates remain equally spaced, as determined by the shared
+`_is_equal_spacing` helper from `utils.jl`, the returned dimension uses a range lookup so
+`step` is still available. Otherwise the transformed coordinates are stored as a vector
+lookup.
+
+# Examples
+```julia
+dim = Dim{:x}(0:0.5:10)
+
+convert_dim(dim, x -> 2x + 1)         # keep the label :x
+convert_dim(dim, :energy, log)        # rename the dimension to :energy
+```
+"""
+function convert_dim(dim::DimensionalData.Dimension, f::Function)
+    return convert_dim(dim, name(dim), f)
+end
+
+function convert_dim(
+    dim::DimensionalData.Dimension,
+    dim_label::Symbol,
+    f::Function,
+)
+    converted_values = f.(parent(lookup(dim)))
+    new_lookup = _converted_lookup(converted_values)
+    return Dim{dim_label}(new_lookup; metadata = metadata(dim))
+end
+
+function convert_dim(
+    dim::DimensionalData.Dimension,
+    dim_label::String,
+    f::Function,
+)
+    return convert_dim(dim, Symbol(dim_label), f)
+end
+
+function convert_dim(dim::DimensionalData.Dimension, f)
+    throw(ArgumentError("f must be a function."))
+end
+
+function convert_dim(dim::DimensionalData.Dimension, dim_label::Union{Symbol,String}, f)
+    throw(ArgumentError("f must be a function."))
+end
 
 """
     rename_dim(data::AbstractDimArray, old::Symbol, new::Symbol)
@@ -248,6 +312,14 @@ end
 
 function _shift_index(index::AbstractArray, shift)
     return index .+ shift
+end
+
+function _converted_lookup(values::AbstractVector)
+    if length(values) ≥ 2 && _is_equal_spacing(values)
+        spacing = (values[end] - values[1]) / (length(values) - 1)
+        return range(values[1], step = spacing, length = length(values))
+    end
+    return collect(values)
 end
 
 """
