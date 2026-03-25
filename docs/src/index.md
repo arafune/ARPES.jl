@@ -19,7 +19,8 @@ The package is built around three ideas:
 - `ARPESData` as the main container for spectra and metadata,
 - canonical dimensions such as `eV`, `phi`, `psi`, `kx`, `ky`, and `kz`,
 - file loading through `load`,
-- dimension-aware transforms and smoothing utilities, and
+- dimension-aware axis editing, transforms, smoothing, derivatives, and curvature
+  enhancement, and
 - `k_conversion` for angle-to-momentum conversion.
 
 ## Quick start
@@ -27,8 +28,8 @@ The package is built around three ideas:
 ```julia
 using ARPES
 
-# Load a dataset.
-data = load("path/to/file.itx")
+# Load a dataset. The current concrete location-specific loader is SPD.
+data = load("path/to/file.itx"; loc = "SPD")
 
 # Add any experiment-specific metadata needed by downstream analysis.
 data = ARPESData(
@@ -37,6 +38,9 @@ data = ARPESData(
         :workfunction => 4.5,
     ),
 )
+
+# Adjust or reinterpret a physical axis without touching the intensity array.
+data = convert_dim(data, :phi, x -> 0.5x)
 
 # Convert the angular data to k-space.
 kdata = k_conversion(data)

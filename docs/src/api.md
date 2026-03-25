@@ -23,6 +23,7 @@ load
 
 ```@docs
 add_dim
+convert_dim
 rename_dim
 shift_dim
 negate_dim

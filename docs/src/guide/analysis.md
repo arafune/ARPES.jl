@@ -12,12 +12,15 @@ shifting data, smoothing noisy spectra, and taking numerical derivatives.
 Use these helpers when the axis definition itself must change:
 
 - `add_dim` adds a new scalar axis to a dataset,
+- `convert_dim` applies a coordinate transform to an existing axis lookup while
+  preserving its label and metadata,
 - `rename_dim` renames a dimension label,
 - `shift_dim` shifts axis lookup values, and
 - `negate_dim` reverses the sign of an axis.
 
 These operations modify the coordinate system while preserving the underlying array values.
-They are useful for calibration, offset correction, and harmonizing imported datasets.
+They are useful for calibration, unit conversion, offset correction, and harmonizing imported
+datasets.
 
 ## Data shifting by interpolation
 

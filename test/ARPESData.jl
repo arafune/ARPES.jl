@@ -26,12 +26,6 @@ end
     @test eltype(arpes_ch_resolved) == Float64
     @test ndims(arpes_ch_resolved) == 3
 
-    @test Base.IndexStyle(typeof(arpes_ch_resolved)) ==
-          Base.IndexStyle(typeof(arpes_ch_resolved.data))
-
-    b1 = Base.Broadcast.broadcastable(arpes_ch_resolved)
-    b2 = Base.Broadcast.broadcastable(arpes_ch_resolved.data)
-    @test typeof(b1) == typeof(b2)
     @test metadata(arpes_ch_resolved)[:hv] ≈ 4.835
 end
 

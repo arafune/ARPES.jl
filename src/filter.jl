@@ -161,6 +161,8 @@ function boxcar_filter_dim(A::AbstractDimArray, dim; window::Real, pixel = true)
     return _apply_along_dim(A, dim, boxcar_1d)
 end
 
+boxcar_filter_dim(A::AbstractDimArray, dim, window::Real) = boxcar_filter_dim(A, dim; window=window, pixel=true)
+
 # -------------------------------
 # Savitzky-Golay filter
 # -------------------------------
@@ -182,7 +184,7 @@ Apply a Savitzky-Golay filter along the specified dimension.
 function sg_filter_dim(
     A::AbstractDimArray,
     dim;
-    window::Real,
+    window::Real = 25,
     polyorder::Int = 2,
     pixel = true,
 )
@@ -242,6 +244,11 @@ function sg_filter_dim(
     return _apply_along_dim(A, dim, sg_1d)
 end
 
+sg_filter_dim(
+    A::AbstractDimArray,
+    dim,
+    window::Real) = sg_filter_dim(A, dim; window=window, polyorder=2, pixel=true)
+
 # -------------------------------
 # Binomial filter
 # -------------------------------
@@ -260,7 +267,7 @@ Kernel corresponds to coefficients of (1/2^n) * [C(n,0), ..., C(n,n)].
 # Returns
 - Smoothed DimArray
 """
-function binomial_filter_dim(A::AbstractDimArray, dim; order::Int)
+function binomial_filter_dim(A::AbstractDimArray, dim; order::Int = 2)
 
     @assert order ≥ 1 "order must be ≥ 1"
 
@@ -293,6 +300,9 @@ function binomial_filter_dim(A::AbstractDimArray, dim; order::Int)
 
     return _apply_along_dim(A, dim, binomial_1d)
 end
+
+
+binomial_filter_dim(A::AbstractDimArray, dim, order::Int) = binomial_filter_dim(A, dim; order=order)
 
 # -------------------------------
 # Gaussian filter
@@ -367,3 +377,13 @@ function gaussian_filter_dim(
     return _apply_along_dim(A, dim, gaussian_1d)
 end
 
+gaussian_filter_dim(
+    A::AbstractDimArray,
+    dim,
+    sigma::Real,
+    radius::Int) = gaussian_filter_dim(A, dim; sigma=sigma, radius=radius, pixel=true)
+gaussian_filter_dim(
+    A::AbstractDimArray,
+    dim,
+    sigma::Real,
+    ) = gaussian_filter_dim(A, dim; sigma=sigma, pixel=true)
