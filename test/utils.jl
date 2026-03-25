@@ -1,7 +1,7 @@
 using Test
 using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
-using ARPES: _apply_along_dim, _is_equal_spacing, _apply_along_dims
+using ARPES: _apply_along_dim, _is_equal_spacing, _apply_along_dims, _step
 using DimensionalData
 using DimensionalData: Dim, hasdim, lookup
 using Random
@@ -213,3 +213,43 @@ end
 
 end
 
+@testset "_step for DimensionalData.Dimension" begin
+
+    # -------------------------------
+    # 1. Range-based Dimension
+    # -------------------------------
+    r = 0:0.5:10
+    d_range = Dim{:x}(r)
+
+    @test _step(d_range) == step(r)
+
+
+    # -------------------------------
+    # 2. Equally spaced Vector Dimension
+    # -------------------------------
+    v_eq = collect(0:0.5:10)  # Vectorだが等間隔
+    d_vec_eq = Dim{:x}(v_eq)
+
+    @test _step(d_vec_eq) ≈ 0.5
+
+
+    # -------------------------------
+    # 3. Non-equally spaced Vector Dimension
+    # -------------------------------
+    v_neq = [0.0, 0.5, 1.1, 2.0]
+    d_vec_neq = Dim{:x}(v_neq)
+
+    @test_throws ArgumentError _step(d_vec_neq)
+
+end
+
+@testset "_step for AbstractRange" begin
+    r = 0:0.5:10
+    @test _step(r) == 0.5
+end
+
+@testset "_step rethrow path" begin
+    d = Dim{:x}(0:10)
+    Base.step(x::typeof(d)) = error("unexpected error")
+    @test_throws ErrorException _step(d)
+end

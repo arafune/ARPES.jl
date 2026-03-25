@@ -1,10 +1,10 @@
 using Test
 using ARPES
-using ARPES: maximum_curvature, minimum_gradient
+using ARPES: curvature, minimum_gradient
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ARPES: _vector_diff, _gradient_modulus
 using DimensionalData
-using DimensionalData: Dim, hasdim, lookup
+using DimensionalData: hasdim, lookup
 using Random
 using Statistics
 
@@ -48,25 +48,34 @@ if !@isdefined(test_data)
     )
 end
 
-@testset "maximum_curvature along one dimension on higher-dimensional data" begin
+@testset "curvature along one dimension on higher-dimensional data" begin
     t = range(0, 2π; length = 200)
     scales = [1.0, 2.0, 0.5]
     data = reduce(hcat, [scale .* sin.(t) for scale in scales])
     A = DimArray(data, (Dim{:t}(t), Dim{:rep}(1:length(scales))))
 
-    B = maximum_curvature(A, :t, 0.1)
+    B = curvature(A, :t, 0.1)
 
     @test dims(B) == dims(A)
     @test size(B) == size(A)
 
+    # --- global scale を明示的に計算 ---
+    df = parent(derivative(A, :t))
+    global_scale = maximum(abs.(df))^2
+
     for j in axes(data, 2)
-        Aj = DimArray(data[:, j], (Dim{:t}(t),))
-        Bref = maximum_curvature(Aj, :t, 0.1)
-        @test parent(B)[:, j] ≈ parent(Bref)
+        y = data[:, j]
+
+        df_j = parent(derivative(DimArray(y, (Dim{:t}(t),)), :t))
+        d2f_j = parent(derivative(DimArray(y, (Dim{:t}(t),)), :t, order = 2))
+
+        Bref = d2f_j ./ (0.1 * global_scale .+ df_j .^ 2) .^ 1.5
+
+        @test parent(B)[:, j] ≈ Bref
     end
 end
 
-@testset "maximum_curvature over dimension pair on higher-dimensional data" begin
+@testset "curvature over dimension pair on higher-dimensional data" begin
     x = range(-1, 1; length = 41)
     y = range(-1.5, 1.5; length = 31)
     scales = [1.0, 2.5]
@@ -74,14 +83,14 @@ end
     data = cat([scale .* base for scale in scales]...; dims = 3)
     A = DimArray(data, (Dim{:x}(x), Dim{:y}(y), Dim{:rep}(1:length(scales))))
 
-    B = maximum_curvature(A, (:x, :y), 0.1, 1.0)
+    B = curvature(A, (:x, :y), 0.1, 1.0)
 
     @test dims(B) == dims(A)
     @test size(B) == size(A)
 
     for k in axes(data, 3)
         Ak = DimArray(data[:, :, k], (Dim{:x}(x), Dim{:y}(y)))
-        Bref = maximum_curvature(Ak, (:x, :y), 0.1, 1.0)
+        Bref = curvature(Ak, (:x, :y), 0.1, 1.0)
         @test parent(B)[:, :, k] ≈ parent(Bref)
     end
 end
@@ -118,6 +127,21 @@ end
     @test maximum(parent(Z_rnd_diff_1) - cos_rnd) < 0.005
     @test maximum(parent(Z_diff_1) - cos_clean) < 0.005
 end
+
+@testset "Test for derivative 1st order with accuracy=1" begin
+    t_rnd = _random_monotonic_vector(200)
+    Z_rnd = DimArray(sin.(t_rnd), (Dim{:t}(t_rnd)))
+    Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t)))
+    #
+    Z_rnd_diff_1 = derivative(Z_rnd, :t)
+    Z_diff_1 = derivative(Z, :t, accuracy = 1)
+    cos_rnd = cos.(t_rnd)
+    cos_clean = cos.(test_data.t)
+    @test maximum(parent(Z_rnd_diff_1) - cos_rnd) < 0.005
+    @test maximum(parent(Z_diff_1) - cos_clean) < 0.005
+end
+
+
 
 @testset "Test for _vector_diff and _gradient_modulus" begin
     test_array = [

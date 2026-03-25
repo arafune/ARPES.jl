@@ -39,7 +39,18 @@ function _is_equal_spacing(
     end
 
     return ok
+end
 
+function _step(x::DimensionalData.Dimension)
+    try
+        step(x)
+    catch e
+        if e isa MethodError || e isa ArgumentError
+            _step(parent(lookup(x)))
+        else
+            rethrow(e)
+        end
+    end
 end
 
 function _step(x::AbstractRange)
@@ -53,6 +64,7 @@ function _step(
     verbose = false,
 )
     if _is_equal_spacing(x; atol = atol, rtol = rtol, verbose = verbose)
+        @assert length(x) ≥ 2
         return x[2] - x[1]
     else
         throw(ArgumentError("x is not equally spaced."))

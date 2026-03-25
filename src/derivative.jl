@@ -4,7 +4,7 @@ using DimensionalData: rebuild
 using DimensionalData: DimArray
 using ..ARPES: _apply_along_dim, _apply_along_dims
 
-export derivative
+export derivative, curvature, minimum_gradient
 
 """
     derivative(A::AbstractDimArray, dim; order::Integer=1)
@@ -30,6 +30,9 @@ while preserving the original array shape, dimensions, and metadata.
 # Requirements
 - For `order > 0`, the lookup of `dim` must contain at least two coordinate
   values.
+- When the coordinates are treated as equally spaced, the current implementation
+  uses second-order one-sided boundary stencils and therefore requires at least
+  three samples along `dim`.
 
 # Examples
 ```julia
@@ -60,17 +63,20 @@ true
 
 # Notes
 - For equally spaced coordinates, a central-difference stencil is used in the
-  interior and forward/backward differences are used at the boundaries.
-- For nonuniform coordinates, the first derivative is computed using the local
-  spacing of neighboring points.
+  interior and, by default, second-order one-sided differences are used at the
+  boundaries.
+- For nonuniform coordinates, the implementation currently uses a three-point
+  formula in the interior and first-order forward/backward differences at the
+  boundaries.
 - For `order > 1` on nonuniform grids, higher-order derivatives are obtained by
-  repeated application of the first-derivative operator, which is an
-  approximation.
+  repeated application of that first-derivative operator. In other words, the
+  nonuniform-grid path is currently based on repeated first-derivative
+  approximations rather than a dedicated higher-order scheme.
 - When `dim` does not exist in `A`, the corresponding error from
   `DimensionalData.dims` is propagated.
 - `order < 0` throws an error.
 """
-function derivative(A::AbstractDimArray, dim; order::Integer = 1)
+function derivative(A::AbstractDimArray, dim; order::Integer = 1, accuracy::Int = 2)
     # NOTE: higher-order derivatives for nonuniform grids
     # are computed by repeated first derivatives (approximate)
     order < 0 && error("order must be ≥ 0")
@@ -81,7 +87,7 @@ function derivative(A::AbstractDimArray, dim; order::Integer = 1)
 
     if _is_equal_spacing(x)
         Δx = x[2] - x[1]
-        f = y -> _diff_uniform(y, Δx, order)
+        f = y -> _diff_uniform(y, Δx, order; accuracy = accuracy)
     else
         f = y -> _diff_nonuniform(y, x, order)
     end
@@ -90,44 +96,58 @@ function derivative(A::AbstractDimArray, dim; order::Integer = 1)
 end
 
 """
-    _diff_uniform(y::AbstractVector, Δx::Real, order::Int)
+    _diff_uniform(y::AbstractVector, Δx::Real, order::Int; accuracy::Int=2)
 
 Compute a numerical derivative of order `order` for uniformly spaced samples
 `y` with spacing `Δx`.
 
 This helper promotes the input to floating-point values and applies the
-first-order finite-difference operator repeatedly.
+first-order finite-difference operator repeatedly. The keyword `accuracy`
+selects the boundary stencil order passed to `_central_diff_uniform`.
 """
-function _diff_uniform(y::AbstractVector, Δx::Real, order::Int)
+function _diff_uniform(y::AbstractVector, Δx::Real, order::Int; accuracy::Int = 2)
     out = copy(float.(y))
 
     for _ = 1:order
-        out = _central_diff_uniform(out, Δx)
+        out = _central_diff_uniform(out, Δx; accuracy = accuracy)
     end
 
     return out
 end
 
 """
-    _central_diff_uniform(y, Δx)
+    _central_diff_uniform(y, Δx; accuracy::Int=2)
 
 Compute the first derivative of uniformly spaced samples `y` using central
-differences in the interior and first-order one-sided differences at the
-boundaries.
+differences in the interior.
+
+The keyword `accuracy` controls the one-sided stencil used at the boundaries:
+
+- `accuracy = 2` (default): second-order one-sided differences
+- `accuracy = 1`: first-order forward/backward differences
 """
-function _central_diff_uniform(y, Δx)
+
+_central_diff_uniform(y, Δx; accuracy::Int = 2) =
+    _central_diff_uniform(y, Δx, Val(accuracy))
+function _central_diff_uniform(y, Δx, ::Val{2})
     n = length(y)
     out = similar(y)
-
-    # central difference (interior)
     @inbounds for i = 2:(n-1)
         out[i] = (y[i+1] - y[i-1]) / (2Δx)
     end
+    out[1] = (-3y[1] + 4y[2] - y[3]) / (2Δx)
+    out[end] = (3y[end] - 4y[end-1] + y[end-2]) / (2Δx)
+    return out
+end
 
-    # forward/backward at boundaries
+function _central_diff_uniform(y, Δx, ::Val{1})
+    n = length(y)
+    out = similar(y)
+    @inbounds for i = 2:(n-1)
+        out[i] = (y[i+1] - y[i-1]) / (2Δx)
+    end
     out[1] = (y[2] - y[1]) / Δx
     out[end] = (y[end] - y[end-1]) / Δx
-
     return out
 end
 
@@ -267,7 +287,7 @@ function _gradient_modulus(data::Union{AbstractDimArray,AbstractArray}; delta::I
 end
 
 """
-    maximum_curvature(A::AbstractDimArray, dim, alpha::Real=0.1)
+    curvature(A::AbstractDimArray, dim, alpha::Real=0.1)
 
 Compute the 1D maximum-curvature transform of `A` along `dim`.
 
@@ -277,21 +297,22 @@ the regularization strength in the curvature denominator. For arrays with
 additional dimensions, the transform is applied independently to each slice
 along `dim`.
 """
-function maximum_curvature(
+function curvature(
     A::AbstractDimArray,
     dim::T,
     alpha::Real = 0.1,
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
     @assert alpha > 0
     dim = DimensionalData.dims(A, dim)
-    x = collect(dim)
-    return _apply_along_dim(A, dim, y -> _maximum_curvature_1d(y, x, alpha))
+    df, d2f = derivative(A, dim), derivative(A, dim, order = 2)
+    demoninator = (alpha * maximum(abs.(parent(df)))^2 .+ parent(df) .^ 2) .^ 1.5
+    rebuild(A, parent(d2f) ./ demoninator)
 end
 
 """
-    maximum_curvature(A::AbstractDimArray, dims::Tuple, alpha::Real=0.1, weight2d::Real=1.0)
+    curvature(A::AbstractDimArray, dims::Tuple, alpha::Real=0.1, weight2d::Real=1.0)
 
-Compute the 2D maximum-curvature transform of `A` over the dimension pair
+Compute the 2D curvature transform of `A` over the dimension pair
 `dims`.
 
 First- and second-order derivatives, including the mixed derivative, are used
@@ -300,7 +321,7 @@ controls the relative scaling between the two dimensions. For arrays with
 additional dimensions, the transform is applied independently to each block
 selected by `dims`.
 """
-function maximum_curvature(
+function curvature(
     A::AbstractDimArray,
     dims::Tuple{T,T},
     alpha::Real = 0.1,
@@ -308,25 +329,32 @@ function maximum_curvature(
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
     @assert alpha > 0
     @assert weight2d != 0
-    return _apply_along_dims(A, dims, block -> _maximum_curvature_2d(block, dims, alpha, weight2d))
+
+    dim1 = DimensionalData.dims(A, dims[1])
+    dim2 = DimensionalData.dims(A, dims[2])
+    df = derivative(A, dim1), derivative(A, dim2)
+    df1 = parent(df[1])
+    df2 = parent(df[2])
+
+    dx, dy = _step(collect(dim1)), _step(collect(dim2))
+    weight = weight2d > 0 ? (dx / dy)^2 * weight2d : (dx / dy)^2 / abs(weight2d)
+    scale_x = maximum(abs.(df1))^2
+    scale_y = maximum(abs.(df2))^2
+    avg_global = max(scale_x, weight * scale_y)
+
+    return _apply_along_dims(
+        A,
+        dims,
+        block -> _curvature_2d(block, dims, alpha, weight2d, avg_global),
+    )
 end
 
-function _maximum_curvature_1d(y::AbstractVector, x::AbstractVector, alpha::Real)
-    df, d2f = if _is_equal_spacing(x)
-        dx = _step(x)
-        _diff_uniform(y, dx, 1), _diff_uniform(y, dx, 2)
-    else
-        _diff_nonuniform(y, x, 1), _diff_nonuniform(y, x, 2)
-    end
-    denominator = (alpha * abs(minimum(df))^2 .+ d2f.^2).^1.5
-    return d2f ./ denominator
-end
-
-function _maximum_curvature_2d(
+function _curvature_2d(
     A::AbstractDimArray,
     dims::Tuple{T,T},
     alpha::Real,
     weight2d::Real,
+    avg::Real,
 ) where {T<:Union{DimensionalData.Dimension,Symbol}}
     dim1 = DimensionalData.dims(A, dims[1])
     dim2 = DimensionalData.dims(A, dims[2])
@@ -342,14 +370,14 @@ function _maximum_curvature_2d(
     d2f1 = parent(d2f[1])
     d2f2 = parent(d2f[2])
     d2f12 = parent(d2f[3])
+
     weight = weight2d > 0 ? (dx / dy)^2 * weight2d : (dx / dy)^2 / abs(weight2d)
-    avg_x = abs(minimum(df[1]))
-    avg_y = abs(minimum(df[2]))
-    avg = max(avg_x^2, weight * avg_y^2)
+
     numerator =
-        (alpha * avg .+ weight .* df1 .* df2) .* d2f2 -
-        2 .* weight .* df1 .* df2 .* d2f12 +
+        (alpha * avg .+ weight .* df1 .* df2) .* d2f2 - 2 .* weight .* df1 .* df2 .* d2f12 +
         weight .* (alpha * avg .+ df2 .* df2) .* d2f1
     denominator = (alpha * avg .+ weight .* df1 .^ 2 .+ df2 .^ 2) .^ 1.5
     return numerator ./ denominator
 end
+
+

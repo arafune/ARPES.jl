@@ -1,3 +1,8 @@
 /Manifest*.toml
 /docs/Manifest*.toml
 /docs/build/
+
+# Coverage artifacts
+*.cov
+/lcov.info
+/coverage_html/
