@@ -60,24 +60,25 @@ add_dim(
 
 """
     convert_dim(dim::DimensionalData.Dimension, f::Function)
-    convert_dim(dim::DimensionalData.Dimension, dim_label::Symbol, f::Function)
-    convert_dim(dim::DimensionalData.Dimension, dim_label::String, f::Function)
+    convert_dim(data::AbstractDimArray, dim::Union{DimensionalData.Dimension,Symbol}, f::Function)
 
 Apply a coordinate transform `f` to the lookup values of a dimension and return a new
-dimension with preserved metadata.
+dimension with preserved metadata. When called on an `AbstractDimArray`, only the selected
+axis lookup is transformed and the array is rebuilt with the same parent data and metadata.
 
 # Arguments
 - `dim::DimensionalData.Dimension`: An existing dimension object whose lookup values are
   transformed. For example, this can be a value such as `Dim{:x}(0:0.5:10)` taken from a
   dimensional array or constructed directly.
-- `dim_label::Symbol` / `dim_label::String`: The label to use for the returned dimension.
-  Pass the current label to keep the same dimension name, or a different label if the
-  transformed axis should be renamed at the same time.
+- `data::AbstractDimArray`: A dimensional array whose selected dimension should be
+  transformed in place via rebuilding.
+- `dim::Union{DimensionalData.Dimension,Symbol}`: The dimension to transform in `data`,
+  identified either by the dimension object itself or by its name.
 - `f::Function`: A function applied elementwise to the lookup values of `dim`.
 
 # Returns
 - A new `DimensionalData.Dimension` with transformed coordinates and the same metadata as
-  `dim`.
+  `dim`. The original dimension name is preserved.
 
 If the transformed coordinates remain equally spaced, as determined by the shared
 `_is_equal_spacing` helper from `utils.jl`, the returned dimension uses a range lookup so
@@ -88,37 +89,36 @@ lookup.
 ```julia
 dim = Dim{:x}(0:0.5:10)
 
-convert_dim(dim, x -> 2x + 1)         # keep the label :x
-convert_dim(dim, :energy, log)        # rename the dimension to :energy
+convert_dim(dim, x -> 2x + 1)
 ```
 """
 function convert_dim(dim::DimensionalData.Dimension, f::Function)
-    return convert_dim(dim, name(dim), f)
-end
-
-function convert_dim(
-    dim::DimensionalData.Dimension,
-    dim_label::Symbol,
-    f::Function,
-)
     converted_values = f.(parent(lookup(dim)))
     new_lookup = _converted_lookup(converted_values)
-    return Dim{dim_label}(new_lookup; metadata = metadata(dim))
+    return Dim{name(dim)}(new_lookup; metadata = metadata(dim))
 end
 
 function convert_dim(
-    dim::DimensionalData.Dimension,
-    dim_label::String,
+    data::AbstractDimArray,
+    dim::Union{DimensionalData.Dimension,Symbol},
     f::Function,
 )
-    return convert_dim(dim, Symbol(dim_label), f)
+    if !hasdim(data, dim)
+        throw(ArgumentError("Dimension with name $dim not found in AbstractDimArray."))
+    end
+    dim = dims(data, dim)
+    idx = findfirst(d -> name(d) == name(dim), dims(data))
+
+    converted = convert_dim(dim, f)
+    new_dims = Base.setindex(dims(data), converted, idx)
+    return rebuild(data; dims = new_dims)
 end
 
-function convert_dim(dim::DimensionalData.Dimension, f)
+function convert_dim(_::DimensionalData.Dimension, f)
     throw(ArgumentError("f must be a function."))
 end
 
-function convert_dim(dim::DimensionalData.Dimension, dim_label::Union{Symbol,String}, f)
+function convert_dim(_::AbstractDimArray, _::Union{DimensionalData.Dimension,Symbol}, f)
     throw(ArgumentError("f must be a function."))
 end
 

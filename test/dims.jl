@@ -19,14 +19,14 @@ end
     nonlinear_func = x -> x^2 + 3x + 2.0
     @testset "Test by range based Dimension" begin
         @testset "Test for convert_dim by linear function" begin
-            converted_range = convert_dim(dim_range, :x, linear_func)
+            converted_range = convert_dim(dim_range, linear_func)
             @test converted_range isa DimensionalData.Dimension
             @test parent(lookup(converted_range)) isa AbstractRange
             @test step(converted_range) == 2 * step(dim_range)
             @test metadata(converted_range) == common_metadata
         end
         @testset "Test for convert_dim by non-linear function" begin
-            converted_range_nonlinear = convert_dim(dim_range, :x, nonlinear_func)
+            converted_range_nonlinear = convert_dim(dim_range, nonlinear_func)
             @test converted_range_nonlinear isa DimensionalData.Dimension
             @test parent(lookup(converted_range_nonlinear)) isa AbstractVector
             @test metadata(converted_range_nonlinear) == common_metadata
@@ -36,7 +36,7 @@ end
     end
     @testset "Test by vector based Dimension" begin
         @testset "Test for convert_dim by linear function" begin
-            converted_vector = convert_dim(dim_vector, :y, linear_func)
+            converted_vector = convert_dim(dim_vector, linear_func)
             @test converted_vector isa DimensionalData.Dimension
             @test parent(lookup(converted_vector)) isa AbstractRange
             @test metadata(converted_vector) == common_metadata
@@ -44,7 +44,7 @@ end
             @test step(converted_vector) == 2 * _step(dim_vector)
         end
         @testset "Test for convert_dim by non-linear function" begin
-            converted_vector = convert_dim(dim_vector, :y, nonlinear_func)
+            converted_vector = convert_dim(dim_vector, nonlinear_func)
             @test converted_vector isa DimensionalData.Dimension
             @test parent(lookup(converted_vector)) isa AbstractVector
             @test metadata(converted_vector) == common_metadata
@@ -54,7 +54,7 @@ end
     end
     @testset "Test by non-uniform vector based Dimension" begin
         @testset "Test for convert_dim by linear function" begin
-            converted_non_uniform = convert_dim(dim_vector_non_uniform, :z, linear_func)
+            converted_non_uniform = convert_dim(dim_vector_non_uniform, linear_func)
             @test converted_non_uniform isa DimensionalData.Dimension
             @test parent(lookup(converted_non_uniform)) isa AbstractVector
             @test metadata(converted_non_uniform) == Dict(:unit => "nm")
@@ -62,7 +62,7 @@ end
             @test_throws MethodError step(converted_non_uniform)
         end
         @testset "Test for convert_dim by non-linear function" begin
-            converted_non_uniform = convert_dim(dim_vector_non_uniform, :z, nonlinear_func)
+            converted_non_uniform = convert_dim(dim_vector_non_uniform, nonlinear_func)
             @test converted_non_uniform isa DimensionalData.Dimension
             @test parent(lookup(converted_non_uniform)) isa AbstractVector
             @test metadata(converted_non_uniform) == Dict(:unit => "nm")
@@ -71,9 +71,9 @@ end
         end
     end
     @testset "Test for error handling in convert_dim" begin
-        @test_throws ArgumentError convert_dim(dim_range, :x, 1.0)
-        @test_throws ArgumentError convert_dim(dim_vector, :y, "not a function")
-        @test_throws ArgumentError convert_dim(dim_vector_non_uniform, :z, missing)
+        @test_throws ArgumentError convert_dim(dim_range, 1.0)
+        @test_throws ArgumentError convert_dim(dim_vector, "not a function")
+        @test_throws ArgumentError convert_dim(dim_vector_non_uniform, missing)
     end
 end
 
@@ -91,17 +91,41 @@ end
         @test step(converted) == 2 * step(dim_range)
     end
 
-    @testset "String label overload" begin
-        converted = convert_dim(dim_range, "energy", linear_func)
-        @test converted isa DimensionalData.Dimension
-        @test name(converted) == :energy
-        @test parent(lookup(converted)) isa AbstractRange
-        @test metadata(converted) == common_metadata
-        @test step(converted) == 2 * step(dim_range)
-    end
-
     @testset "Non-function overload" begin
         @test_throws ArgumentError convert_dim(dim_range, 1.0)
+    end
+end
+
+@testset "Test for convert_dim on AbstractDimArray" begin
+    data = test_ARPESData()
+    linear_func = x -> 2x + 1.0
+    nonlinear_func = x -> x^2 + 3x + 2.0
+
+    @testset "Symbol selector" begin
+        converted = convert_dim(data, :phi, linear_func)
+        @test converted isa ARPESData
+        @test name.(dims(converted)) == name.(dims(data))
+        @test name(dims(converted)[1]) == :phi
+        @test parent(lookup(dims(converted)[1])) isa AbstractRange
+        @test step(dims(converted)[1]) == 2 * step(dims(data)[1])
+        @test dims(converted)[2] == dims(data)[2]
+        @test metadata(converted) == metadata(data)
+    end
+
+    @testset "Dimension selector" begin
+        converted = convert_dim(data, dims(data)[2], nonlinear_func)
+        @test converted isa ARPESData
+        @test name.(dims(converted)) == name.(dims(data))
+        @test name(dims(converted)[2]) == name(dims(data)[2])
+        @test parent(lookup(dims(converted)[2])) isa AbstractVector
+        @test_throws MethodError step(dims(converted)[2])
+        @test dims(converted)[1] == dims(data)[1]
+        @test metadata(converted) == metadata(data)
+    end
+
+    @testset "Error handling" begin
+        @test_throws ArgumentError convert_dim(data, :delay, linear_func)
+        @test_throws ArgumentError convert_dim(data, :phi, 1.0)
     end
 end
 
