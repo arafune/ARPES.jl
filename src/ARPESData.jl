@@ -30,6 +30,7 @@ Container for ARPES data.
     * `:analyzer_configuration` - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
     * `:hv` - the photon energy in eV (should match the :hv in the data array metadata)
       (Note: in future, consider to use :hν instead of :hv)
+    * `:history` - a list of transformations applied to the data, for provenance tracking.
     * `:β`: used for momentum conversion. if the dims include psi, angle `β` is not required.
     * `:ξ`: used for momentum conversion.
     * `:χ`: used for momentum conversion.
