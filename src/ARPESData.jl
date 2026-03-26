@@ -99,9 +99,16 @@ function ARPESData(
     energy_def::EnergyDefinition = BindingEnergy,
     additional_metadata::AbstractDict = Dict(),
 )
-    extra_metadata =
-        Dict(:analyzer_configuration => analyzer_config, :intensity_unit => intensity_unit)
-    new_metadata = merge(Dict(metadata(data)), extra_metadata, Dict(additional_metadata))
+    default_metadata_for_arpesdata = Dict(
+        :analyzer_configuration => analyzer_config,
+        :intensity_unit => intensity_unit,
+        :history => Union{String,Pair}[],
+    )
+    new_metadata = merge(
+        Dict(metadata(data)),
+        default_metadata_for_arpesdata,
+        Dict(additional_metadata),
+    )
 
     # Add :energy_definition to the metadata of the eV dimension
     new_dims = map(dims(data)) do d
