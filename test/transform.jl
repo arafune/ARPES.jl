@@ -177,3 +177,10 @@ end
     @test_throws ArgumentError cat_arpes(data_2_1, data_1_1, data3; dims = :w)
 end
 
+@testset "Test for rebin" begin
+    spd_standard = test_spd_standard()
+    # Rebin along phi with new edges
+    rebin_spd = regin(spd_standard, :phi, 10)
+    @test size(rebin_spd) == (10, 601)
+    @test ARPES._is_equal_spacing(dims(rebin_spd, :phi))
+end
