@@ -181,7 +181,10 @@ end
     spd_standard = test_spd_standard()
     # Rebin along phi with new edges
     rebin_spd = rebin(spd_standard, :phi, 10)
+    rebin_spd_by_bins = rebin(spd_standard, :phi, Bins(10))
     @test size(rebin_spd) == (10, 601)
-    @test rebin_spd == rebin(spd_standard, :phi, Bins(10))
+    @test parent(rebin_spd) == parent(rebin(spd_standard, :phi, Bins(10)))
     @test ARPES._is_equal_spacing(lookup(rebin_spd, :phi))
+    @test metadata(rebin_spd)[:history][end] == "rebin by 10 along phi"
+    @test metadata(rebin_spd)[:history][end] == "rebin by Bins(identity, 10) along phi"
 end
