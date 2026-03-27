@@ -1,6 +1,7 @@
 using DimensionalData: Dimension
 using ..ARPES: EnergyDefinition
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
+using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 
 """
      reshape_for_nd(arrs...)
@@ -102,10 +103,6 @@ function _ek_range(
         return @. ek + hv - workfunction
     end
 end
-
-
-
-
 
 """
     _kx_range(
@@ -240,8 +237,7 @@ Check if the given `ARPESData` object contains the required dimensions and metad
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
     for dim in [phi, eV]
-        idx = findfirst(d -> name(d) == name(dim), dims(data))
-        if idx === nothing
+        if !hasdim(data, dim)
             throw(ArgumentError("Missing required dimension: $(name(dim))"))
         end
     end
