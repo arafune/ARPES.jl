@@ -20,3 +20,5 @@ makedocs(;
         "API Reference" => "api.md",
     ],
 )
+
+deploydocs(; repo = "github.com/arafune/ARPES.jl", push_preview = true)
