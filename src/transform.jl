@@ -1,9 +1,53 @@
 using Interpolations
-using DimensionalData: Dimension
+using DimensionalData: Dimension, Bins
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
-export shift, rebuild_with_slice, cat_arpes
+export rebin, shift, rebuild_with_slice, cat_arpes
 
+
+
+"""
+    rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Int)
+
+Rebins the data along the specified dimension `dim` into `bins` number of bins.
+This is a convenience wrapper that constructs a `Bins` object from the integer
+and calls the main `rebin` method.
+
+# Arguments
+- `data`: The input `AbstractDimArray` to be rebinned.
+- `dim`: The dimension (as a `Symbol` or `Dimension`) along which to rebin.
+- `bins`: The number of bins to use for rebinning.
+
+# Returns
+A new array with the specified dimension rebinned into the given number of bins.
+"""
+function rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Int)
+    bins = Bins(bins)
+    rebin(data, dim, bins)
+end
+
+"""
+    rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Bins)
+
+Rebins the data along the specified dimension `dim` using the provided `Bins` object.
+Groups the data along `dim` into bins, computes the mean within each bin, and concatenates
+the results along the rebinned dimension.
+
+# Arguments
+- `data`: The input `AbstractDimArray` to be rebinned.
+- `dim`: The dimension (as a `Symbol` or `Dimension`) along which to rebin.
+- `bins`: A `Bins` object specifying the binning strategy.
+
+# Returns
+A new array with the specified dimension rebinned according to `bins`.
+"""
+function rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Bins)
+    @assert hasdim(data, dim) "Dimension :$dim not found in the data object."
+    dim = dims(data, dim)
+    groupby_dim_array = groupby(data, dim=>bins)
+    binned_data = map(a -> mean(a, dims = dim), groupby_dim_array)
+    reduce((x, y) -> cat(x, y; dims = name(dim)), binned_data)
+end
 
 """
     shift(
@@ -13,7 +57,8 @@ export shift, rebuild_with_slice, cat_arpes
         values::AbstractVector{<:Real},
     )
 
-Shift the `data` array along `shift_dim` by an amount specified in `values`, for each position along `other_dim`.
+Shift the `data` array along `shift_dim` by an amount specified in `values`,
+for each position along `other_dim`.
 
 - `data`: An `AbstractDimArray` to be shifted.
 - `shift_dim`: The dimension along which to shift (as a `Symbol` or `Dimension`).
