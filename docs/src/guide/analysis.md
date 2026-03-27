@@ -12,12 +12,17 @@ shifting data, smoothing noisy spectra, and taking numerical derivatives.
 Use these helpers when the axis definition itself must change:
 
 - `add_dim` adds a new scalar axis to a dataset,
+- `convert_dim` applies a coordinate transform to an existing axis lookup while
+  preserving its label and metadata,
 - `rename_dim` renames a dimension label,
 - `shift_dim` shifts axis lookup values, and
 - `negate_dim` reverses the sign of an axis.
 
-These operations modify the coordinate system while preserving the underlying array values.
-They are useful for calibration, offset correction, and harmonizing imported datasets.
+These operations modify the coordinate system while preserving the underlying
+array values. They are useful for calibration, unit conversion, offset correction,
+and harmonizing imported datasets.
+
+## Data rebinnig
 
 ## Data shifting by interpolation
 
@@ -40,13 +45,13 @@ The implementation supports both regularly spaced and monotonic irregular grids.
 
 Several 1D filters are applied independently along a chosen dimension:
 
-| Function | Typical use |
-| --- | --- |
+| Function                 | Typical use                                                  |
+| ------------------------ | ------------------------------------------------------------ |
 | `kalman_smooth_dim_llpf` | Strong noise suppression with explicit state-space smoothing |
-| `boxcar_filter_dim` | Simple moving average |
-| `sg_filter_dim` | Shape-preserving smoothing with local polynomial fits |
-| `binomial_filter_dim` | Lightweight repeated smoothing |
-| `gaussian_filter_dim` | Gaussian-weighted smoothing |
+| `boxcar_filter_dim`      | Simple moving average                                        |
+| `sg_filter_dim`          | Shape-preserving smoothing with local polynomial fits        |
+| `binomial_filter_dim`    | Lightweight repeated smoothing                               |
+| `gaussian_filter_dim`    | Gaussian-weighted smoothing                                  |
 
 Window sizes can be expressed either in pixels or in axis units, depending on the function
 arguments.

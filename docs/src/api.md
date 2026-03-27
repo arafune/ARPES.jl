@@ -23,6 +23,7 @@ load
 
 ```@docs
 add_dim
+convert_dim
 rename_dim
 shift_dim
 negate_dim
@@ -31,6 +32,7 @@ negate_dim
 ## Data transforms
 
 ```@docs
+rebin
 shift
 rebuild_with_slice
 cat_arpes

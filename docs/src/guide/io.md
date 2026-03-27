@@ -54,6 +54,9 @@ The current source tree includes:
 - SP2 support in the SPD loader path, and
 - an `SPDLoader` that standardizes dimensions and metadata into canonical ARPES names.
 
+In other words, SPD is the current concrete location-specific loader in the repository, and
+it is the main path exercised by the user-facing examples.
+
 When no explicit location is supplied, loader detection uses filename extensions and, for
 ITX files, header inspection.
 

@@ -114,6 +114,7 @@ level, and writes `:energy_definition` into the `eV` dimension metadata.
 Several utilities modify dimensions while preserving the dimensional-array model:
 
 - `add_dim` adds a scalar dimension,
+- `convert_dim` transforms lookup values while preserving the dimension label and metadata,
 - `rename_dim` renames an axis,
 - `shift_dim` shifts lookup values without changing array contents, and
 - `negate_dim` flips the sign of a dimension lookup.

@@ -56,6 +56,16 @@ test_data = (
     @test var(B) < var(A)
 end
 
+@testset "positional filter overloads" begin
+    A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
+
+    @test parent(boxcar_filter_dim(A, :t, 5)) == parent(boxcar_filter_dim(A, :t; window = 5, pixel = true))
+    @test parent(sg_filter_dim(A, :t, 7)) ≈ parent(sg_filter_dim(A, :t; window = 7, polyorder = 2, pixel = true))
+    @test parent(binomial_filter_dim(A, :t, 4)) == parent(binomial_filter_dim(A, :t; order = 4))
+    @test parent(gaussian_filter_dim(A, :t, 2.0)) ≈ parent(gaussian_filter_dim(A, :t; sigma = 2.0, radius = 0, pixel = true))
+    @test parent(gaussian_filter_dim(A, :t, 2.0, 6)) ≈ parent(gaussian_filter_dim(A, :t; sigma = 2.0, radius = 6, pixel = true))
+end
+
 @testset "boxcar_filter_dim with noise" begin
     Z = DimArray(test_data.sine.clean, (Dim{:t}(test_data.t),))
     A = DimArray(test_data.sine.noisy, (Dim{:t}(test_data.t),))
