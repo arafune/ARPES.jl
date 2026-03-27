@@ -77,7 +77,7 @@ function k_conversion(
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
     δ_ = _deg2rad(metadata(data)[:δ], δ0)
-    χ_ = _deg2rad(metadata(data)[:χ], χ0)
+    χ_ = haskey(metadata(data), :χ) ? _deg2rad(metadata(data)[:χ], χ0) : NaN
 
     @debug "Kinetic energy ref to analyzer, and angles" ek α β_ χ_ ξ_ δ_
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
@@ -92,8 +92,8 @@ function k_conversion(
     kx_grid, ky_grid, ek_grid = reshape_for_nd(kx_range, ky_range, ek)
 
     @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
-    α_range = mapped_α(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
-    β_range = mapped_β(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
+    α_range, β_range =
+        angle_mapping(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
     @debug "size of α_range, β_range" size(α_range) size(β_range)
     #   3.2 interpolate
     data_k =
