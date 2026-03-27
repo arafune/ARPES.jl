@@ -2,7 +2,7 @@ using DimensionalData
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 
-export add_dim, shift_dim, negate_dim, rename_dim
+export add_dim, convert_dim, shift_dim, negate_dim, rename_dim
 
 """
     add_dim(data::AbstractDimArray, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
@@ -58,6 +58,88 @@ add_dim(
     unit::Union{Nothing,String} = nothing,
 ) = add_dim(data, Symbol(dim_label), val; unit = unit)
 
+"""
+    convert_dim(dim::DimensionalData.Dimension, f::Function)
+    convert_dim(data::AbstractDimArray, dim::Union{DimensionalData.Dimension,Symbol}, f::Function)
+
+Apply a coordinate transform `f` to the lookup values of a dimension and return a new
+dimension with preserved metadata. When called on an `AbstractDimArray`, only the selected
+axis lookup is transformed and the array is rebuilt with the same parent data and metadata.
+
+# Arguments
+- `dim::DimensionalData.Dimension`: An existing dimension object whose lookup values are
+  transformed. For example, this can be a value such as `Dim{:x}(0:0.5:10)` taken from a
+  dimensional array or constructed directly.
+- `data::AbstractDimArray`: A dimensional array whose selected dimension should be
+  transformed in place via rebuilding.
+- `dim::Union{DimensionalData.Dimension,Symbol}`: The dimension to transform in `data`,
+  identified either by the dimension object itself or by its name.
+- `f::Function`: A function applied elementwise to the lookup values of `dim`.
+
+# Returns
+- A new `DimensionalData.Dimension` with transformed coordinates and the same metadata as
+  `dim`. The original dimension name is preserved.
+
+If the transformed coordinates remain equally spaced, as determined by the shared
+`_is_equal_spacing` helper from `utils.jl`, the returned dimension uses a range lookup so
+`step` is still available. Otherwise the transformed coordinates are stored as a vector
+lookup.
+
+# Examples
+```julia
+dim = Dim{:x}(0:0.5:10)
+
+convert_dim(dim, x -> 2x + 1)
+```
+"""
+function convert_dim(dim::DimensionalData.Dimension, f::Function)
+    converted_values = f.(parent(lookup(dim)))
+    new_lookup = _converted_lookup(converted_values)
+    return Dim{name(dim)}(new_lookup; metadata = metadata(dim))
+end
+
+function convert_dim(
+    data::AbstractDimArray,
+    dim::Union{DimensionalData.Dimension,Symbol},
+    f::Function,
+)
+    if !hasdim(data, dim)
+        throw(ArgumentError("Dimension with name $dim not found in AbstractDimArray."))
+    end
+    dim = dims(data, dim)
+    idx = findfirst(d -> name(d) == name(dim), dims(data))
+
+    converted = convert_dim(dim, f)
+    new_dims = Base.setindex(dims(data), converted, idx)
+    return rebuild(data; dims = new_dims)
+end
+
+function convert_dim(_::DimensionalData.Dimension, f)
+    throw(ArgumentError("f must be a function."))
+end
+
+function convert_dim(_::AbstractDimArray, _::Union{DimensionalData.Dimension,Symbol}, f)
+    throw(ArgumentError("f must be a function."))
+end
+
+"""
+    rename_dim(data::AbstractDimArray, old::Symbol, new::Symbol)
+    rename_dim(data::AbstractDimArray, p::Pair{<:Symbol,<:Symbol})
+
+Rename a dimension in a dimensional array while preserving its lookup values and metadata.
+
+# Arguments
+- `data::AbstractDimArray`: Input dimensional array.
+- `old::Symbol`: Existing dimension label.
+- `new::Symbol`: New dimension label.
+- `p::Pair`: Convenience form such as `:theta => :phi`.
+
+# Returns
+- A rebuilt dimensional array with the renamed dimension.
+
+# Errors
+- Throws `ArgumentError` if `old` does not exist or if `new` already exists.
+"""
 function rename_dim(data, old::Symbol, new::Symbol)
     hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
     hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
@@ -230,6 +312,14 @@ end
 
 function _shift_index(index::AbstractArray, shift)
     return index .+ shift
+end
+
+function _converted_lookup(values::AbstractVector)
+    if length(values) ≥ 2 && _is_equal_spacing(values)
+        spacing = (values[end] - values[1]) / (length(values) - 1)
+        return range(values[1], step = spacing, length = length(values))
+    end
+    return collect(values)
 end
 
 """

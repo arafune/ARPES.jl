@@ -13,7 +13,7 @@ jobs:
   CompatHelper:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install CompatHelper
         run: |
@@ -28,4 +28,4 @@ jobs:
         shell: julia --color=yes {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMPATHELPER_PRIV: ${{ secrets.DOCUMENTER_KEY }}
+          COMPATHELPER_PRIV: ${{ secrets.COMPATHELPER_PRIV }}
