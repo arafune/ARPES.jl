@@ -24,7 +24,14 @@ and harmonizing imported datasets.
 
 ## Data rebinnig
 
-## Data shifting by interpolation
+The `rebin` family of functions resample the data values themselves by averaging over
+bins along a specified dimension. This is useful for:
+
+- reducing noise by averaging neighboring points,
+- matching the resolution of another dataset, and
+- preparing data for visualization.
+
+8## Data shifting by interpolation
 
 The `shift` family moves the data values themselves using interpolation.
 It supports:
