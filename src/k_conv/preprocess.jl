@@ -236,6 +236,7 @@ Check if the given `ARPESData` object contains the required dimensions and metad
 """
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
+    #
     for dim in [phi, eV]
         if !hasdim(data, dim)
             throw(ArgumentError("Missing required dimension: $(name(dim))"))
@@ -254,7 +255,8 @@ function _check_arpesdata(data::ARPESData)
             ),
         )
     end
-    for meta in [:ξ, :δ, :χ]
+
+    for meta in _set_supplemental_angles(metadata(data)[:analyzer_configuration])
         if !haskey(metadata(data), meta)
             metadata(data)[meta] = 0.0
             @warn "Missing metadata: $meta. Using default value of 0.0 for conversion."
@@ -263,4 +265,7 @@ function _check_arpesdata(data::ARPESData)
     return true
 end
 
-
+_set_supplemental_angles(::Type{TypeI}) = [:ξ, :δ]
+_set_supplemental_angles(::Type{TypeII}) = [:ξ, :δ]
+_set_supplemental_angles(::Type{TypeIp}) = [:ξ, :δ, :χ]
+_set_supplemental_angles(::Type{TypeIIp}) = [:ξ, :δ, :χ]
