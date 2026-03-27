@@ -4,7 +4,7 @@ using ARPES: add_dim, cat_arpes
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ARPES: _shift_irregular
 using DimensionalData
-using DimensionalData: Dim, hasdim, lookup
+using DimensionalData: Dim, hasdim, lookup, Bins
 
 if !@isdefined(test_ARPESData)
     include("fixture.jl")
@@ -180,7 +180,8 @@ end
 @testset "Test for rebin" begin
     spd_standard = test_spd_standard()
     # Rebin along phi with new edges
-    rebin_spd = regin(spd_standard, :phi, 10)
+    rebin_spd = rebin(spd_standard, :phi, 10)
     @test size(rebin_spd) == (10, 601)
-    @test ARPES._is_equal_spacing(dims(rebin_spd, :phi))
+    @test rebin_spd == rebin(spd_standard, :phi, Bins(10))
+    @test ARPES._is_equal_spacing(lookup(rebin_spd, :phi))
 end
