@@ -4,8 +4,16 @@ using DimensionalData: dims, hasdim, metadata, name, lookup
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 using ..ARPES: EnergyDefinition
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
-using ..ARPES: AnalyzerConfiguration, TypeI, TypeII, TypeIp, TypeIIp
+using ..ARPES:
+    AbstractAnalyzerConfiguration,
+    AbstractAnalyzerConfigurationWithoutDeflector,
+    AbstractAnalyzerConfigurationWithDeflector,
+    TypeI,
+    TypeII,
+    TypeIp,
+    TypeIIp
 using ..ARPES: shift_dim, negate_dim
+
 
 include("mapping.jl")
 include("interpolation.jl")

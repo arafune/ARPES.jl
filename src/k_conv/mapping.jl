@@ -1,12 +1,16 @@
 using ARPES: TypeI, TypeII
 const K_INV = 0.5123167219534328
 export momentum_mapping, mapped_kx, mapped_ky, angle_mapping, mapped_α, mapped_β
-using ..ARPES: AnalyzerConfiguration
+using ..ARPES:
+    AbstractAnalyzerConfiguration,
+    AbstractAnalyzerConfigurationWithoutDeflector,
+    AbstractAnalyzerConfigurationWithDeflector
+
 
 unorm_sinc(x) = x == 0 ? 1 : sinc(x/π)
 
 function momentum_mapping(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
+    analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
     α,
     β_,
     Ek,
@@ -51,7 +55,7 @@ function mapped_ky(::Type{TypeII}, α, β_, Ek, χ_, ξ_, δ_)
 end
 
 function angle_mapping(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
+    analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
     kx,
     ky,
     Ek,
