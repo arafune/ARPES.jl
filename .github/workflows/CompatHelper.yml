@@ -24,7 +24,7 @@ jobs:
       - name: Run CompatHelper
         run: |
           using CompatHelper
-          CompatHelper.main()
+          CompatHelper.main(; ignore = ["LinearAlgebra", "Statistics", "SparseArrays"])
         shell: julia --color=yes {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
