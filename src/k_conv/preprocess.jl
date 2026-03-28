@@ -265,6 +265,6 @@ function _check_arpesdata(data::ARPESData)
     return true
 end
 
-_set_supplemental_angles(::Type{<:AbstractAnalyzerConfigurationWithoutDeflector}) = [:ξ, :δ]
+_set_supplemental_angles(::Type{<:AbstractAnalyzerConfigurationWithoutDeflector}) = (:ξ, :δ)
 _set_supplemental_angles(::Type{<:AbstractAnalyzerConfigurationWithDeflector}) =
-    [:ξ, :δ, :χ]
+    (:ξ, :δ, :χ)
