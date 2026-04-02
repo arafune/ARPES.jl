@@ -30,6 +30,7 @@ Container for ARPES data.
     * `:analyzer_configuration` - one of the `AbstractAnalyzerConfiguration` types (TypeI, TypeII, etc.)
     * `:hv` - the photon energy in eV (should match the :hv in the data array metadata)
       (Note: in future, consider to use :hν instead of :hv)
+    * `:history` - a list of transformations applied to the data, for provenance tracking.
     * `:β`: used for momentum conversion. if the dims include psi, angle `β` is not required.
     * `:ξ`: used for momentum conversion.
     * `:χ`: used for momentum conversion.
@@ -98,9 +99,16 @@ function ARPESData(
     energy_def::EnergyDefinition = BindingEnergy,
     additional_metadata::AbstractDict = Dict(),
 )
-    extra_metadata =
-        Dict(:analyzer_configuration => analyzer_config, :intensity_unit => intensity_unit)
-    new_metadata = merge(Dict(metadata(data)), extra_metadata, Dict(additional_metadata))
+    default_metadata_for_arpesdata = Dict(
+        :analyzer_configuration => analyzer_config,
+        :intensity_unit => intensity_unit,
+        :history => Union{String,Pair}[],
+    )
+    new_metadata = merge(
+        Dict(metadata(data)),
+        default_metadata_for_arpesdata,
+        Dict(additional_metadata),
+    )
 
     # Add :energy_definition to the metadata of the eV dimension
     new_dims = map(dims(data)) do d
