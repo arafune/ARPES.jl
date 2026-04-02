@@ -1,0 +1,33 @@
+name: Sync Main without Submodules
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+        with:
+          submodules: false # サブモジュールは取得しない
+          fetch-depth: 0
+
+      - name: Remove submodule files & config
+        run: |
+          # 
+          rm -rf testdata
+          #
+          git config -f .gitmodules --remove-section submodule.testdata || true
+          rm -f .gitmodules
+          git add -A
+
+      - name: Push to main branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          #
+          git checkout -B main
+          git commit -m "chore: sync from dev (removing submodules for registration)" || echo "No changes"
+          git push origin main --force
