@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
 
-    if: github.ref_name == 'dev' || startWith(github.ref, 'refs/pull')
+    if: github.ref_name == 'dev' || startsWith(github.ref, 'refs/pull/')
 
     permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
       actions: write
