@@ -31,7 +31,7 @@ bins along a specified dimension. This is useful for:
 - matching the resolution of another dataset, and
 - preparing data for visualization.
 
-8## Data shifting by interpolation
+## Data shifting by interpolation
 
 The `shift` family moves the data values themselves using interpolation.
 It supports:

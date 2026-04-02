@@ -27,7 +27,7 @@ Container for ARPES data.
 - `metadata::Me`: Additional metadata as a dictionary or other structure.
   - metadata should include the following keys:
     * `:intensity_unit` - one of the `IntensityUnit` types (Counts, CPS)
-    * `:analyzer_configuration` - one of the `AnalyzerConfiguration` types (TypeI, TypeII, etc.)
+    * `:analyzer_configuration` - one of the `AbstractAnalyzerConfiguration` types (TypeI, TypeII, etc.)
     * `:hv` - the photon energy in eV (should match the :hv in the data array metadata)
       (Note: in future, consider to use :hν instead of :hv)
     * `:β`: used for momentum conversion. if the dims include psi, angle `β` is not required.
@@ -47,7 +47,7 @@ struct ARPESData{T,N,D,R,A<:AbstractArray{T,N},Na,Me} <: AbstractDimArray{T,N,D,
         refdims::R,
         name::Na,
         metadata::Me,
-    ) where {T,N,D,R,A<:AbstractArray{T,N},Na,Me}
+    ) where {T,N,A<:AbstractArray{T,N},D,R,Na,Me}
         formatted_dims = DimensionalData.format(dims, data)
         return new{T,N,typeof(formatted_dims),R,A,Na,Me}(
             data,
@@ -94,7 +94,7 @@ end
 function ARPESData(
     data::AbstractDimArray;
     intensity_unit::Type{<:IntensityUnit} = Counts,
-    analyzer_config::Type{<:AnalyzerConfiguration} = TypeI,
+    analyzer_config::Type{<:AbstractAnalyzerConfiguration} = TypeI,
     energy_def::EnergyDefinition = BindingEnergy,
     additional_metadata::AbstractDict = Dict(),
 )

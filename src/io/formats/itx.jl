@@ -251,12 +251,20 @@ Converts parsed data and metadata into a `DimArray` with appropriate dimensions 
 function _to_dimarray(data::Array, waves_info::Dict)::DimArray
     # Construct dimension
     dims_list = []
+    @debug "waves_info" waves_info[:shape]
+    @debug "data length" length(data)
     if haskey(waves_info, :shape)
-        shapedim = length(waves_info[:shape])
-        data = permutedims(reshape(data, reverse(waves_info[:shape])), shapedim:-1:1)
+        shape = waves_info[:shape]
+        shape_itx = (shape[2], shape[1], shape[3:end]...)
+        nd = length(shape)
+        @debug "nd, shape" nd shape
+        data = reshape(data, shape_itx)
+        data = permutedims(data, vcat([2, 1], 3:nd...))
     end
     axes_keys = [:x_scale, :y_scale, :z_scale, :w_scale]
-    for (i, key) in enumerate(axes_keys)
+    nd = ndims(data)
+    axes_key_used = axes_keys[1:nd]
+    for (i, key) in enumerate(axes_key_used)
         if ndims(data) >= i && haskey(waves_info, key)
             info = waves_info[key]
             n = size(data, i)
@@ -286,7 +294,7 @@ function _to_dimarray(data::Array, waves_info::Dict)::DimArray
         name = Symbol(get(waves_info, :name, "data")),
         metadata = DimensionalData.Metadata(waves_info),
     )
-
+    @debug "size(da) and dims(da)" size(da) dims(da)
     return da
 end
 

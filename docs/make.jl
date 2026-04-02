@@ -21,4 +21,8 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/arafune/ARPES.jl", push_preview = true)
+deploydocs(;
+    repo = "github.com/arafune/ARPES.jl.git",
+    devbranch = "main",
+    push_preview = true,
+)
