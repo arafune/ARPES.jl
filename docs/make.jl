@@ -16,6 +16,7 @@ makedocs(;
             "Data loading" => "guide/io.md",
             "Analysis utilities" => "guide/analysis.md",
             "k-space conversion" => "guide/k-space.md",
+            "For developers" => "guide/development.md",
         ],
         "API Reference" => "api.md",
     ],
