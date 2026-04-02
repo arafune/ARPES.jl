@@ -11,9 +11,7 @@ using ARPES.KConversion: _check_arpesdata, reshape_for_nd
 
 @testset "Test for helper _check_arpesdata" begin
     data = test_spd_standard()
-    @test_logs (:warn, "Missing metadata: χ. Using default value of 0.0 for conversion.") begin
-        @test _check_arpesdata(data) == true
-    end
+    @test _check_arpesdata(data) == true
     delete!(metadata(data), :workfunction)
     @test_throws ArgumentError _check_arpesdata(data)
 

@@ -18,9 +18,18 @@ Use these helpers when the axis definition itself must change:
 - `shift_dim` shifts axis lookup values, and
 - `negate_dim` reverses the sign of an axis.
 
-These operations modify the coordinate system while preserving the underlying array values.
-They are useful for calibration, unit conversion, offset correction, and harmonizing imported
-datasets.
+These operations modify the coordinate system while preserving the underlying
+array values. They are useful for calibration, unit conversion, offset correction,
+and harmonizing imported datasets.
+
+## Data rebinnig
+
+The `rebin` family of functions resample the data values themselves by averaging over
+bins along a specified dimension. This is useful for:
+
+- reducing noise by averaging neighboring points,
+- matching the resolution of another dataset, and
+- preparing data for visualization.
 
 ## Data shifting by interpolation
 
@@ -43,13 +52,13 @@ The implementation supports both regularly spaced and monotonic irregular grids.
 
 Several 1D filters are applied independently along a chosen dimension:
 
-| Function | Typical use |
-| --- | --- |
+| Function                 | Typical use                                                  |
+| ------------------------ | ------------------------------------------------------------ |
 | `kalman_smooth_dim_llpf` | Strong noise suppression with explicit state-space smoothing |
-| `boxcar_filter_dim` | Simple moving average |
-| `sg_filter_dim` | Shape-preserving smoothing with local polynomial fits |
-| `binomial_filter_dim` | Lightweight repeated smoothing |
-| `gaussian_filter_dim` | Gaussian-weighted smoothing |
+| `boxcar_filter_dim`      | Simple moving average                                        |
+| `sg_filter_dim`          | Shape-preserving smoothing with local polynomial fits        |
+| `binomial_filter_dim`    | Lightweight repeated smoothing                               |
+| `gaussian_filter_dim`    | Gaussian-weighted smoothing                                  |
 
 Window sizes can be expressed either in pixels or in axis units, depending on the function
 arguments.

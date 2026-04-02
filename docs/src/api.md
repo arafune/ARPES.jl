@@ -32,6 +32,7 @@ negate_dim
 ## Data transforms
 
 ```@docs
+rebin
 shift
 rebuild_with_slice
 cat_arpes

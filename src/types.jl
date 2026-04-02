@@ -22,11 +22,14 @@ struct CPS <: IntensityUnit end
 """
 type representing the analyzer configuration defined in Rev. Sci. Instrum. **89**, 043903 (2018).
 """
-abstract type AnalyzerConfiguration end
-struct TypeI <: AnalyzerConfiguration end
-struct TypeII <: AnalyzerConfiguration end
-struct TypeIp <: AnalyzerConfiguration end
-struct TypeIIp <: AnalyzerConfiguration end
+abstract type AbstractAnalyzerConfiguration end
+abstract type AbstractAnalyzerConfigurationWithoutDeflector <: AbstractAnalyzerConfiguration end
+abstract type AbstractAnalyzerConfigurationWithDeflector <: AbstractAnalyzerConfiguration end
+
+struct TypeI <: AbstractAnalyzerConfigurationWithoutDeflector end
+struct TypeII <: AbstractAnalyzerConfigurationWithoutDeflector end
+struct TypeIp <: AbstractAnalyzerConfigurationWithDeflector end
+struct TypeIIp <: AbstractAnalyzerConfigurationWithDeflector end
 
 """
     @enum EnergyDefinition

@@ -318,7 +318,7 @@ function _get_validated_slice(A, dimsel)
 end
 
 """
-    rebuild_with_slice(A::DimArray, dimsel, X::AbstractArray) -> DimArray
+    rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractArray) -> DimArray
 
 Return a new `DimArray` by copying `A` and replacing the (n-1)-D slice
 specified by `dimsel` (e.g. `Ti(At(t0))`) with `X`.
@@ -344,7 +344,7 @@ function rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractArray)
 end
 
 """
-    rebuild_with_slice(A::DimArray, dimsel, X::AbstractDimArray) -> DimArray
+    rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractDimArray) -> DimArray
 
 Same as the `AbstractArray` method, but also checks dimension metadata.
 

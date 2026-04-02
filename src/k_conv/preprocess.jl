@@ -106,7 +106,7 @@ end
 
 """
     _kx_range(
-        analyzer_conf::Type{<:AnalyzerConfiguration},
+        analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
         ek::AbstractVector,
         α::AbstractVector,
         β_::Union{AbstractVector{<:Real},Real},
@@ -119,7 +119,7 @@ end
 Determine the kx range for the given analyzer configuration and parameters.
 
 # Arguments
-- `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
+- `analyzer_conf::Type{<:AbstractAnalyzerConfiguration}`: The analyzer configuration type.
 - `ek::AbstractVector`: Range/Vector of kinetic energies.
 - `α::AbstractVector`:  Range/Vector of alpha angles.
 - `β_::AbstractVector`: Range/Vector of beta angles.
@@ -139,7 +139,7 @@ Determine the kx range for the given analyzer configuration and parameters.
 3. Constructs and returns the kx range using the calculated step size.
 """
 function _kx_range(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
+    analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
     α::AbstractVector{<:Real},
     β_::Union{AbstractVector{<:Real},Real},
     ek::AbstractVector{<:Real},
@@ -165,7 +165,7 @@ end
 
 """
     _ky_range(
-        analyzer_conf::Type{<:AnalyzerConfiguration},
+        analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
         ek::AbstractVector,
         α::AbstractVector,
         β_::Union{AbstractVector{<:Real},Real},
@@ -177,7 +177,7 @@ end
 Determine the ky range for the given analyzer configuration and parameters.
 
 # Arguments
-- `analyzer_conf::Type{<:AnalyzerConfiguration}`: The analyzer configuration type.
+- `analyzer_conf::Type{<:AbstractAnalyzerConfiguration}`: The analyzer configuration type.
 - `α::AbstractVector`: Range/Vector of alpha angles.
 - `β_::AbstractVector`: Range/Vector of beta angles.
 - `ek::AbstractVector`: Range/Vector of kinetic energies.
@@ -196,7 +196,7 @@ Determine the ky range for the given analyzer configuration and parameters.
 3. Constructs and returns the ky range using the calculated step size.
 """
 function _ky_range(
-    analyzer_conf::Type{<:AnalyzerConfiguration},
+    analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
     α::AbstractVector{<:Real},
     β_::Union{AbstractVector{<:Real},Real},
     ek::AbstractVector{<:Real},
@@ -236,6 +236,7 @@ Check if the given `ARPESData` object contains the required dimensions and metad
 """
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
+    #
     for dim in [phi, eV]
         if !hasdim(data, dim)
             throw(ArgumentError("Missing required dimension: $(name(dim))"))
@@ -254,7 +255,8 @@ function _check_arpesdata(data::ARPESData)
             ),
         )
     end
-    for meta in [:ξ, :δ, :χ]
+
+    for meta in _set_supplemental_angles(metadata(data)[:analyzer_configuration])
         if !haskey(metadata(data), meta)
             metadata(data)[meta] = 0.0
             @warn "Missing metadata: $meta. Using default value of 0.0 for conversion."
@@ -263,4 +265,6 @@ function _check_arpesdata(data::ARPESData)
     return true
 end
 
-
+_set_supplemental_angles(::Type{<:AbstractAnalyzerConfigurationWithoutDeflector}) = (:ξ, :δ)
+_set_supplemental_angles(::Type{<:AbstractAnalyzerConfigurationWithDeflector}) =
+    (:ξ, :δ, :χ)
