@@ -1,7 +1,7 @@
 # ARPES.jl
 
-[![Build Status](https://github.com/arafune/ARPES.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/arafune/ARPES.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/arafune/ARPES.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/arafune/ARPES.jl)
+[![Build Status](https://github.com/arafune/ARPES.jl/actions/workflows/CI.yml/badge.svg?branch=dev)](https://github.com/arafune/ARPES.jl/actions/workflows/CI.yml?query=branch%3Adev)
+[![codecov](https://codecov.io/gh/arafune/ARPES.jl/branch/dev/graph/badge.svg)](https://codecov.io/gh/arafune/ARPES.jl)
 
 ARPES.jl is a Julia package for working with
 **Angle-Resolved Photoemission Spectroscopy (ARPES)** data.
@@ -127,7 +127,6 @@ Some important conventions used across the package:
   - `k_conv/` — k-space conversion (`k_conversion`)
 - `docs/` — documentation (Documenter.jl)
 - `test/` — tests
-- `testdata` — git submodule (test fixtures)
 
 ---
 
