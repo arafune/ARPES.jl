@@ -5,7 +5,7 @@ using DimensionalData.Dimensions: label
 export add_dim, convert_dim, shift_dim, negate_dim, rename_dim
 
 """
-    add_dim(data::AbstractDimArray, dim_label, val::Real=NaN; unit::Union{Nothing, String}=nothing)
+    add_dim(data::AbstractDimArray, dim_label, val::Real=NaN; unit::Union{Nothing, String, Symbol}=nothing)
 
 Add a new dimension to the `data` object with the specified `dim_label` and value `val`.
 Optionally, a unit can be provided for the new dimension. Throws an error if the dimension already exists.
@@ -14,7 +14,7 @@ Optionally, a unit can be provided for the new dimension. Throws an error if the
 - `data::AbstractDimArray`: The AbstractDimArray object to modify.
 - `dim_label::Symbol`: The label for the new dimension.
 - `val::Real=NaN`: The value for the new dimension (default is NaN).
-- `unit::Union{Nothing, String}=nothing`: Optional unit for the new dimension.
+- `unit::Union{Nothing, String, Symbol}=nothing`: Optional unit for the new dimension.
 
 # Returns
 - A new AbstractDimArray object with the added dimension.
@@ -23,7 +23,7 @@ function add_dim(
     data::AbstractDimArray,
     dim_label::Symbol,
     val::Real;
-    unit::Union{Nothing,String} = nothing,
+    unit::Union{Nothing,String,Symbol} = nothing,
 )
     if hasdim(data, dim_label)
         throw(
@@ -38,7 +38,7 @@ end
 function add_dim(
     data::AbstractDimArray,
     dim_label::Symbol;
-    unit::Union{Nothing,String} = nothing,
+    unit::Union{Nothing,String,Symbol} = nothing,
 )
     if !haskey(metadata(data), dim_label)
         throw(
@@ -55,7 +55,7 @@ add_dim(
     data::AbstractDimArray,
     dim_label::String,
     val::Real;
-    unit::Union{Nothing,String} = nothing,
+    unit::Union{Nothing,String,Symbol} = nothing,
 ) = add_dim(data, Symbol(dim_label), val; unit = unit)
 
 """

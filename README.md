@@ -91,7 +91,7 @@ The package currently exports the following user-facing names:
 - Core type: `ARPESData`
 - Metadata helper: `merge_consensus`
 - Dimension helpers: `add_dim`, `convert_dim`, `shift_dim`, `negate_dim`, `rename_dim`
-- Data transforms: `shift`, `rebuild_with_slice`, `cat_arpes`
+- Data transforms: `shift`, `rebuild_with_slice`
 - Filters: `kalman_smooth_dim_llpf`, `boxcar_filter_dim`, `sg_filter_dim`,
   `binomial_filter_dim`, `gaussian_filter_dim`
 - Derivative / feature extraction: `derivative`, `curvature`, `minimum_gradient`
