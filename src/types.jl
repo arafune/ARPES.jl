@@ -1,6 +1,7 @@
 using DimensionalData.Dimensions: @dim
 
 #--- Dimension names used for ARPES ---
+@dim kp "k∥  ( Å⁻¹ )"
 @dim kx "kx  ( Å⁻¹ )"
 @dim ky "ky  ( Å⁻¹ )"
 @dim kz "kz  ( Å⁻¹ )"

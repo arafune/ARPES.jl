@@ -30,7 +30,6 @@ end
 function _build_arpesband(
     banddata::AbstractArray,
     kx_range::AbstractVector,
-    _,
     ek_range::AbstractVector,
     metadata_original::Dict,
     energy_def::EnergyDefinition,

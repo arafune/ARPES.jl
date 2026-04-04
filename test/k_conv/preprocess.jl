@@ -6,7 +6,7 @@ using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, CPS, TypeI, FinalStateEnergy
 using ARPES.KConversion
 using ARPES.KConversion: _kx_range, _ky_range
-using ARPES.KConversion: _check_arpesdata, reshape_for_nd
+using ARPES.KConversion: _check_arpesdata, prepare_for_broadcast
 
 
 @testset "Test for helper _check_arpesdata" begin
@@ -29,16 +29,16 @@ using ARPES.KConversion: _check_arpesdata, reshape_for_nd
     # Further tests can be added here to check the correctness of the conversion.
 end
 
-@testset "Test for reshape_for_nd" begin
+@testset "Test for prepare_for_broadcast" begin
     x = [1, 2, 3]
-    y = reshape_for_nd(x, 2)
+    y = prepare_for_broadcast(x, 2)
     @test size(y[1]) == (3,)
     @test y[1] == x
 
     x = 0.1:0.5:3
     y = 10:10:40
     z = -8:1.3:1
-    result = reshape_for_nd(x, y, z)
+    result = prepare_for_broadcast(x, y, z)
     @test (length(result[1]), length(result[2]), length(result[3])) ==
           (length(x), length(y), length(z))
     @test result[1] == reshape(x, :, 1, 1)

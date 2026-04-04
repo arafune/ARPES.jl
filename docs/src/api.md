@@ -35,7 +35,6 @@ negate_dim
 rebin
 shift
 rebuild_with_slice
-cat_arpes
 ```
 
 ## Filtering

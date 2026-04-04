@@ -45,8 +45,196 @@ The `eV` dimension metadata must include `:energy_definition`.
 - The current implementation supports `BindingEnergy` and `FinalStateEnergy`.
 - The output preserves the dataset-level metadata from the input.
 """
+function k_conversion(  # kp version
+    data::ARPESData{T,2} where {T};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :phi) && hasdim(data, :eV) "Input data must have 'phi' and 'eV' dimensions."
+    energy_definition = metadata(dims(data, :eV))[:energy_definition]
+    if !(energy_definition in [BindingEnergy, FinalStateEnergy])
+        throw(ArgumentError("Not Impremented for $energy_definition"))
+    end
+    @assert _check_arpesdata(data)
+    # 1. required variables
+    # 1.1. workfunction, photon energy and kinetic energy
+    analyzer_conf = metadata(data)[:analyzer_configuration]
+    workfunction = metadata(data)[:workfunction]
+
+    #  (at present, kz conversion from the photon energy depencence is not implemented,
+    #   so hv is not used in the conversion. It is included here for future extension.)
+    hv = metadata(data)[:hv]
+
+    eV_range = isnothing(eV_range) ? parent(lookup(data, :eV)) : eV_range
+    ek_original = _ek_range(energy_definition, dims(data, :eV), workfunction, hv)
+    ek = _ek_range(energy_definition, eV_range, workfunction, hv)
+
+    @debug "Kinetic energy ref to analyzer" ek
+    # 1.2. angles  * α, β_, χ_, δ_, ξ_
+    #  * apply offset & and convert degree to radian.
+    α =
+        haskey(metadata(data), :negate_alpha) && metadata(data)[:negate_alpha] == true ?
+        _deg2rad(parent(negate_dim(dims(data, :phi)))) :
+        _deg2rad(parent(lookup(data, :phi)))
+    β = metadata(data)[:β]
+    β_ = _deg2rad(β, β0)
+    ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
+    δ_ = _deg2rad(metadata(data)[:δ], δ0)
+    χ_ = haskey(metadata(data), :χ) ? _deg2rad(metadata(data)[:χ], χ0) : NaN
+
+    @debug "Kinetic energy ref to analyzer, and angles" ek α β_ χ_ ξ_ δ_
+    # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
+    kx_range =
+        isnothing(kx_range) ? _kx_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : kx_range
+    ky_range = _ky_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_)
+
+    @debug "kx_range, ky_range" kx_range ky_range
+    # 3. apply interpolation to get the intensity values on the k grid.
+    #   3.1 corresponding \alpha and \beta
+    kx_grid, ky_grid, ek_grid = prepare_for_broadcast(kx_range, ky_range, ek)
+
+    @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
+    α_range, β_range =
+        angle_mapping(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
+    @debug "size of α_range, β_range" size(α_range) size(β_range)
+    #   3.2 interpolate
+    data_k = _interpolate(α_range, ek_grid, α, parent(ek_original), parent(data))
+    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
+    return _build_arpesband(data_k, kx_range, eV_range, metadata(data), energy_definition)
+end
+
+
+function k_conversion(  # kx-ky version
+    data::ARPESData{T,3} where {T};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :eV) && hasdim(data, :phi) "Input data must have 'phi' and 'eV' dimensions."
+    if hasdim(data, :psi)
+        return kxky_conversion(data; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
+    end
+    if hasdim(data, :hv) || hasdim(data, :hν)
+        return kpkz_conversion(data; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
+    end
+    otherdim = setdiff(names(dims(data)), [:eV, :phi])[1]
+    unit =
+        haskey(metadata(dims(data, otherdim)), :unit) ?
+        metadata(dims(data, otherdim))[:unit] : nothing
+    k_convs = ARPESData[]
+    for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+        k_converted_cut =
+            k_conversion(arpes_cut; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
+        push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+    end
+    cat(k_convs...; dims = otherdim)
+end
+
+
 function k_conversion(
-    data::ARPESData;
+    data::ARPESData{T,4} where {T};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :eV) && hasdim(data, :phi) "Input data must have 'phi' and 'eV' dimensions."
+    if hasdim(data, :psi) && (hasdim(data, :hv) || hasdim(data, :hν))
+        return kxkykz_conversion(
+            data;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
+        )
+    end
+    if hasdim(data, :psi) && !(hasdim(data, :hv) || hasdim(data, :hν))
+        otherdim = setdiff(names(dims(data)), [:eV, :phi, :psi])[1]
+        unit =
+            haskey(metadata(dims(data, otherdim)), :unit) ?
+            metadata(dims(data, otherdim))[:unit] : nothing
+        k_convs = ARPESData[]
+        for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+            k_converted_cut = k_conversion(
+                arpes_cut;
+                kx_range,
+                ky_range,
+                kz_range,
+                eV_range,
+                β0,
+                ξ0,
+                δ0,
+                χ0,
+            )
+            push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+        end
+        return cat(k_convs...; dims = otherdim)
+    end
+    if hasdim(data, :hv) || hasdim(data, :hν) && !hasdim(data, :psi)
+        otherdim = setdiff(names(dims(data)), [:eV, :phi, :hv, :hν])[1]
+        unit =
+            haskey(metadata(dims(data, otherdim)), :unit) ?
+            metadata(dims(data, otherdim))[:unit] : nothing
+        k_convs = ARPESData[]
+        for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+            k_converted_cut = k_conversion(  # kpkz conversion
+                arpes_cut;
+                kx_range,
+                ky_range,
+                kz_range,
+                eV_range,
+                β0,
+                ξ0,
+                δ0,
+                χ0,
+            )
+            push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+        end
+        return cat(k_convs...; dims = otherdim)
+    end
+    if hasdim(data, :phi) && hasdim(data, :eV)
+        otherdims = ohterdims(data, (:eV, :phi))
+        # use k_conversion for 2D (kp-conversion) 
+    end
+end
+
+
+function k_conversion(  # N>=5D
+    data::ARPESData{T,N} where {T,N};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :eV) && hasdim(data, :phi) "Input data must have 'phi' and 'eV' dimensions."
+end
+
+
+function kxky_conversion(
+    data::ARPESData{T,3} where {T};
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
     ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
     kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
@@ -97,7 +285,7 @@ function k_conversion(
     @debug "kx_range, ky_range" kx_range ky_range
     # 3. apply interpolation to get the intensity values on the k grid.
     #   3.1 corresponding \alpha and \beta
-    kx_grid, ky_grid, ek_grid = reshape_for_nd(kx_range, ky_range, ek)
+    kx_grid, ky_grid, ek_grid = prepare_for_broadcast(kx_range, ky_range, ek)
 
     @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
     α_range, β_range =
@@ -115,6 +303,41 @@ function k_conversion(
         metadata(data),
         energy_definition,
     )
+end
+
+function kpkz_conversion(
+    data::ARPESData{T,3} where {T};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :eV) &&
+            hasdim(data, :phi) &&
+            (hasdim(data, :hv) || hasdim(data, :hν)) "Input data must have 'phi', 'eV', and 'hv' (or 'hν') dimensions."
+    error("kpkz conversion for 3D ARPESData is not implemented yet.")
+end
+
+function kxkykz_conversion(
+    data::ARPESData{T,4} where {T};
+    kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    kz_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    eV_range::Union{AbstractVector{<:Real},Nothing} = nothing,
+    β0::Real = 0.0,
+    ξ0::Real = 0.0,
+    δ0::Real = 0.0,
+    χ0::Real = 0.0,
+)
+    @assert hasdim(data, :eV) &&
+            hasdim(data, :phi) &&
+            hasdim(data, :psi) &&
+            (hasdim(data, :hv) || hasdim(data, :hν)) "Input data must have 'phi', 'eV', 'psi', and 'hv' (or 'hν') dimensions."
+    error("kxkykz conversion for 4D ARPESData is not implemented yet.")
 end
 
 # --- internal functions

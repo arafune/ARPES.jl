@@ -4,7 +4,7 @@ using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnerg
 using ..ARPES: ARPESData, kx, ky, kz, phi, psi, eV
 
 """
-     reshape_for_nd(arrs...)
+     prepare_for_broadcast(arrs...)
 
 Reshapes each input array in `arrs` for N-dimensional broadcasting.
 
@@ -20,11 +20,12 @@ For each array argument, this function reshapes it so that its length occupies a
 ```julia
 a = [1, 2, 3]
 b = [4, 5]
-reshape_for_nd(a, b)
+prepare_for_broadcast(a, b)
 # returns (3×1 Array, 1×2 Array)
 ```
 """
-function reshape_for_nd(arrs::Union{AbstractArray,Real}...)
+function prepare_for_broadcast(arrs::Union{AbstractArray,Real}...)
+
     arrays_count = count(a -> a isa AbstractArray, arrs)
 
     i = 0
@@ -149,11 +150,11 @@ function _kx_range(
 )
     ek_min = minimum(ek)
 
-    kx_ = mapped_kx(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
+    kx_ = mapped_kx(analyzer_conf, prepare_for_broadcast(α, β_, ek_min)..., χ_, ξ_, δ_)
     d_kx = abs.(diff(kx_, dims = 1))
     step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
     @debug "min_kx, max_kx, step_kx @ minimum ek" minimum(kx_) maximum(kx_) step_kx ek_min
-    kx_ = mapped_kx(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
+    kx_ = mapped_kx(analyzer_conf, prepare_for_broadcast(α, β_, ek)..., χ_, ξ_, δ_)
     min_kx, max_kx = minimum(kx_), maximum(kx_)
     @debug "kx_ shape" size(kx_)
     @debug "min_kx, max_kx, step_kx" min_kx max_kx step_kx
@@ -205,10 +206,10 @@ function _ky_range(
     δ_::Real,
 )
     ek_min = minimum(ek)
-    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek_min)..., χ_, ξ_, δ_)
+    ky_ = mapped_ky(analyzer_conf, prepare_for_broadcast(α, β_, ek_min)..., χ_, ξ_, δ_)
     d_ky = abs.(diff(ky_, dims = β_ isa Real ? 1 : 2))
     step_ky = isempty(d_ky) ? nothing : minimum(d_ky)
-    ky_ = mapped_ky(analyzer_conf, reshape_for_nd(α, β_, ek)..., χ_, ξ_, δ_)
+    ky_ = mapped_ky(analyzer_conf, prepare_for_broadcast(α, β_, ek)..., χ_, ξ_, δ_)
     min_ky, max_ky = minimum(ky_), maximum(ky_)
     if step_ky === nothing || step_ky == 0.0
         return min_ky
