@@ -246,6 +246,30 @@ function k_conversion(  # N>=5D
     χ0::Real = 0.0,
 )
     @assert hasdim(data, :eV) && hasdim(data, :phi) "Input data must have 'phi' and 'eV' dimensions."
+    # Slice over the last scan dimension (not involved in k-space conversion) and
+    # recurse into (N-1)D. Exclude eV, phi, psi, and hv/hν so that those dimensions
+    # are handled by the appropriate lower-level dispatch
+    # (N=4 routes psi/hv to kxky/kpkz/kxkykz conversions).
+    # Using [end] preserves dimension order: inner recursion handles earlier dims first.
+    target_dim = otherdims(data, (:eV, :phi, :psi, :hv, :hν))[end]
+    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
+    k_convs = ARPESData[]
+    for (val, arpes_slice) in
+        zip(dims(data, target_dim), eachslice(data; dims = target_dim))
+        k_converted_slice = k_conversion(
+            arpes_slice;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
+        )
+        push!(k_convs, add_dim(k_converted_slice, target_dim, val; unit))
+    end
+    return cat(k_convs...; dims = target_dim)
 end
 
 
