@@ -12,7 +12,7 @@ using ..ARPES:
     TypeII,
     TypeIp,
     TypeIIp
-using ..ARPES: shift_dim, negate_dim
+using ..ARPES: shift_dim, negate_dim, add_dim
 
 
 include("mapping.jl")
@@ -59,7 +59,7 @@ function k_conversion(  # kp version
     @assert hasdim(data, :phi) && hasdim(data, :eV) "Input data must have 'phi' and 'eV' dimensions."
     energy_definition = metadata(dims(data, :eV))[:energy_definition]
     if !(energy_definition in [BindingEnergy, FinalStateEnergy])
-        throw(ArgumentError("Not Impremented for $energy_definition"))
+        throw(ArgumentError("Not Implemented for $energy_definition"))
     end
     @assert _check_arpesdata(data)
     # 1. required variables
@@ -92,7 +92,8 @@ function k_conversion(  # kp version
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
     kx_range =
         isnothing(kx_range) ? _kx_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : kx_range
-    ky_range = _ky_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_)
+    ky_range =
+        isnothing(ky_range) ? _ky_range(analyzer_conf, α, β_, ek, χ_, ξ_, δ_) : ky_range
 
     @debug "kx_range, ky_range" kx_range ky_range
     # 3. apply interpolation to get the intensity values on the k grid.
@@ -105,12 +106,12 @@ function k_conversion(  # kp version
     @debug "size of α_range, β_range" size(α_range) size(β_range)
     #   3.2 interpolate
     data_k = _interpolate(α_range, ek_grid, α, parent(ek_original), parent(data))
-    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
+    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
     return _build_arpesband(data_k, kx_range, eV_range, metadata(data), energy_definition)
 end
 
 
-function k_conversion(  # kx-ky version
+function k_conversion(  # N=3 version version
     data::ARPESData{T,3} where {T};
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
     ky_range::Union{AbstractVector{<:Real},Nothing} = nothing,
@@ -122,13 +123,14 @@ function k_conversion(  # kx-ky version
     χ0::Real = 0.0,
 )
     @assert hasdim(data, :eV) && hasdim(data, :phi) "Input data must have 'phi' and 'eV' dimensions."
-    if hasdim(data, :psi)
+    if hasdim(data, :psi)  # kxky conversion from ϕ and ψ
         return kxky_conversion(data; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
     end
-    if hasdim(data, :hv) || hasdim(data, :hν)
+    if hasdim(data, :hv) || hasdim(data, :hν) # kpz conversion from ϕ and hv
         return kpkz_conversion(data; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
     end
-    otherdim = setdiff(names(dims(data)), [:eV, :phi])[1]
+    # conversion 
+    otherdim = only(otherdims(data, (:eV, :phi)))
     unit =
         haskey(metadata(dims(data, otherdim)), :unit) ?
         metadata(dims(data, otherdim))[:unit] : nothing
@@ -168,7 +170,7 @@ function k_conversion(
         )
     end
     if hasdim(data, :psi) && !(hasdim(data, :hv) || hasdim(data, :hν))
-        otherdim = setdiff(names(dims(data)), [:eV, :phi, :psi])[1]
+        otherdim = only(otherdims(data, (:eV, :phi, :psi)))
         unit =
             haskey(metadata(dims(data, otherdim)), :unit) ?
             metadata(dims(data, otherdim))[:unit] : nothing
@@ -189,8 +191,8 @@ function k_conversion(
         end
         return cat(k_convs...; dims = otherdim)
     end
-    if hasdim(data, :hv) || hasdim(data, :hν) && !hasdim(data, :psi)
-        otherdim = setdiff(names(dims(data)), [:eV, :phi, :hv, :hν])[1]
+    if (hasdim(data, :hv) || hasdim(data, :hν)) && !hasdim(data, :psi)
+        otherdim = only(otherdims(data, (:eV, :phi, :hv, :hν)))
         unit =
             haskey(metadata(dims(data, otherdim)), :unit) ?
             metadata(dims(data, otherdim))[:unit] : nothing
@@ -246,7 +248,7 @@ function kxky_conversion(
 )
     energy_definition = metadata(dims(data, :eV))[:energy_definition]
     if !(energy_definition in [BindingEnergy, FinalStateEnergy])
-        throw(ArgumentError("Not Impremented for $energy_definition"))
+        throw(ArgumentError("Not Implemented for $energy_definition"))
     end
     @assert _check_arpesdata(data)
     # 1. required variables
@@ -294,7 +296,7 @@ function kxky_conversion(
     #   3.2 interpolate
     data_k =
         _interpolate(α_range, β_range, ek_grid, α, β, parent(ek_original), parent(data))
-    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.u
+    # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
     return _build_arpesband(
         data_k,
         kx_range,
