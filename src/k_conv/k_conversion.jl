@@ -25,11 +25,23 @@ export k_conversion
     k_conversion(data::ARPESData; kx_range=nothing, ky_range=nothing, kz_range=nothing,
                  eV_range=nothing, β0=0.0, ξ0=0.0, δ0=0.0, χ0=0.0)
 
-Convert angle-resolved ARPES data to momentum-space coordinates.
+Convert ARPES data from angle-space to momentum-space coordinates.
 
-The input must contain `eV` and `phi`, and either a `psi` dimension or a dataset-level
-`:β` metadata entry. The dataset metadata is expected to include
-`:analyzer_configuration`, `:workfunction`, `:hv`, `:ξ`, `:δ`, and `:χ`.
+Dispatch is determined by the number of dimensions and which named dimensions are present:
+
+| Input dims | Key dims present             | Output         | Internal call       |
+|:---------- |:---------------------------- |:-------------- |:------------------- |
+| N=2        | `phi`, `eV`                  | `kx × eV`     | (direct)            |
+| N=3        | `phi`, `psi`, `eV`           | `kx × ky × eV`| `kxky_conversion`   |
+| N=3        | `phi`, `hv`/`hν`, `eV`      | (not impl.)    | `kpkz_conversion`   |
+| N=3        | other                        | slices extra dim | `_slice_and_convert`|
+| N=4        | `phi`, `psi`, `hv`/`hν`, `eV`| (not impl.)  | `kxkykz_conversion` |
+| N=4        | `phi`, `psi`, `eV` + extra   | slices extra dim | `_slice_and_convert`|
+| N=4        | `phi`, `hv`/`hν`, `eV` + extra| slices extra dim| `_slice_and_convert`|
+| N≥5        | any                          | slices last extra dim | `_slice_and_convert`|
+
+The input must contain `eV` and `phi` dimensions. The dataset metadata is expected to
+include `:analyzer_configuration`, `:workfunction`, `:hv`, `:β`, `:ξ`, `:δ`, and `:χ`.
 The `eV` dimension metadata must include `:energy_definition`.
 
 # Keywords
@@ -39,11 +51,12 @@ The `eV` dimension metadata must include `:energy_definition`.
 - `β0`, `ξ0`, `δ0`, `χ0`: Additional angular offsets in degrees applied during mapping.
 
 # Returns
-- `ARPESData`: A new dataset sampled on momentum-space axes.
+- `ARPESData`: A new dataset sampled on momentum-space axes, preserving the dataset-level
+  metadata from the input.
 
 # Notes
-- The current implementation supports `BindingEnergy` and `FinalStateEnergy`.
-- The output preserves the dataset-level metadata from the input.
+- Currently supports `BindingEnergy` and `FinalStateEnergy` energy definitions.
+- `kpkz_conversion` and `kxkykz_conversion` are defined but not yet implemented.
 """
 function k_conversion(  # kp version
     data::ARPESData{T,2} where {T};
@@ -205,6 +218,29 @@ function k_conversion(  # N>=5D
 end
 
 
+"""
+    kxky_conversion(data::ARPESData{T,3}; kx_range=nothing, ky_range=nothing,
+                    kz_range=nothing, eV_range=nothing, β0=0.0, ξ0=0.0, δ0=0.0, χ0=0.0)
+
+Convert 3D `phi × psi × eV` ARPES data to `kx × ky × eV` momentum coordinates.
+
+Called internally by `k_conversion` when the 3D input has both `phi` and `psi` dimensions.
+`phi` provides the first in-plane scattering angle (α in the mapping equations) and `psi`
+provides the second (β).
+
+The dataset metadata must include `:analyzer_configuration`, `:workfunction`, `:hv`, `:ξ`,
+`:δ`, and optionally `:χ`. The `eV` dimension metadata must include `:energy_definition`
+set to `BindingEnergy` or `FinalStateEnergy`.
+
+# Keywords
+- `kx_range`, `ky_range`, `kz_range`: Optional target momentum axes. If omitted, the code
+  estimates suitable ranges from the input geometry.
+- `eV_range`: Optional target energy axis. Defaults to the input `eV` lookup.
+- `β0`, `ξ0`, `δ0`, `χ0`: Additional angular offsets in degrees applied during mapping.
+
+# Returns
+- `ARPESData`: A new 3D dataset on `kx × ky × eV` axes.
+"""
 function kxky_conversion(
     data::ARPESData{T,3} where {T};
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
@@ -277,6 +313,19 @@ function kxky_conversion(
     )
 end
 
+"""
+    kpkz_conversion(data::ARPESData{T,3}; kx_range=nothing, ky_range=nothing,
+                    kz_range=nothing, eV_range=nothing, β0=0.0, ξ0=0.0, δ0=0.0, χ0=0.0)
+
+Convert 3D `phi × hv × eV` ARPES data to parallel/perpendicular momentum coordinates.
+
+Called internally by `k_conversion` when the 3D input has `phi` and `hv` (or `hν`)
+dimensions but no `psi` dimension.
+
+!!! note "Not yet implemented"
+    This function currently raises an error. The kp–kz conversion via photon-energy
+    dependence is not yet implemented.
+"""
 function kpkz_conversion(
     data::ARPESData{T,3} where {T};
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
@@ -294,6 +343,19 @@ function kpkz_conversion(
     error("kpkz conversion for 3D ARPESData is not implemented yet.")
 end
 
+"""
+    kxkykz_conversion(data::ARPESData{T,4}; kx_range=nothing, ky_range=nothing,
+                      kz_range=nothing, eV_range=nothing, β0=0.0, ξ0=0.0, δ0=0.0, χ0=0.0)
+
+Convert 4D `phi × psi × hv × eV` ARPES data to `kx × ky × kz × eV` momentum coordinates.
+
+Called internally by `k_conversion` when the 4D input has `phi`, `psi`, and `hv` (or `hν`)
+dimensions.
+
+!!! note "Not yet implemented"
+    This function currently raises an error. The full three-dimensional momentum
+    conversion is not yet implemented.
+"""
 function kxkykz_conversion(
     data::ARPESData{T,4} where {T};
     kx_range::Union{AbstractVector{<:Real},Nothing} = nothing,
