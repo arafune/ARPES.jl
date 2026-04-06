@@ -212,6 +212,7 @@ function sg_filter_dim(
     function sg_1d(y)
         n = length(y)
         out = similar(y)
+        weights = zeros(eltype(B), n_pixels)
         for i = 1:n
             # Find the window that includes index i. 
             # Clamp the center so the window [center-half : center+half] stays within 1:n.
@@ -228,7 +229,7 @@ function sg_filter_dim(
             # This is equivalent to taking a weighted sum of the window, 
             # where weights are: w = B[1,:] + B[2,:]*x + B[3,:]*x^2 + ...
 
-            weights = zeros(eltype(B), n_pixels)
+            fill!(weights, zero(eltype(B)))
             for k = 0:polyorder
                 # B[k+1, :] gives the weights for the k-th derivative term
                 # We scale it by (relative_pos^k / k!) if we were doing derivatives, 
@@ -236,7 +237,7 @@ function sg_filter_dim(
                 weights .+= B[k+1, :] .* (relative_pos^k)
             end
 
-            out[i] = sum(weights .* y[lo:hi])
+            out[i] = sum(weights .* @view y[lo:hi])
         end
         return out
     end

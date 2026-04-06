@@ -76,13 +76,14 @@ function k_conversion(  # kp version
     end
     @assert _check_arpesdata(data)
     # 1. required variables
+    md = metadata(data)
     # 1.1. workfunction, photon energy and kinetic energy
-    analyzer_conf = metadata(data)[:analyzer_configuration]
-    workfunction = metadata(data)[:workfunction]
+    analyzer_conf = md[:analyzer_configuration]
+    workfunction = md[:workfunction]
 
     #  (at present, kz conversion from the photon energy depencence is not implemented,
     #   so hv is not used in the conversion. It is included here for future extension.)
-    hv = metadata(data)[:hv]
+    hv = md[:hv]
 
     eV_range = isnothing(eV_range) ? parent(lookup(data, :eV)) : eV_range
     ek_original = _ek_range(energy_definition, dims(data, :eV), workfunction, hv)
@@ -92,14 +93,14 @@ function k_conversion(  # kp version
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
     α =
-        haskey(metadata(data), :negate_alpha) && metadata(data)[:negate_alpha] == true ?
+        get(md, :negate_alpha, false) == true ?
         _deg2rad(parent(negate_dim(dims(data, :phi)))) :
         _deg2rad(parent(lookup(data, :phi)))
-    β = metadata(data)[:β]
+    β = md[:β]
     β_ = _deg2rad(β, β0)
-    ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
-    δ_ = _deg2rad(metadata(data)[:δ], δ0)
-    χ_ = haskey(metadata(data), :χ) ? _deg2rad(metadata(data)[:χ], χ0) : NaN
+    ξ_ = _deg2rad(md[:ξ], ξ0)
+    δ_ = _deg2rad(md[:δ], δ0)
+    χ_ = haskey(md, :χ) ? _deg2rad(md[:χ], χ0) : NaN
 
     @debug "Kinetic energy ref to analyzer, and angles" ek α β_ χ_ ξ_ δ_
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
@@ -120,7 +121,7 @@ function k_conversion(  # kp version
     #   3.2 interpolate
     data_k = _interpolate(α_range, ek_grid, α, parent(ek_original), parent(data))
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
-    return _build_arpesband(data_k, kx_range, eV_range, metadata(data), energy_definition)
+    return _build_arpesband(data_k, kx_range, eV_range, md, energy_definition)
 end
 
 
@@ -258,13 +259,14 @@ function kxky_conversion(
     end
     @assert _check_arpesdata(data)
     # 1. required variables
+    md = metadata(data)
     # 1.1. workfunction, photon energy and kinetic energy
-    analyzer_conf = metadata(data)[:analyzer_configuration]
-    workfunction = metadata(data)[:workfunction]
+    analyzer_conf = md[:analyzer_configuration]
+    workfunction = md[:workfunction]
 
     #  (at present, kz conversion from the photon energy depencence is not implemented,
     #   so hv is not used in the conversion. It is included here for future extension.)
-    hv = metadata(data)[:hv]
+    hv = md[:hv]
 
     eV_range = isnothing(eV_range) ? parent(lookup(data, :eV)) : eV_range
     ek_original = _ek_range(energy_definition, dims(data, :eV), workfunction, hv)
@@ -274,14 +276,14 @@ function kxky_conversion(
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
     α =
-        haskey(metadata(data), :negate_alpha) && metadata(data)[:negate_alpha] == true ?
+        get(md, :negate_alpha, false) == true ?
         _deg2rad(parent(negate_dim(dims(data, :phi)))) :
         _deg2rad(parent(lookup(data, :phi)))
-    β = hasdim(data, :psi) ? parent(dims(data, :psi)) : metadata(data)[:β]
+    β = parent(dims(data, :psi))
     β_ = _deg2rad(β, β0)
-    ξ_ = _deg2rad(metadata(data)[:ξ], ξ0)
-    δ_ = _deg2rad(metadata(data)[:δ], δ0)
-    χ_ = haskey(metadata(data), :χ) ? _deg2rad(metadata(data)[:χ], χ0) : NaN
+    ξ_ = _deg2rad(md[:ξ], ξ0)
+    δ_ = _deg2rad(md[:δ], δ0)
+    χ_ = haskey(md, :χ) ? _deg2rad(md[:χ], χ0) : NaN
 
     @debug "Kinetic energy ref to analyzer, and angles" ek α β_ χ_ ξ_ δ_
     # 2. determine k_regions, and use them if kx_range and ky_range are not provided.
@@ -308,7 +310,7 @@ function kxky_conversion(
         kx_range,
         ky_range,
         eV_range,
-        metadata(data),
+        md,
         energy_definition,
     )
 end
