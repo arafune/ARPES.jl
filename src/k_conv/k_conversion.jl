@@ -131,14 +131,9 @@ function k_conversion(  # N=3 version version
     end
     # conversion 
     target_dim = only(otherdims(data, (:eV, :phi)))
-    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
-    k_convs = ARPESData[]
-    for (val, arpes_cut) in zip(dims(data, target_dim), eachslice(data; dims = target_dim))
-        k_converted_cut =
-            k_conversion(arpes_cut; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
-        push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
-    end
-    cat(k_convs...; dims = target_dim)
+    return _slice_and_convert(
+        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+    )
 end
 
 
@@ -169,68 +164,20 @@ function k_conversion(
     end
     if hasdim(data, :psi) && !(hasdim(data, :hv) || hasdim(data, :hν))
         target_dim = only(otherdims(data, (:eV, :phi, :psi)))
-        unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
-        k_convs = ARPESData[]
-        for (val, arpes_cut) in
-            zip(dims(data, target_dim), eachslice(data; dims = target_dim))
-            k_converted_cut = k_conversion(
-                arpes_cut;
-                kx_range,
-                ky_range,
-                kz_range,
-                eV_range,
-                β0,
-                ξ0,
-                δ0,
-                χ0,
-            )
-            push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
-        end
-        return cat(k_convs...; dims = target_dim)
+        return _slice_and_convert(
+            data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+        )
     end
     if (hasdim(data, :hv) || hasdim(data, :hν)) && !hasdim(data, :psi)
         target_dim = only(otherdims(data, (:eV, :phi, :hv, :hν)))
-        unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
-        k_convs = ARPESData[]
-        for (val, arpes_cut) in
-            zip(dims(data, target_dim), eachslice(data; dims = target_dim))
-            k_converted_cut = k_conversion(  # kpkz conversion
-                arpes_cut;
-                kx_range,
-                ky_range,
-                kz_range,
-                eV_range,
-                β0,
-                ξ0,
-                δ0,
-                χ0,
-            )
-            push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
-        end
-        return cat(k_convs...; dims = target_dim)
-
-    end
-    others = otherdims(data, (:eV, :phi))
-    target_dim = others[end]
-    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
-
-    k_convs = ARPESData[]
-    for (val, arpes_slice) in
-        zip(dims(data, target_dim), eachslice(data; dims = target_dim))
-        k_converted_slice = k_conversion(
-            arpes_slice;
-            kx_range,
-            ky_range,
-            kz_range,
-            eV_range,
-            β0,
-            ξ0,
-            δ0,
-            χ0,
+        return _slice_and_convert(
+            data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
         )
-        push!(k_convs, add_dim(k_converted_slice, target_dim, val, unit = unit))
     end
-    return cat(k_convs...; dims = target_dim)
+    target_dim = otherdims(data, (:eV, :phi))[end]
+    return _slice_and_convert(
+        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+    )
 end
 
 
@@ -252,24 +199,9 @@ function k_conversion(  # N>=5D
     # (N=4 routes psi/hv to kxky/kpkz/kxkykz conversions).
     # Using [end] preserves dimension order: inner recursion handles earlier dims first.
     target_dim = otherdims(data, (:eV, :phi, :psi, :hv, :hν))[end]
-    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
-    k_convs = ARPESData[]
-    for (val, arpes_slice) in
-        zip(dims(data, target_dim), eachslice(data; dims = target_dim))
-        k_converted_slice = k_conversion(
-            arpes_slice;
-            kx_range,
-            ky_range,
-            kz_range,
-            eV_range,
-            β0,
-            ξ0,
-            δ0,
-            χ0,
-        )
-        push!(k_convs, add_dim(k_converted_slice, target_dim, val; unit))
-    end
-    return cat(k_convs...; dims = target_dim)
+    return _slice_and_convert(
+        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+    )
 end
 
 
@@ -381,6 +313,36 @@ function kxkykz_conversion(
 end
 
 # --- internal functions
+
+"""
+    _slice_and_convert(data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
+
+Slice `data` along `target_dim`, apply `k_conversion` to each slice, and concatenate
+the results back along the same dimension. Used to reduce N-dimensional data to
+(N-1)-dimensional slices for recursive k-space conversion.
+"""
+function _slice_and_convert(
+    data::ARPESData,
+    target_dim;
+    kx_range,
+    ky_range,
+    kz_range,
+    eV_range,
+    β0,
+    ξ0,
+    δ0,
+    χ0,
+)
+    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
+    k_convs = ARPESData[]
+    for (val, arpes_slice) in zip(dims(data, target_dim), eachslice(data; dims = target_dim))
+        k_converted = k_conversion(
+            arpes_slice; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+        )
+        push!(k_convs, add_dim(k_converted, target_dim, val; unit))
+    end
+    return cat(k_convs...; dims = target_dim)
+end
 
 """
     _deg2rad(angle_deg::AbstractRange, offset_deg::Real = 0.0) :: AbstractRange
