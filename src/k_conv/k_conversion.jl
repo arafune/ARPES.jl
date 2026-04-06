@@ -130,17 +130,15 @@ function k_conversion(  # N=3 version version
         return kpkz_conversion(data; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
     end
     # conversion 
-    otherdim = only(otherdims(data, (:eV, :phi)))
-    unit =
-        haskey(metadata(dims(data, otherdim)), :unit) ?
-        metadata(dims(data, otherdim))[:unit] : nothing
+    target_dim = only(otherdims(data, (:eV, :phi)))
+    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
     k_convs = ARPESData[]
-    for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+    for (val, arpes_cut) in zip(dims(data, target_dim), eachslice(data; dims = target_dim))
         k_converted_cut =
             k_conversion(arpes_cut; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0)
-        push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+        push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
     end
-    cat(k_convs...; dims = otherdim)
+    cat(k_convs...; dims = target_dim)
 end
 
 
@@ -170,12 +168,11 @@ function k_conversion(
         )
     end
     if hasdim(data, :psi) && !(hasdim(data, :hv) || hasdim(data, :hν))
-        otherdim = only(otherdims(data, (:eV, :phi, :psi)))
-        unit =
-            haskey(metadata(dims(data, otherdim)), :unit) ?
-            metadata(dims(data, otherdim))[:unit] : nothing
+        target_dim = only(otherdims(data, (:eV, :phi, :psi)))
+        unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
         k_convs = ARPESData[]
-        for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+        for (val, arpes_cut) in
+            zip(dims(data, target_dim), eachslice(data; dims = target_dim))
             k_converted_cut = k_conversion(
                 arpes_cut;
                 kx_range,
@@ -187,17 +184,16 @@ function k_conversion(
                 δ0,
                 χ0,
             )
-            push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+            push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
         end
-        return cat(k_convs...; dims = otherdim)
+        return cat(k_convs...; dims = target_dim)
     end
     if (hasdim(data, :hv) || hasdim(data, :hν)) && !hasdim(data, :psi)
-        otherdim = only(otherdims(data, (:eV, :phi, :hv, :hν)))
-        unit =
-            haskey(metadata(dims(data, otherdim)), :unit) ?
-            metadata(dims(data, otherdim))[:unit] : nothing
+        target_dim = only(otherdims(data, (:eV, :phi, :hv, :hν)))
+        unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
         k_convs = ARPESData[]
-        for (val, arpes_cut) in zip(dims(data, otherdim), eachslice(data; dims = otherdim))
+        for (val, arpes_cut) in
+            zip(dims(data, target_dim), eachslice(data; dims = target_dim))
             k_converted_cut = k_conversion(  # kpkz conversion
                 arpes_cut;
                 kx_range,
@@ -209,14 +205,32 @@ function k_conversion(
                 δ0,
                 χ0,
             )
-            push!(k_convs, add_dim(k_converted_cut, otherdim, val, unit = unit))
+            push!(k_convs, add_dim(k_converted_cut, target_dim, val, unit = unit))
         end
-        return cat(k_convs...; dims = otherdim)
+        return cat(k_convs...; dims = target_dim)
+
     end
-    if hasdim(data, :phi) && hasdim(data, :eV)
-        otherdims = ohterdims(data, (:eV, :phi))
-        # use k_conversion for 2D (kp-conversion) 
+    others = otherdims(data, (:eV, :phi))
+    target_dim = others[end]
+    unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
+
+    k_convs = ARPESData[]
+    for (val, arpes_slice) in
+        zip(dims(data, target_dim), eachslice(data; dims = target_dim))
+        k_converted_slice = k_conversion(
+            arpes_slice;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
+        )
+        push!(k_convs, add_dim(k_converted_slice, target_dim, val, unit = unit))
     end
+    return cat(k_convs...; dims = target_dim)
 end
 
 
