@@ -12,7 +12,7 @@ Optionally, a unit can be provided for the new dimension. Throws an error if the
 
 # Arguments
 - `data::AbstractDimArray`: The AbstractDimArray object to modify.
-- `dim_label::Symbol`: The label for the new dimension.
+- `dim::Symbol`: The label for the new dimension.
 - `val::Real=NaN`: The value for the new dimension (default is NaN).
 - `unit::Union{Nothing, String, Symbol}=nothing`: Optional unit for the new dimension.
 
@@ -21,25 +21,59 @@ Optionally, a unit can be provided for the new dimension. Throws an error if the
 """
 function add_dim(
     data::AbstractDimArray,
-    dim_label::Symbol,
+    dim::Symbol,
     val::Real;
     unit::Union{Nothing,String,Symbol} = nothing,
 )
-    if hasdim(data, dim_label)
-        throw(
-            ArgumentError("A dimension with the name $dim_label already exists in $data."),
-        )
+    if hasdim(data, dim)
+        throw(ArgumentError("A dimension with the name $dim already exists in $data."))
     end
     new_data = reshape(parent(data), size(data)..., 1)
-    newdim = Dim{dim_label}([val], metadata = Dict(:unit => unit))
+    newdim = Dim{dim}([val], metadata = Dict(:unit => unit))
     return rebuild(data; data = new_data, dims = (dims(data)..., newdim))
 end
 
 function add_dim(
     data::AbstractDimArray,
-    dim_label::Symbol;
+    dim::Symbol;
     unit::Union{Nothing,String,Symbol} = nothing,
 )
+    if !haskey(metadata(data), dim)
+        throw(
+            ArgumentError(
+                "A dimension with the name $dim does not exist in metadata of $data.",
+            ),
+        )
+    end
+    val = metadata(data)[dim]
+    return add_dim(data, dim, val; unit = unit)
+end
+
+add_dim(
+    data::AbstractDimArray,
+    dim::String,
+    val::Real;
+    unit::Union{Nothing,String,Symbol} = nothing,
+) = add_dim(data, Symbol(dim), val; unit = unit)
+
+
+function add_dim(
+    data::AbstractDimArray,
+    dim::DimensionalData.Dimension,
+    val::Real;
+    unit::Union{Nothing,String,Symbol} = nothing,
+)
+    dim_label = DimensionalData.name(dim)
+    return add_dim(data, dim_label, val; unit = unit)
+end
+
+function add_dim(
+    data::AbstractDimArray,
+    dim::DimensionalData.Dimension;
+    unit::Union{Nothing,String,Symbol} = nothing,
+)
+    dim_label = DimensionalData.name(dim)
+
     if !haskey(metadata(data), dim_label)
         throw(
             ArgumentError(
@@ -47,16 +81,10 @@ function add_dim(
             ),
         )
     end
+
     val = metadata(data)[dim_label]
     return add_dim(data, dim_label, val; unit = unit)
 end
-
-add_dim(
-    data::AbstractDimArray,
-    dim_label::String,
-    val::Real;
-    unit::Union{Nothing,String,Symbol} = nothing,
-) = add_dim(data, Symbol(dim_label), val; unit = unit)
 
 """
     convert_dim(dim::DimensionalData.Dimension, f::Function)
@@ -225,22 +253,39 @@ function shift_dim(arpes_data::AbstractDimArray, dim_shift_pair...)
             ),
         )
     end
-    dims = dim_shift_pair[1:2:end]
+    dim_labels = dim_shift_pair[1:2:end]
     shifts = dim_shift_pair[2:2:end]
-    for (dim, shift) in zip(dims, shifts)
+    for (dim, shift) in zip(dim_labels, shifts)
         arpes_data = shift_dim(arpes_data, dim, shift)
     end
     return arpes_data
 end
 
 """
-  negate_dim(dim::Dimension)
+    negate_dim(dim::Dimension)
+    negate_dim(data::AbstractDimArray, dim_label::Symbol)
+    negate_dim(data::AbstractDimArray, dim::DimensionalData.Dimension)
 
 Negate the lookup values of a dimension.
 """
 function negate_dim(dim::DimensionalData.Dimension)
     new_lookup = _negate_lookup(lookup(dim))
     return rebuild(dim; val = new_lookup)
+end
+
+function negate_dim(data::AbstractDimArray, dim_label::Symbol)
+    idx = findfirst(d -> name(d) == dim_label, dims(data))
+    if isnothing(idx)
+        throw(
+            ArgumentError("Dimension with name $dim_label not found in AbstractDimArray."),
+        )
+    end
+    negated = negate_dim(dims(data)[idx])
+    return rebuild(data; dims = Base.setindex(dims(data), negated, idx))
+end
+
+function negate_dim(data::AbstractDimArray, dim::DimensionalData.Dimension)
+    return negate_dim(data, name(dim))
 end
 
 function change_energy_definition(arpes_data::ARPESData, new_definition::EnergyDefinition)
@@ -292,19 +337,9 @@ function _negate_lookup(l::Lookup)
 end
 
 """
-    _process_index(index)
+    _shift_index(index, shift)
 
-Process the given index for shifting. If the index is a range or array, return it as is.
-Otherwise, throw an error.
-
-# Arguments
-- `index`: The index to process.
-
-# Returns
-- The processed index.
-
-# Throws
-- An error if the index type is not supported.
+Return a new index by adding `shift` to each element of `index`.
 """
 function _shift_index(index::AbstractRange, shift)
     return range(index[1] + shift, step = step(index), length = length(index))
