@@ -29,16 +29,16 @@ Convert ARPES data from angle-space to momentum-space coordinates.
 
 Dispatch is determined by the number of dimensions and which named dimensions are present:
 
-| Input dims | Key dims present             | Output         | Internal call       |
-|:---------- |:---------------------------- |:-------------- |:------------------- |
-| N=2        | `phi`, `eV`                  | `kx × eV`     | (direct)            |
-| N=3        | `phi`, `psi`, `eV`           | `kx × ky × eV`| `kxky_conversion`   |
-| N=3        | `phi`, `hv`/`hν`, `eV`      | (not impl.)    | `kpkz_conversion`   |
-| N=3        | other                        | slices extra dim | `_slice_and_convert`|
-| N=4        | `phi`, `psi`, `hv`/`hν`, `eV`| (not impl.)  | `kxkykz_conversion` |
-| N=4        | `phi`, `psi`, `eV` + extra   | slices extra dim | `_slice_and_convert`|
-| N=4        | `phi`, `hv`/`hν`, `eV` + extra| slices extra dim| `_slice_and_convert`|
-| N≥5        | any                          | slices last extra dim | `_slice_and_convert`|
+| Input dims | Key dims present             | Output                | Internal call       |
+|:---------- |:---------------------------- |:--------------------- |:------------------- |
+| N=2        | `phi`, `eV`                      | `kx × eV`               | (direct)            |
+| N=3        | `phi`, `psi`, `eV`                 | `kx × ky × eV`          | `kxky_conversion`     |
+| N=3        | `phi`, `hv`/`hν`, `eV`               | (not impl.)           | `kpkz_conversion`     |
+| N=3        | `phi`, `eV`, + extra             | slices extra dim      | `_slice_and_convert`  |
+| N=4        | `phi`, `psi`, `hv`/`hν`, `eV`          | (not impl. )          | `kxkykz_conversion`   |
+| N=4        | `phi`, `psi`, `eV` + extra         | slices extra d im     | `_slice_and_convert`  |
+| N=4        | `phi`, `hv`/`hν`, `eV` + extra       | slices extra dim      | `_slice_and_convert`  |
+| N≥5        | any                          | slices last extra dim | `_slice_and_convert`  |
 
 The input must contain `eV` and `phi` dimensions. The dataset metadata is expected to
 include `:analyzer_configuration`, `:workfunction`, `:hv`, `:β`, `:ξ`, `:δ`, and `:χ`.
@@ -146,7 +146,16 @@ function k_conversion(  # N=3 version version
     # conversion 
     target_dim = only(otherdims(data, (:eV, :phi)))
     return _slice_and_convert(
-        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+        data,
+        target_dim;
+        kx_range,
+        ky_range,
+        kz_range,
+        eV_range,
+        β0,
+        ξ0,
+        δ0,
+        χ0,
     )
 end
 
@@ -179,18 +188,45 @@ function k_conversion(
     if hasdim(data, :psi) && !(hasdim(data, :hv) || hasdim(data, :hν))
         target_dim = only(otherdims(data, (:eV, :phi, :psi)))
         return _slice_and_convert(
-            data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+            data,
+            target_dim;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
         )
     end
     if (hasdim(data, :hv) || hasdim(data, :hν)) && !hasdim(data, :psi)
         target_dim = only(otherdims(data, (:eV, :phi, :hv, :hν)))
         return _slice_and_convert(
-            data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+            data,
+            target_dim;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
         )
     end
     target_dim = otherdims(data, (:eV, :phi))[end]
     return _slice_and_convert(
-        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+        data,
+        target_dim;
+        kx_range,
+        ky_range,
+        kz_range,
+        eV_range,
+        β0,
+        ξ0,
+        δ0,
+        χ0,
     )
 end
 
@@ -214,7 +250,16 @@ function k_conversion(  # N>=5D
     # Using [end] preserves dimension order: inner recursion handles earlier dims first.
     target_dim = otherdims(data, (:eV, :phi, :psi, :hv, :hν))[end]
     return _slice_and_convert(
-        data, target_dim; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+        data,
+        target_dim;
+        kx_range,
+        ky_range,
+        kz_range,
+        eV_range,
+        β0,
+        ξ0,
+        δ0,
+        χ0,
     )
 end
 
@@ -305,14 +350,7 @@ function kxky_conversion(
     data_k =
         _interpolate(α_range, β_range, ek_grid, α, β, parent(ek_original), parent(data))
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
-    return _build_arpesband(
-        data_k,
-        kx_range,
-        ky_range,
-        eV_range,
-        md,
-        energy_definition,
-    )
+    return _build_arpesband(data_k, kx_range, ky_range, eV_range, md, energy_definition)
 end
 
 """
@@ -399,9 +437,18 @@ function _slice_and_convert(
 )
     unit = haskey(metadata(target_dim), :unit) ? metadata(target_dim)[:unit] : nothing
     k_convs = ARPESData[]
-    for (val, arpes_slice) in zip(dims(data, target_dim), eachslice(data; dims = target_dim))
+    for (val, arpes_slice) in
+        zip(dims(data, target_dim), eachslice(data; dims = target_dim))
         k_converted = k_conversion(
-            arpes_slice; kx_range, ky_range, kz_range, eV_range, β0, ξ0, δ0, χ0
+            arpes_slice;
+            kx_range,
+            ky_range,
+            kz_range,
+            eV_range,
+            β0,
+            ξ0,
+            δ0,
+            χ0,
         )
         push!(k_convs, add_dim(k_converted, target_dim, val; unit))
     end
