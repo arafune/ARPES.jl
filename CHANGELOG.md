@@ -1,0 +1,90 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] — 2026-04-08
+
+### Added
+
+- **3D `k_conversion`** for `ARPESData{T,3}` ([#52]):
+  - Dispatches to `kxky_conversion` when a `:psi` dimension is present (kx-ky map).
+  - Dispatches to `kpkz_conversion` when a `:hv`/`:hν` dimension is present (kp-kz map, stub).
+  - Otherwise iterates over the third scan dimension, applies the 2D `k_conversion` on each φ-eV slice, and concatenates the results.
+- **4D `k_conversion`** for `ARPESData{T,4}` ([#52]):
+  - Dispatches to `kxkykz_conversion` (stub) for φ+ψ+hν data.
+  - Falls back to iterating over the extra scan dimension and delegating to 3D dispatch.
+- **N≥5D `k_conversion`** ([#52]):
+  - Recursively peels the last scan dimension (any dimension that is not eV, phi, psi, hv, or hν) and delegates to the (N-1)D dispatch.
+- `kxky_conversion` helper for 3D φ×ψ×eV → kx×ky×eV conversion ([#52]).
+- Stubs for `kpkz_conversion` and `kxkykz_conversion` ([#52]).
+- `_slice_and_convert` internal helper to eliminate repeated slice-stack patterns across dispatch levels ([#52]).
+- 4D quadrilinear interpolation overloads for `_interpolate` (uniform and non-uniform grids) ([#52]).
+- `ky_range` and `kz_range` keyword arguments added to the 2D `k_conversion` signature for a consistent call interface from higher-dimensional dispatches ([#52]).
+- `AbstractDimArray` and `DimensionalData.Dimension` overloads for `negate_dim` and `add_dim` in `dims.jl` ([#52]).
+- `testdata` added as a git submodule (dev branch only) ([#50]).
+
+### Changed
+
+- Renamed `reshape_for_nd` → `prepare_for_broadcast` ([#52]).
+- Renamed loop variable `a_dimarray` → `arpes_cut` in kx-ky dispatch for clarity ([#52]).
+- Renamed `_interpolate` parameters from 0-based (`p0`/`c0`) to 1-based (`p1`/`c1`) to align with Julia's indexing convention ([#52]).
+- Renamed local variable `dims` → `dim_labels` in `shift_dim` varargs to avoid shadowing ([#52]).
+- Renamed `otherdim` → `target_dim` throughout N=3 and N=4 fallback cases in `k_conversion` ([#52]).
+- `k_conversion` docstring rewritten with a full dispatch table covering N=2 through N≥5 cases ([#52]).
+- `derivative.jl`: added missing `return` in `curvature/2` (previously returned `nothing`) ([#52]).
+- `filter.jl`: hoisted `weights` allocation out of the inner loop in `sg_1d`; use `@view` for slices to avoid copies ([#52]).
+- CI: added `deploy-main.yml` workflow to maintain a clean `main` branch without testdata ([#50]).
+- Tests split into two sections for cleaner CI reporting ([#54]).
+
+### Fixed
+
+- Fixed loading of n-dimensional (n > 2) ITX data ([#45]).
+- Fixed `ky_range` being always overwritten in 2D `k_conversion` (added `isnothing` guard) ([#52]).
+- Fixed operator-precedence bug in `hasdim(:hv) || hasdim(:hν)` check ([#52]).
+- Fixed `UndefVarError` in `add_dim` caused by misnamed parameter (`dim_label` → `dim`) ([#52]).
+- Fixed `UndefVarError` references to undefined `otherdim` in N=3 and N=4 fallback paths ([#52]).
+- Fixed dimension-order reversal in the N=4 fallback: changed `others[1]` to `others[end]` so recursion preserves input order (e.g. φ, eV, A, B → kx, eV, A, B) ([#52]).
+- Fixed `_shift_index` docstring header (was incorrectly labeled `_process_index`) ([#52]).
+- Typo fix in CI.yml ([#48]).
+- Fixed typo `'Not Impremented'` → `'Not Implemented'` ([#52]).
+
+### Removed
+
+- `cat_arpes` removed; the standard `Base.cat` is sufficient ([#52]).
+- Removed redundant 7-argument `_interpolate` forwarding overloads ([#52]).
+- Removed `arpes_doc`-related section from documentation ([#52]).
+
+---
+
+## [0.1.1] — 2026-04-02
+
+### Added
+
+- `rebin` function with documentation ([#38]).
+- Positional overloads and defaults for filter functions ([#37-area]).
+- `convert_dim` for `DimensionalData.Dimension` including overloads for default-label and `String`-label usage.
+- Improved handling of the angle χ in k-conversion (`_set_supplemental_angles`).
+- GitHub Pages documentation deployment.
+- Expanded documentation guide and API reference.
+
+### Changed
+
+- Simplified k-conversion dimension checks.
+- Simplified `convert_dim` API.
+- Refactored `AnalyzerConfiguration` type hierarchy (new abstract type below `AnalyzerConfiguration`).
+- Various code style and refactoring improvements.
+
+### Fixed
+
+- CompatHelper workflow corrections ([#37]).
+- Removed `LinearAlgebra` and `Statistics` from `[deps]` to fix CompatHelper.
+
+[0.1.1]: https://github.com/arafune/ARPES.jl/releases/tag/v0.1.1
+[#45]: https://github.com/arafune/ARPES.jl/pull/45
+[#48]: https://github.com/arafune/ARPES.jl/pull/48
+[#50]: https://github.com/arafune/ARPES.jl/pull/50
+[#52]: https://github.com/arafune/ARPES.jl/pull/52
+[#54]: https://github.com/arafune/ARPES.jl/pull/54
