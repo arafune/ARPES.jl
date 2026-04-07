@@ -1,6 +1,6 @@
 using Test
 using ARPES
-using ARPES: add_dim, cat_arpes
+using ARPES: add_dim
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ARPES: _shift_irregular
 using DimensionalData
@@ -155,27 +155,6 @@ end
     @test_throws ArgumentError shift(test_dim3D_3, :Z, -0.5)
 end
 
-
-@testset "Test for cat_arpes" begin
-    data1 = test_ARPESData()
-    data2 = test_ARPESData()
-    data3 = test_ARPESData()
-    data4 = test_spd_standard()
-
-    data_1_1 = add_dim(data1, :w, 0.0)
-    data_2_1 = add_dim(data2, :w, 1.0)
-    data_3_1 = add_dim(data3, :w, 3.0)
-    #    stack_1_to_3 = sort(cat([data_2_1, data_1_1, data_3_1]; dims = :w); dims = :w)
-    #    @test size(stack_1_to_3) == (10, 10, 10, 3)
-    #
-    #    @test hasdim(stack_1_to_3, :w)
-    #    @test lookup(stack_1_to_3, :w) == [0.0, 1.0, 3.0]
-    #
-    stack_1_to_3_alt = cat_arpes(data_2_1, data_1_1, data_3_1; dims = :w)
-    #cat_arpes(data_2_1, data_1_1, data_3_1; dims = Dim{:w}([1.0, 0.0, 3.0]))
-    @test parent(lookup(stack_1_to_3_alt, :w)) == [1.0, 0.0, 3.0]
-    @test_throws ArgumentError cat_arpes(data_2_1, data_1_1, data3; dims = :w)
-end
 
 @testset "Test for rebin" begin
     spd_standard = test_spd_standard()

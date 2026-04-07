@@ -306,7 +306,7 @@ function curvature(
     dim = DimensionalData.dims(A, dim)
     df, d2f = derivative(A, dim), derivative(A, dim, order = 2)
     demoninator = (alpha * maximum(abs.(parent(df)))^2 .+ parent(df) .^ 2) .^ 1.5
-    rebuild(A, parent(d2f) ./ demoninator)
+    return rebuild(A, parent(d2f) ./ demoninator)
 end
 
 """

@@ -23,6 +23,11 @@ The package is built around three ideas:
   enhancement, and
 - `k_conversion` for angle-to-momentum conversion.
 
+## What the package does _not_ provide
+
+- plotting utilities, which are best left to dedicated packages such as
+  [Makie.jl](https://makie.juliaplots.org/stable/). See [ARPESPlots.jl](https://arafune.github.io/ARPESPlots.jl).
+
 ## Quick start
 
 ```julia

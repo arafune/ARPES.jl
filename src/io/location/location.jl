@@ -26,7 +26,7 @@ implemented to provide the necessary mappings and conversion rules for that load
 module Location
 using DimensionalData
 using DimensionalData.Dimensions.Lookups: NoMetadata
-using ..IO: LocationLoader, SPDLoader, GenericLoader
+using ARPES.IO: LocationLoader, SPDLoader, GenericLoader
 export canonical_dim, dim_alias, default_dim_map
 
 """

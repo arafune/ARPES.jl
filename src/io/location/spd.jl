@@ -1,9 +1,9 @@
 using ..Format: read_itx
 using DimensionalData
 using DimensionalData: DimArray
-using ..IO: SPDLoader
+using ARPES.IO: SPDLoader
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
-using ..IO.Location: to_standardize
+using ARPES.IO.Location: to_standardize
 
 """
     negate(x)

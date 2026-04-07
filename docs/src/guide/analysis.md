@@ -76,13 +76,12 @@ visualization and feature enhancement pipelines.
 
 ## Concatenation and metadata consensus
 
-`cat_arpes` concatenates multiple datasets along a chosen dimension while preserving the
-dimensional-array structure.
+In order to concatenates multiple datasets along a chosen dimension while preserving the
+dimensional-array structure, you can use `Base.cat` function.
 
 When metadata from multiple inputs must be combined, `merge_consensus` keeps only the
 key-value pairs that are consistent across all inputs.
 
 This is a practical way to build combined datasets without silently keeping conflicting
 metadata.
-
 See the [API reference](../api.md) for the detailed docstrings of these functions.
