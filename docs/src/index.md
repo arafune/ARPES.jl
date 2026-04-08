@@ -5,7 +5,7 @@ CurrentModule = ARPES
 # ARPES.jl
 
 `ARPES.jl` is a Julia package for working with angle-resolved photoemission spectroscopy
-(ARPES) data on top of
+(ARPES) data on
 [DimensionalData.jl](https://rafaqz.github.io/DimensionalData.jl).
 
 The package is built around three ideas:
