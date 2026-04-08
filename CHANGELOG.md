@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] — 2026-04-08
 
+### Breaking change (Removed)
+
+- `cat_arpes` removed; the standard `Base.cat` is sufficient ([#52]).
+
 ### Added
 
 - **3D `k_conversion`** for `ARPESData{T,3}` ([#52]):
@@ -48,14 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `UndefVarError` references to undefined `otherdim` in N=3 and N=4 fallback paths ([#52]).
 - Fixed dimension-order reversal in the N=4 fallback: changed `others[1]` to `others[end]` so recursion preserves input order (e.g. φ, eV, A, B → kx, eV, A, B) ([#52]).
 - Fixed `_shift_index` docstring header (was incorrectly labeled `_process_index`) ([#52]).
-- Typo fix in CI.yml ([#48]).
-- Fixed typo `'Not Impremented'` → `'Not Implemented'` ([#52]).
-
-### Removed
-
-- `cat_arpes` removed; the standard `Base.cat` is sufficient ([#52]).
-- Removed redundant 7-argument `_interpolate` forwarding overloads ([#52]).
-- Removed `arpes_doc`-related section from documentation ([#52]).
+- Fixed typos
 
 ---
 
@@ -84,7 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.1.1]: https://github.com/arafune/ARPES.jl/releases/tag/v0.1.1
 [#45]: https://github.com/arafune/ARPES.jl/pull/45
-[#48]: https://github.com/arafune/ARPES.jl/pull/48
 [#50]: https://github.com/arafune/ARPES.jl/pull/50
 [#52]: https://github.com/arafune/ARPES.jl/pull/52
 [#54]: https://github.com/arafune/ARPES.jl/pull/54
