@@ -11,7 +11,7 @@ jobs:
       - name: Checkout dev branch
         uses: actions/checkout@v4
         with:
-          submodules: false # サブモジュールは取得しない
+          submodules: false
           fetch-depth: 0
 
       - name: Remove submodule files & config
