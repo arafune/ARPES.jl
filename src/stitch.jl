@@ -14,6 +14,10 @@ Stitch two `AbstractDimArray`s together along `dim`.
 - `seam_ratio`: fraction of the overlap region assigned to the left array.
   `nothing` (default) means no overlap splitting — arrays are concatenated directly.
 - `gain_a`: multiplicative scale factor applied to `A` before concatenating.
+
+# Notes
+
+- ARPESPlots.jl provides a convenient interface for this function, as `stitch_ui`.
 """
 function stitch_along(
     A::AbstractDimArray,
