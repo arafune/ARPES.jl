@@ -67,7 +67,7 @@ jobs:
           name: coverage-html
           path: coverage_html
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
         with:
           files: lcov.info
