@@ -7,20 +7,20 @@ using DimensionalData.Dimensions: label
 export stitch_along
 
 """
-    stitch_along(A, B, dim; occupation_ratio=nothing, enhance_a=1.0)
+    stitch_along(A, B, dim; seam_ratio=nothing, gain_a=1.0)
 
 Stitch two `AbstractDimArray`s together along `dim`.
 
-- `occupation_ratio`: fraction of the overlap region assigned to the left array.
+- `seam_ratio`: fraction of the overlap region assigned to the left array.
   `nothing` (default) means no overlap splitting — arrays are concatenated directly.
-- `enhance_a`: multiplicative scale factor applied to `A` before concatenating.
+- `gain_a`: multiplicative scale factor applied to `A` before concatenating.
 """
 function stitch_along(
     A::AbstractDimArray,
     B::AbstractDimArray,
     dim::Union{Dimension,Symbol},
-    occupation_ratio::Union{Real,Nothing},
-    enhance_a::Real,
+    seam_ratio::Union{Real,Nothing},
+    gain_a::Real,
 )
     @assert name(dims(A)) == name(dims(B))
     otherdims_A = otherdims(A, dim)
@@ -30,13 +30,13 @@ function stitch_along(
     extrema_B = extrema(lookup(B, dim))
     @debug "extrema_A" extrema_A
     @debug "extrema_B" extrema_B
-    if isnothing(occupation_ratio) ||
+    if isnothing(seam_ratio) ||
        (extrema_A[2] < extrema_B[1]) ||
        (extrema_B[2] < extrema_A[1])
         @debug "concatenating"
-        return _cat_and_sort(A, B, dim, enhance_a)
+        return _cat_and_sort(A, B, dim, gain_a)
     end
-    @assert 0.0 <= occupation_ratio <= 1.0 "occupation_ratio must be between 0 and 1"
+    @assert 0.0 <= seam_ratio <= 1.0 "seam_ratio must be between 0 and 1"
     if extrema_A[1] < extrema_B[1]
         left, right = A, B
     elseif extrema_B[1] < extrema_A[1]
@@ -48,11 +48,11 @@ function stitch_along(
     end
     seam_dim =
         (maximum(lookup(left, name(dim))) - minimum(lookup(right, name(dim)))) *
-        occupation_ratio + minimum(lookup(right, name(dim)))
+        seam_ratio + minimum(lookup(right, name(dim)))
     @debug "seam_dim" seam_dim
-    left_part = left[Dim{name(dim)}(At(<(seam_dim)))]
-    right_part = right[Dim{name(dim)}(At(>=(seam_dim)))]
-    return _cat_and_sort(left_part, right_part, dim, enhance_a)
+    left_part = left[Dim{name(dim)}(Where(<(seam_dim)))]
+    right_part = right[Dim{name(dim)}(Where(>=(seam_dim)))]
+    return _cat_and_sort(left_part, right_part, dim, gain_a)
 end
 
 
@@ -61,15 +61,15 @@ stitch_along(
     A::AbstractDimArray,
     B::AbstractDimArray,
     dim::Union{Dimension,Symbol};
-    occupation_ratio::Union{Real,Nothing} = nothing,
-    enhance_a::Real = 1.0,
-) = stitch_along(A, B, dim, occupation_ratio, enhance_a)
+    seam_ratio::Union{Real,Nothing} = nothing,
+    gain_a::Real = 1.0,
+) = stitch_along(A, B, dim, seam_ratio, gain_a)
 
 function _cat_and_sort(
     A::AbstractDimArray,
     B::AbstractDimArray,
     dim::Union{Dimension,Symbol},
-    enhance_a,
+    gain_a,
 )
     along_dim = dims(A, dim)
     along_dim_idx = dimnum(A, dim)
@@ -80,7 +80,7 @@ function _cat_and_sort(
     )
     @debug "cat_dim" cat_dim
     @debug "new_along_dim" new_along_dim
-    cat_data = cat(parent(A) .* enhance_a, parent(B), dims = along_dim_idx)
+    cat_data = cat(parent(A) .* gain_a, parent(B), dims = along_dim_idx)
     @debug "size_of cat_data" size(cat_data)
     stitch_dimArray = rebuild(
         A;

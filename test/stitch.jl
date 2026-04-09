@@ -4,24 +4,27 @@ using ARPES
 
 
 function build_arrays()
-    x = range(1.0, stop = 8.0, length = 20)
-    y = collect(range(5, stop = 9, length = 10))
-    data = collect(1.0:200) |> d->reshape(d, 20, 10)
-    A = DimArray(data, (X = x, Y = y))
+    # Array A: X from 1 to 8
+    x1 = range(1.0, stop = 8.0, length = 20)
+    y1 = collect(range(5, stop = 9, length = 10))
+    data1 = collect(1.0:200) |> d -> reshape(d, 20, 10)
+    A = DimArray(data1, (X = x1, Y = y1))
 
-    x = range(3.0, stop = 15.0, length = 20)
-    y = collect(range(5, stop = 9, length = 10))
-    data = collect(1.0:200) |> d->reshape(d, 10, 20)
-    B = DimArray(data', (X = x, Y = y))
+    # Array B: X from 3 to 15 (Overlaps A)
+    x2 = range(3.0, stop = 15.0, length = 20)
+    y2 = collect(range(5, stop = 9, length = 10))
+    data2 = collect(1.0:200) |> d -> reshape(d, 10, 20)
+    B = DimArray(data2', (X = x2, Y = y2))
 
-    x = range(13.0, stop = 15.0, length = 10)
-    y = collect(range(5, stop = 9, length = 10))
-    data = collect(1.0:100) |> d->reshape(d, 10, 10)
-    C = DimArray(data', (X = x, Y = y))
+    # Array C: X from 13 to 15 (No overlap with A)
+    x3 = range(13.0, stop = 15.0, length = 10)
+    y3 = collect(range(5, stop = 9, length = 10))
+    data3 = collect(1.0:100) |> d -> reshape(d, 10, 10)
+    C = DimArray(data3', (X = x3, Y = y3))
 
     return A, B, C
-
 end
+
 
 function build_arrays3D()
     x = range(1.0, stop = 8.0, length = 20)
@@ -38,3 +41,37 @@ function build_arrays3D()
     return A, B
 end
 
+@testset "ARPES Stitching Tests" begin
+    A, B, C = build_arrays()
+
+    @testset "Case: Overlapping Stitched (A & B)" begin
+        res = stitch_along(A, B, :X, 0.5, 1.0)
+        @test res isa DimArray
+        @test size(res, :X) < (size(A, :X) + size(B, :X))
+        @test minimum(lookup(res, :X)) == 1.0
+        @test maximum(lookup(res, :X)) == 15.0
+        @test issorted(lookup(res, :X))
+    end
+
+    @testset "Case: Disjoint Stitched (A & C)" begin
+        res = stitch_along(A, C, :X, 0.5, 1.0)
+        @test size(res, :X) == size(A, :X) + size(C, :X)
+        @test issorted(lookup(res, :X))
+    end
+
+    @testset "Case: Intensity Enhancement" begin
+        gain = 2.5
+        res = stitch_along(A, C, :X, nothing, gain)
+        @test res[X(At(1.0)), Y(At(5.0))] == A[X(At(1.0)), Y(At(5.0))] * gain
+        @test res[X(At(15.0)), Y(At(5.0))] == C[X(At(15.0)), Y(At(5.0))]
+    end
+
+    @testset "Case: Error Handling" begin
+        @test_throws AssertionError stitch_along(A, B, :X, 1.2, 1.0)
+
+        B_wrong = B[Y(1:5)]
+        @test_throws AssertionError stitch_along(A, B_wrong, :X, 0.5, 1.0)
+
+        @test_throws ErrorException stitch_along(A, A, :X, 0.5, 1.0)
+    end
+end
