@@ -14,6 +14,7 @@ include("./fixture.jl")
         include("transform.jl")
         include("filter.jl")
         include("derivative.jl")
+        include("stitch.jl")
     end
     @testset "k_conv" begin
         include("k_conv/preprocess.jl")
