@@ -11,13 +11,27 @@ export stitch_along
 
 Stitch two `AbstractDimArray`s together along `dim`.
 
+# Arguments
+
+- `A`, `B`: arrays to stitch. Both must share the same dimension names and have
+  matching coordinate values on every dimension other than `dim`.
+- `dim`: the dimension along which to stitch (a `Dimension` object or a `Symbol`).
 - `seam_ratio`: fraction of the overlap region assigned to the left array.
   `nothing` (default) means no overlap splitting — arrays are concatenated directly.
+  Must be in [0, 1] when provided.
 - `gain_a`: multiplicative scale factor applied to `A` before concatenating.
+  Useful for normalising intensity differences between the two arrays.
+
+# Returns
+
+A new `AbstractDimArray` (same concrete type as `A`) covering the union of the
+coordinate ranges of `A` and `B` along `dim`, with values sorted in ascending
+coordinate order.
 
 # Notes
 
-- ARPESPlots.jl provides a convenient interface for this function, as `stitch_ui`.
+- ARPESPlots.jl provides a convenient interactive interface for this function,
+  as `stitch_ui`.
 """
 function stitch_along(
     A::AbstractDimArray,
@@ -67,6 +81,15 @@ stitch_along(
     gain_a::Real = 1.0,
 ) = stitch_along(A, B, dim, seam_ratio, gain_a)
 
+"""
+    _cat_and_sort(A, B, dim, gain_a)
+
+Concatenate `A` (scaled by `gain_a`) and `B` along `dim`, then sort the result
+by ascending coordinate value along that dimension.
+
+This is the low-level building block used by `stitch_along` after the seam has
+already been applied to trim any unwanted overlap.
+"""
 function _cat_and_sort(
     A::AbstractDimArray,
     B::AbstractDimArray,
