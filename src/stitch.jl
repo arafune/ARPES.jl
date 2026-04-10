@@ -59,8 +59,6 @@ function stitch_along(
     return _cat_and_sort(left_part, right_part, dim, gain_a)
 end
 
-
-
 stitch_along(
     A::AbstractDimArray,
     B::AbstractDimArray,

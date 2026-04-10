@@ -1,6 +1,7 @@
 using Test
 using DimensionalData
 using ARPES
+using ARPES: phi, eV, delay
 
 
 function build_arrays()
@@ -27,17 +28,18 @@ end
 
 
 function build_arrays3D()
-    x = range(1.0, stop = 8.0, length = 20)
-    y = collect(range(5, stop = 9, length = 10))
-    z = collect(range(1, stop = 5, length = 5))
-    data = collect(1.0:1000) |> d->reshape(d, 20, 10, 5)
-    A = DimArray(data, (X = x, Y = y, Z = z))
-
     x = range(7.0, stop = 15.0, length = 20)
     y = collect(range(5, stop = 9, length = 10))
     z = collect(range(1, stop = 5, length = 5))
     data = collect(1.0:1000) * 2.1 |> d->reshape(d, 20, 10, 5)
-    B = DimArray(data, (X = x, Y = y, Z = z))
+    A = ARPESData(data, (phi = x, eV = y, delay = z))
+
+    x = range(1.0, stop = 8.0, length = 20)
+    y = collect(range(5, stop = 9, length = 10))
+    z = collect(range(1, stop = 5, length = 5))
+    data = collect(1.0:1000) |> d->reshape(d, 20, 10, 5)
+    B = ARPESData(data, (phi = x, eV = y, delay = z))
+
     return A, B
 end
 
@@ -73,5 +75,18 @@ end
         @test_throws AssertionError stitch_along(A, B_wrong, :X, 0.5, 1.0)
 
         @test_throws ErrorException stitch_along(A, A, :X, 0.5, 1.0)
+    end
+end
+
+@testset "ARPES Stitching Tests - 3D" begin
+    A, B = build_arrays3D()
+
+    @testset "Case: Overlapping Stitched (A & B)" begin
+        res = stitch_along(A, B, :phi; seam_ratio = 0.5, gain_a = 1.0)
+        @test res isa ARPESData
+        @test size(res, :phi) < (size(A, :phi) + size(B, :phi))
+        @test minimum(lookup(res, :phi)) == 1.0
+        @test maximum(lookup(res, :phi)) == 15.0
+        @test issorted(lookup(res, :phi))
     end
 end
