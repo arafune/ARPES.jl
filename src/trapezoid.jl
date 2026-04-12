@@ -62,45 +62,34 @@ _phi_to_phi(
     Ek,
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
     base_corners::Tuple{Real,Real},
-) = _rectangle_to_trapezoid(p, Ek, trapezoid_corners, base_corners)
+) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, false)
 
 _phi_to_phi(
     p,
     Ek,
     base_corners::Tuple{Real,Real},
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
-) = _trapezoid_to_rectangle(p, Ek, base_corners, trapezoid_corners)
+) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, true)
 
-
-
-function _rectangle_to_trapezoid(
+function _phi_to_phi_impl(
     p,
     Ek,
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
     base_corners::Tuple{Real,Real},
+    from_trapezoid::Bool,
 )
     UL, UR, LL, LR = trapezoid_corners
-    slope_left_edge = UL.phi - LL.phi / (UL.eV - LL.eV)
-    slope_right_edge = UR.phi - LR.phi / (UR.eV - LR.eV)
+    slope_left_edge = (UL.phi - LL.phi) / (UL.eV - LL.eV)
+    slope_right_edge = (UR.phi - LR.phi) / (UR.eV - LR.eV)
     left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
-    right_edge = @. slope_right_edge + (Ek - UR.eV) + UR.phi
-    dac_da = (right_edge - left_edge) / (maximim(base_corners) - minimum(base_corners))
-    return @. (p - minimum(base_corners)) * dac_da + left_edge
-end
-
-function _trapezoid_to_rectangle(
-    p,
-    Ek,
-    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
-    base_corners::Tuple{Real,Real},
-)
-    UL, UR, LL, LR = trapezoid_corners
-    slope_left_edge = UL.phi - LL.phi / (UL.eV - LL.eV)
-    slope_right_edge = UR.phi - LR.phi / (UR.eV - LR.eV)
-    left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
-    right_edge = @. slope_right_edge + (Ek - UR.eV) + UR.phi
-    c = @. (p - left_edge) / (right_edge - left_edge)
-    return @. minimum(base_corners) + c * (maximum(base_corners) - minimum(base_corners))
-
+    right_edge = @. slope_right_edge * (Ek - UR.eV) + UR.phi
+    if from_trapezoid # from trapezoid to rectangle
+        c = @. (p - left_edge) / (right_edge - left_edge)
+        return @. minimum(base_corners) +
+                  c * (maximum(base_corners) - minimum(base_corners))
+    else  # from rectangle to trapezoid 
+        dac_da = (right_edge - left_edge) / (maximum(base_corners) - minimum(base_corners))
+        return @. (p - minimum(base_corners)) * dac_da + left_edge
+    end
 end
 
