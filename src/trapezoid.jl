@@ -58,6 +58,26 @@ function trapezoid(  # convert from trapezoid
     else
         base_corners
     end
+    @assert L_rect < R_Rect "L_Rect must be less than R_Rect"
+
+    # Create new phi coordinates for the output array
+    max_phi = maximum(
+        _phi_to_phi(
+            maximum(lookup(A, :phi)),
+            lookup(A, :eV),
+            trapezoid_corners,
+            (L_rect, R_Rect),
+        ),
+    )
+    min_phi = minimum(
+        _phi_to_phi(
+            minimum(lookup(A, :phi)),
+            lookup(A, :eV),
+            trapezoid_corners,
+            (L_rect, R_Rect),
+        ),
+    )
+    new_phi = range(start = min_phi, step = abs(step_phi), stop = max_phi)
 
 end
 
