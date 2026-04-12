@@ -53,23 +53,47 @@ function trapezoid(  # convert from trapezoid
     @assert UL.eV == UR.eV "UL and UR must have the same eV value"
     @assert LL.eV == LR.eV "LL and LR must have the same eV value"
     step_phi = _step(dims(A, :phi))
-
+    L_rect, R_Rect = if isnothing(base_corners)
+        extrema(lookup(A, :phi))
+    else
+        base_corners
+    end
 
 end
 
+"""
+    _phi_to_phi(p, Ek, trapezoid_corners, base_corners)   # rectangle => trapezoid
+    _phi_to_phi(p, Ek, base_corners, trapezoid_corners)   # trapezoid => rectangle
+
+Transforms coordinates between a trapezoidal region (defined by four corners in (eV, phi) space)
+and a rectangular region (defined by two base corners). The direction of the transformation is
+determined by the argument order:
+
+- If `base_corners` comes first, transforms from rectangle to trapezoid.
+- If `trapezoid_corners` comes first, transforms from trapezoid to rectangle.
+
+Arguments:
+- `p`: phi coordinate(s) to transform
+- `Ek`: energy value(s)
+- `trapezoid_corners`: NTuple of 4 NamedTuples (UL, UR, LL, LR) with fields `:eV` and `:phi`
+- `base_corners`: Tuple of two real numbers defining the rectangle base
+
+Returns:
+- Transformed coordinate(s) in the target region.
+"""
 _phi_to_phi(
     p,
     Ek,
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
     base_corners::Tuple{Real,Real},
-) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, false)
+) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, true)
 
 _phi_to_phi(
     p,
     Ek,
     base_corners::Tuple{Real,Real},
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
-) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, true)
+) = _phi_to_phi_impl(p, Ek, trapezoid_corners, base_corners, false)
 
 function _phi_to_phi_impl(
     p,
