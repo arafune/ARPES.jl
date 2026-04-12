@@ -41,26 +41,36 @@ angles.
 A new array converted.
 """
 
-function trapezoid(
+function trapezoid(  # convert from trapezoid
     A::ARPESData{T,2} where {T},
-  trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
-  base_corners::Union{Tuple{Real, Real}, Nothing} = nothing;,
-) end
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+    base_corners::Union{Tuple{Real,Real},Nothing} = nothing,
+)
+    @assert hasdim(A, :eV) && hasdim(A, :phi) " A must have dimensions :eV and :phi"
+    @assert _is_equaly_spacing(lookup(A, :phi)) "A must be equally spaced along :phi dimension"
+
+    UL, UR, LL, LR = trapezoid_corners
+    @assert UL.eV == UR.eV "UL and UR must have the same eV value"
+    @assert LL.eV == LR.eV "LL and LR must have the same eV value"
 
 
-function _rectangle_to_trapezoid(p,
-                                 Ek,
-                                 trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
-                                 base_corners::Tuple{Real, Real})
-  UL, UR, LL, LR = trapezoid_corners
-  slope_left_edge = UL.phi - LL.phi / (UL.eV - LL.eV)
-  slope_right_edge = UR.phi - LR.phi / (UR.eV - LR.eV)
-  left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
-  right_edge = @. slope_right_edge + (Ek- UR.eV) + UR.phi
-  dac_da = (right_edge - left_edge) / (maximim(base_corners) - minimum(base_corners))
-  return @. (p - minimum(base_corners)) * dac_da+ left_edge
 end
 
-function _traezoid_to_rectangle()
+
+function _rectangle_to_trapezoid(
+    p,
+    Ek,
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+    base_corners::Tuple{Real,Real},
+)
+    UL, UR, LL, LR = trapezoid_corners
+    slope_left_edge = UL.phi - LL.phi / (UL.eV - LL.eV)
+    slope_right_edge = UR.phi - LR.phi / (UR.eV - LR.eV)
+    left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
+    right_edge = @. slope_right_edge + (Ek - UR.eV) + UR.phi
+    dac_da = (right_edge - left_edge) / (maximim(base_corners) - minimum(base_corners))
+    return @. (p - minimum(base_corners)) * dac_da + left_edge
 end
+
+function _traezoid_to_rectangle() end
 
