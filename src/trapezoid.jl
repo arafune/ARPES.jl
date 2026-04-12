@@ -52,9 +52,25 @@ function trapezoid(  # convert from trapezoid
     UL, UR, LL, LR = trapezoid_corners
     @assert UL.eV == UR.eV "UL and UR must have the same eV value"
     @assert LL.eV == LR.eV "LL and LR must have the same eV value"
+    step_phi = _step(dims(A, :phi))
 
 
 end
+
+_phi_to_phi(
+    p,
+    Ek,
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+    base_corners::Tuple{Real,Real},
+) = _rectangle_to_trapezoid(p, Ek, trapezoid_corners, base_corners)
+
+_phi_to_phi(
+    p,
+    Ek,
+    base_corners::Tuple{Real,Real},
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+) = _trapezoid_to_rectangle(p, Ek, base_corners, trapezoid_corners)
+
 
 
 function _rectangle_to_trapezoid(
@@ -72,5 +88,19 @@ function _rectangle_to_trapezoid(
     return @. (p - minimum(base_corners)) * dac_da + left_edge
 end
 
-function _traezoid_to_rectangle() end
+function _trapezoid_to_rectangle(
+    p,
+    Ek,
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+    base_corners::Tuple{Real,Real},
+)
+    UL, UR, LL, LR = trapezoid_corners
+    slope_left_edge = UL.phi - LL.phi / (UL.eV - LL.eV)
+    slope_right_edge = UR.phi - LR.phi / (UR.eV - LR.eV)
+    left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
+    right_edge = @. slope_right_edge + (Ek - UR.eV) + UR.phi
+    c = @. (p - left_edge) / (right_edge - left_edge)
+    return @. minimum(base_corners) + c * (maximum(base_corners) - minimum(base_corners))
+
+end
 
