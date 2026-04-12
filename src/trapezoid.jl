@@ -25,7 +25,7 @@ angles.
         eV      \\_______/               (L_Rect) +--------+  (R_Rect)
             (LL)          (LR)
 
-                                ----------→ phi
+                ----------→ phi
 
 # Argumetns
 
@@ -61,7 +61,7 @@ function trapezoid(  # convert from trapezoid
     @assert L_rect < R_Rect "L_Rect must be less than R_Rect"
 
     # Create new phi coordinates for the output array
-    max_phi = maximum(
+    max_to_phi = maximum(
         _phi_to_phi(
             maximum(lookup(A, :phi)),
             lookup(A, :eV),
@@ -69,7 +69,7 @@ function trapezoid(  # convert from trapezoid
             (L_rect, R_Rect),
         ),
     )
-    min_phi = minimum(
+    min_to_phi = minimum(
         _phi_to_phi(
             minimum(lookup(A, :phi)),
             lookup(A, :eV),
@@ -77,8 +77,17 @@ function trapezoid(  # convert from trapezoid
             (L_rect, R_Rect),
         ),
     )
-    new_phi = range(start = min_phi, step = abs(step_phi), stop = max_phi)
+    to_phi_range = range(start = min_to_phi, step = abs(step_phi), stop = max_to_phi)
 
+    to_phi_grid, ek_grid = prepare_for_broadcast(to_phi_range, parent(lookup(A, :eV)))
+    from_phi_grid = _phi_to_phi(to_phi_grid, ek_grid, (L_rect, R_rect), trapezoid_corners)
+    data_transposed = _interpolate(
+        from_phi_grid,
+        ek_grid,
+        parent(lookup(A, :phi)),
+        parent(lookup(A, :eV)),
+        parent(A),
+    )
 end
 
 """
