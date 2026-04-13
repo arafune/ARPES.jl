@@ -104,6 +104,10 @@ end
     shift_2d_1 = shift(test_dim2D_1, :Y, -0.5)
     @test isequal(parent(shift_2d_1), [2.5 5.5 8.5 NaN; 3.5 6.5 9.5 NaN; 4.5 7.5 10.5 NaN])
 
+    shift_2d_1_extended = shift(test_dim2D_1, :Y, -0.5; dim_extend = true)
+    @test collect(lookup(dims(shift_2d_1_extended, :Y))) == [4.5, 5.5, 6.5, 7.5]
+    @test isequal(parent(shift_2d_1_extended), parent(test_dim2D_1))
+
     shift_2d_2 = _shift_irregular(test_dim2D_1, :Y, -0.5)
     @test isequal(parent(shift_2d_2), [2.5 5.5 8.5 NaN; 3.5 6.5 9.5 NaN; 4.5 7.5 10.5 NaN])
 
@@ -116,6 +120,18 @@ end
     @test all(isnan, shift_3d_2[Z=At(14)])
     shift_amount_along_y = DimArray([-0.5, -1.0, -1.5, -2.0], Y([5.0, 6.0, 7.0, 8]))
     @test isequal(parent(shift_3d_2), shift(test_dim3D_1, :Z, shift_amount_along_y))
+
+    shift_3d_2_extended = shift(test_dim3D_1, :Z, :Y, [-0.5, -1.0, -1.5, -2.0]; dim_extend = true)
+    @test collect(lookup(dims(shift_3d_2_extended, :Z))) == collect(8.0:14.0)
+    @test size(shift_3d_2_extended, :Z) == 7
+    @test isequal(
+        parent(shift_3d_2_extended[Y=At(8.0)]),
+        hcat(parent(test_dim3D_1[Y=At(8.0)]), fill(NaN, 3, 2)),
+    )
+    @test isequal(
+        parent(shift_3d_2_extended),
+        parent(shift(test_dim3D_1, :Z, shift_amount_along_y; dim_extend = true)),
+    )
 
     @test_throws ArgumentError shift(test_dim3D_1, :Z, test_dim2D_1)
     @test_throws ArgumentError shift(test_dim3D_1, :Z, :X, [-0.5, -1.0])
@@ -149,10 +165,11 @@ end
     shift_3d_2_2 = shift(test_dim3D_2, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
     @test all(isnan, shift_3d_2_2[Z=At(14)])
     shift_3d_2_3 = shift(test_dim3D_2, :Z, -0.5)
+    @test_throws ArgumentError shift(test_dim3D_2, :Z, :Y, [-0.5, -1.0, -1.5, -2.0]; dim_extend = true)
+    @test_throws ArgumentError shift(test_dim3D_2, :Z, -0.5; dim_extend = true)
 
     test_dim3D_3 = test_DimArray3D_irregular_unordered()
     @test_throws ArgumentError shift(test_dim3D_3, :Z, :Y, [-0.5, -1.0, -1.5, -2.0])
     @test_throws ArgumentError shift(test_dim3D_3, :Z, -0.5)
 end
-
 
