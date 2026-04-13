@@ -1,6 +1,6 @@
 name = "ARPES"
 uuid = "3764e38b-e87f-453d-b456-dc646f8e1bb8"
-version = "0.2.1dev"
+version = "0.2.1"
 authors = ["Ryuichi Arafune"]
 
 [deps]

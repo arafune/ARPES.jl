@@ -115,11 +115,11 @@ function k_conversion(  # kp version
     kx_grid, ky_grid, ek_grid = prepare_for_broadcast(kx_range, ky_range, ek)
 
     @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
-    α_range, β_range =
+    α_grid, β_grid =
         angle_mapping(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
-    @debug "size of α_range, β_range" size(α_range) size(β_range)
+    @debug "size of α_grid, β_grid" size(α_grid) size(β_grid)
     #   3.2 interpolate
-    data_k = _interpolate(α_range, ek_grid, α, parent(ek_original), parent(data))
+    data_k = _interpolate(α_grid, ek_grid, α, parent(ek_original), parent(data))
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
     return _build_arpesband(data_k, kx_range, eV_range, md, energy_definition)
 end
@@ -343,12 +343,11 @@ function kxky_conversion(
     kx_grid, ky_grid, ek_grid = prepare_for_broadcast(kx_range, ky_range, ek)
 
     @debug "size of kx_grid, ky_grid ek_grid, " size(kx_grid) size(ky_grid) size(ek_grid)
-    α_range, β_range =
+    α_grid, β_grid =
         angle_mapping(analyzer_conf, kx_grid, ky_grid, ek_grid, _deg2rad(β0), χ_, ξ_, δ_)
-    @debug "size of α_range, β_range" size(α_range) size(β_range)
+    @debug "size of α_grid, β_grid" size(α_grid) size(β_grid)
     #   3.2 interpolate
-    data_k =
-        _interpolate(α_range, β_range, ek_grid, α, β, parent(ek_original), parent(data))
+    data_k = _interpolate(α_grid, β_grid, ek_grid, α, β, parent(ek_original), parent(data))
     # 4. construct the output ARPESData object with kx, ky, and eV dimensions.
     return _build_arpesband(data_k, kx_range, ky_range, eV_range, md, energy_definition)
 end
