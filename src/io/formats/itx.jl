@@ -39,7 +39,7 @@ function read_itx(fpath::String)::DimArray
             comment = strip(comment)
 
             push!(waves_info[:raw_comments], comment)
-            parsed = _parse_comment_line(comment)
+            parsed = _parse_itx_comment_line(comment)
             if parsed !== nothing
                 merge!(waves_info, parsed)
             end
@@ -48,7 +48,7 @@ function read_itx(fpath::String)::DimArray
             continue
 
         elseif startswith(line, "WAVES")
-            parsed = _parse_waves_declaration(line)
+            parsed = _parse_itx_waves_declaration(line)
             if parsed !== nothing
                 waves_info = merge(waves_info, parsed)
             end
@@ -58,21 +58,21 @@ function read_itx(fpath::String)::DimArray
 
         elseif startswith(line, "END")
             in_data_section = false
-            wave_data = _parse_wave_data(data_lines)
+            wave_data = _parse_itx_wave_data(data_lines)
 
         elseif startswith(line, "X SetScale")
-            scale_info = _parse_setscale(line)
+            scale_info = _parse_itx_setscale(line)
             merge!(waves_info, scale_info)
 
         elseif in_data_section
             push!(data_lines, line)
         end
     end
-    return _to_dimarray(wave_data, waves_info)
+    return _itx_to_dimarray(wave_data, waves_info)
 end
 
 """
-    _parse_comment_line(comment::AbstractString)
+    _parse_itx_comment_line(comment::AbstractString)
 
 Parses a comment line from the ITX file and extracts key-value pairs or metadata.
 
@@ -85,7 +85,7 @@ Parses a comment line from the ITX file and extracts key-value pairs or metadata
 # Returns
 - `Dict{Symbol, Any}`: Dictionary of parsed metadata, or `nothing` if not applicable.
 """
-function _parse_comment_line(comment::AbstractString)
+function _parse_itx_comment_line(comment::AbstractString)
     if startswith(comment, "User Comment")
         parts = split(comment, "=", limit = 2)
         additional_waves_info = Dict{Symbol,Any}()
@@ -93,7 +93,7 @@ function _parse_comment_line(comment::AbstractString)
             key_raw = strip(parts[1])
             val_raw = strip(parts[2])
             additional_waves_info[:user_comment] = val_raw
-            info_from_comments = _parse_comment_line_comment(String(val_raw))
+            info_from_comments = _parse_itx_comment_line_comment(String(val_raw))
             return merge(additional_waves_info, info_from_comments)
         end
     end
@@ -104,7 +104,7 @@ function _parse_comment_line(comment::AbstractString)
             key_raw = strip(parts[1])
             val_raw = strip(parts[2])
             key = Symbol(lowercase(replace(key_raw, " " => "_")))
-            val = _parse_value(String(val_raw))
+            val = _parse_itx_value(String(val_raw))
             return Dict(key => val)
         end
     end
@@ -125,7 +125,8 @@ function _parse_comment_line(comment::AbstractString)
 end
 
 """
-    _build_scale(scale_info::Dict, length::Int)
+
+_build_itx_scale(scale_info::Dict, length::Int)
 
 Builds a numerical range for a dimension based on scale information.
 
@@ -136,18 +137,24 @@ Builds a numerical range for a dimension based on scale information.
 # Returns
 - `AbstractRange`: The constructed range for the dimension.
 """
-function _build_scale(scale_info::Dict, length::Int)
-    if haskey(scale_info, :min)
+function _build_itx_scale(scale_info::Dict, length::Int)
+    if haskey(scale_info, :min) && haskey(scale_info, :max)
         return range(scale_info[:min], scale_info[:max], length = length)
-    elseif haskey(scale_info, :start)
+    elseif haskey(scale_info, :start) && haskey(scale_info, :step)
         return range(scale_info[:start], step = scale_info[:step], length = length)
+    elseif haskey(scale_info, :start) && haskey(scale_info, :right)
+        return range(
+            scale_info[:start],
+            step = (scale_info[:right] - scale_info[:start])/length,
+            length = length,
+        )
     else
         error("Invalid scale information")
     end
 end
 
 """
-    _parse_comment_line_comment(comment::String)
+    _parse_itx_comment_line_comment(comment::String)
 
 Parses a semicolon-separated comment string into key-value pairs.
 
@@ -161,14 +168,14 @@ Example:
 - `Dict{Symbol, Any}`: Dictionary of parsed key-value pairs.
 
 """
-function _parse_comment_line_comment(comment::String)
+function _parse_itx_comment_line_comment(comment::String)
     additional_waves_info = Dict{Symbol,Any}()
     comments = split(comment, ";")
     for info in comments
         info_item = split(info, ":")
         if length(info_item) >= 2
             key = Symbol(lowercase(replace(info_item[1], " " => "_")))
-            additional_waves_info[key] = _parse_value(String(info_item[2]))
+            additional_waves_info[key] = _parse_itx_value(String(info_item[2]))
         end
     end
     return additional_waves_info
@@ -176,7 +183,7 @@ end
 
 
 """
-    _parse_value(val_str::String)
+    _parse_itx_value(val_str::String)
 
 Converts a string value to an appropriate type (Int, Float64, or String).
 
@@ -186,7 +193,7 @@ Converts a string value to an appropriate type (Int, Float64, or String).
 # Returns
 - `Int`, `Float64`, or `String`: The parsed value.
 """
-function _parse_value(val_str::String)
+function _parse_itx_value(val_str::String)
     val_str = strip(val_str)
 
     # Try to interpret as number
@@ -205,7 +212,7 @@ function _parse_value(val_str::String)
 end
 
 """
-    _parse_wave_data(data_lines::Vector{String})
+    _parse_itx_wave_data(data_lines::Vector{String})
 
 Parses lines of wave data into a 1D array of Float64 values.
 
@@ -215,7 +222,7 @@ Parses lines of wave data into a 1D array of Float64 values.
 # Returns
 - `Vector{Float64}`: Parsed numeric data.
 """
-function _parse_wave_data(data_lines::Vector{String})
+function _parse_itx_wave_data(data_lines::Vector{String})
     all_values = Float64[]
     for line in data_lines
         if isempty(strip(line))
@@ -237,7 +244,7 @@ end
 
 
 """
-    _to_dimarray(data::Array, waves_info::Dict)
+    _itx_to_dimarray(data::Array, waves_info::Dict)
 
 Converts parsed data and metadata into a `DimArray` with appropriate dimensions and metadata.
 
@@ -248,13 +255,18 @@ Converts parsed data and metadata into a `DimArray` with appropriate dimensions 
 # Returns
 - `DimArray`: The constructed dimensional array.
 """
-function _to_dimarray(data::Array, waves_info::Dict)::DimArray
+function _itx_to_dimarray(data::Array, waves_info::Dict)::DimArray
     # Construct dimension
     dims_list = []
     @debug "waves_info" waves_info[:shape]
     @debug "data length" length(data)
     if haskey(waves_info, :shape)
         shape = waves_info[:shape]
+
+        @debug "length(data)" length(data)
+        @debug "shape" shape
+        @debug "prod(shape)" prod(shape)
+
         shape_itx = (shape[2], shape[1], shape[3:end]...)
         nd = length(shape)
         @debug "nd, shape" nd shape
@@ -268,7 +280,7 @@ function _to_dimarray(data::Array, waves_info::Dict)::DimArray
         if ndims(data) >= i && haskey(waves_info, key)
             info = waves_info[key]
             n = size(data, i)
-            vals = _build_scale(info, n)
+            vals = _build_itx_scale(info, n)
             default_name = Symbol(string(key)[1])
             label = get(info, :label, nothing)
             dim_name = (label === nothing || isempty(label)) ? default_name : Symbol(label)
@@ -299,7 +311,7 @@ function _to_dimarray(data::Array, waves_info::Dict)::DimArray
 end
 
 """
-    _parse_waves_declaration(line::AbstractString)
+    _parse_itx_waves_declaration(line::AbstractString)
 
 Parses a WAVES declaration line from the ITX file and extracts wave metadata.
 
@@ -313,7 +325,7 @@ Example:
 # Returns
 - `Dict{Symbol, Any}`: Dictionary of parsed wave metadata.
 """
-function _parse_waves_declaration(line::AbstractString)
+function _parse_itx_waves_declaration(line::AbstractString)
     info = Dict{Symbol,Any}()
 
     # Extract flag part (/S, /N=...)
@@ -361,7 +373,7 @@ function _parse_waves_declaration(line::AbstractString)
 end
 
 """
-    _parse_setscale(line::AbstractString)
+    _parse_itx_setscale(line::AbstractString)
 
 Parses a SetScale line from the ITX file and extracts axis scaling information.
 
@@ -378,7 +390,7 @@ Examples:
 # Returns
 - `Dict{Symbol, Any}`: Dictionary containing axis scale information.
 """
-function _parse_setscale(line::AbstractString)
+function _parse_itx_setscale(line::AbstractString)
     # SetScale/I x, min, max, "unit (label)", 'wave'
     # SetScale/P x, start, step, "unit", "label"
     parts = split(line, ",")
@@ -436,6 +448,17 @@ function _parse_setscale(line::AbstractString)
                 axis_key => Dict(
                     :start => start_val,
                     :step => step_val,
+                    :unit => unit,
+                    :label => label,
+                ),
+            )
+        elseif mode==:default
+            start_val = parse(Float64, strip(parts[2]))
+            right_val = parse(Float64, strip(parts[3]))
+            return Dict(
+                axis_key => Dict(
+                    :start => start_val,
+                    :right => right_val,
                     :unit => unit,
                     :label => label,
                 ),
