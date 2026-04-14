@@ -1,14 +1,15 @@
 using DimensionalData
 using DimensionalData: Dimension
 using DimensionalData: basetypeof
+using DimensionalData: metadata, name
 using DimensionalData.Lookups
-using DimensionalData.Dimensions: label
-
+using .KConversion: prepare_for_broadcast, _interpolate
 export trapezoid
 
 
 """
-    trapezoid(A, trapezoid_corners, base_corners; from_trapezoid=true)
+  trapezoid(A, trapezoid_corners, base_corners)
+  trapezoid(A, base_corners, trapezoid_corners)
 
 Applies the trapezoidal correction in angular units by linearly interpolating slices.
 
@@ -19,7 +20,7 @@ angles.
 
 
 
-           (UL)_____________ (UR)                 +--------+
+          (UL)_____________ (UR)                 +--------+
         ↑     \\           /                      |        |
         |      \\         /        ⇄              |        |
         eV      \\_______/               (L_Rect) +--------+  (R_Rect)
@@ -31,34 +32,36 @@ angles.
 
 - `A`: The input `ARPESData` to be transformed.
 - `trapezoid_corners`: The coordinate of the trapezoid corners.
-   The tuple of four dict that specifies corners of the trapezoid, the key must be both `:eV` and `:phi`.
+   The tuple of four Named tuple that specifies corners of the trapezoid, the key must be both `:eV` and `:phi`.
 - `base_corners`: The tuple of two the phi values of the trensposed rectangle corners. (i.e. L_Rect and R_Rect).
    if not specified (None), use the extrema(A, :phi). Defaults to None.
    (As the `eV` axis does not change and only `phi` axis changes, specifying L_Rect and R_Rect is enough.)
+
+- If `base_corners` comes first, transforms from rectangle to trapezoid.
+- If `trapezoid_corners` comes first, transforms from trapezoid to rectangle.
 
 # Returns:
 
 A new array converted.
 """
-
 function trapezoid(  # convert from trapezoid
     A::ARPESData{T,2} where {T},
     trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
     base_corners::Union{Tuple{Real,Real},Nothing} = nothing,
 )
     @assert hasdim(A, :eV) && hasdim(A, :phi) " A must have dimensions :eV and :phi"
-    @assert _is_equaly_spacing(lookup(A, :phi)) "A must be equally spaced along :phi dimension"
+    @assert _is_equal_spacing(lookup(A, :phi)) "A must be equally spaced along :phi dimension"
 
     UL, UR, LL, LR = trapezoid_corners
     @assert UL.eV == UR.eV "UL and UR must have the same eV value"
     @assert LL.eV == LR.eV "LL and LR must have the same eV value"
     step_phi = _step(dims(A, :phi))
-    L_rect, R_Rect = if isnothing(base_corners)
+    L_rect, R_rect = if isnothing(base_corners)
         extrema(lookup(A, :phi))
     else
         base_corners
     end
-    @assert L_rect < R_Rect "L_Rect must be less than R_Rect"
+    @assert L_rect < R_rect "L_Rect must be less than R_Rect"
 
     # Create new phi coordinates for the output array
     max_to_phi = maximum(
@@ -66,7 +69,7 @@ function trapezoid(  # convert from trapezoid
             maximum(lookup(A, :phi)),
             lookup(A, :eV),
             trapezoid_corners,
-            (L_rect, R_Rect),
+            (L_rect, R_rect),
         ),
     )
     min_to_phi = minimum(
@@ -74,7 +77,7 @@ function trapezoid(  # convert from trapezoid
             minimum(lookup(A, :phi)),
             lookup(A, :eV),
             trapezoid_corners,
-            (L_rect, R_Rect),
+            (L_rect, R_rect),
         ),
     )
     to_phi_range = range(start = min_to_phi, step = abs(step_phi), stop = max_to_phi)
@@ -88,7 +91,60 @@ function trapezoid(  # convert from trapezoid
         parent(lookup(A, :eV)),
         parent(A),
     )
+
+    new_phi_dim = Dim{:phi}(to_phi_range; metadata = metadata(dims(A, :phi)))
+    new_dims = Base.setindex(dims(A), new_phi_dim, dimnum(A, :phi))
+    return rebuild(A; data = data_transposed, dims = new_dims)
 end
+
+function trapezoid(  # convert from rectangle
+    A::ARPESData{T,2} where {T},
+    base_corners::Tuple{Real,Real},
+    trapezoid_corners::NTuple{4,NamedTuple{(:eV, :phi),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+)
+    @assert hasdim(A, :eV) && hasdim(A, :phi) " A must have dimensions :eV and :phi"
+    @assert _is_equal_spacing(lookup(A, :phi)) "A must be equally spaced along :phi dimension"
+    L_rect, R_rect = base_corners
+    UL, UR, LL, LR = trapezoid_corners
+    @assert UL.eV == UR.eV "UL and UR must have the same eV value"
+    @assert LL.eV == LR.eV "LL and LR must have the same eV value"
+    step_phi = _step(dims(A, :phi))
+
+    @assert L_rect < R_rect "L_Rect must be less than R_Rect"
+
+    max_to_phi = maximum(
+        _phi_to_phi(
+            maximum(lookup(A, :phi)),
+            lookup(A, :eV),
+            (L_rect, R_rect),
+            trapezoid_corners,
+        ),
+    )
+    min_to_phi = minimum(
+        _phi_to_phi(
+            minimum(lookup(A, :phi)),
+            lookup(A, :eV),
+            (L_rect, R_rect),
+            trapezoid_corners,
+        ),
+    )
+    @debug "max_to_phi: $max_to_phi, min_to_phi: $min_to_phi"
+
+    to_phi_range = range(start = min_to_phi, step = abs(step_phi), stop = max_to_phi)
+    to_phi_grid, ek_grid = prepare_for_broadcast(to_phi_range, parent(lookup(A, :eV)))
+    from_phi_grid = _phi_to_phi(to_phi_grid, ek_grid, trapezoid_corners, (L_rect, R_rect))
+    data_transposed = _interpolate(
+        from_phi_grid,
+        ek_grid,
+        parent(lookup(A, :phi)),
+        parent(lookup(A, :eV)),
+        parent(A),
+    )
+    new_phi_dim = Dim{:phi}(to_phi_range; metadata = metadata(dims(A, :phi)))
+    new_dims = Base.setindex(dims(A), new_phi_dim, dimnum(A, :phi))
+    return rebuild(A; data = data_transposed, dims = new_dims)
+end
+
 
 """
     _phi_to_phi(p, Ek, trapezoid_corners, base_corners)   # rectangle => trapezoid
@@ -131,18 +187,23 @@ function _phi_to_phi_impl(
     base_corners::Tuple{Real,Real},
     from_trapezoid::Bool,
 )
+    @debug "p: typeof: $(typeof(p)), length: $(length(p)), extrema: $(extrema(p))"
+    @debug "base_corners: $(base_corners)"
     UL, UR, LL, LR = trapezoid_corners
+    left_corner, right_corner = extrema(base_corners)
     slope_left_edge = (UL.phi - LL.phi) / (UL.eV - LL.eV)
     slope_right_edge = (UR.phi - LR.phi) / (UR.eV - LR.eV)
     left_edge = @. slope_left_edge * (Ek - UL.eV) + UL.phi
+    @debug "left_edge: length: $(length(left_edge)), extrema: $(extrema(left_edge))"
     right_edge = @. slope_right_edge * (Ek - UR.eV) + UR.phi
+    @debug "right_edge: length: $(length(right_edge)), extrema: $(extrema(right_edge))"
     if from_trapezoid # from trapezoid to rectangle
         c = @. (p - left_edge) / (right_edge - left_edge)
-        return @. minimum(base_corners) +
-                  c * (maximum(base_corners) - minimum(base_corners))
+        @debug "c: length: $(length(c)), extrema: $(extrema(c))"
+        return @. left_corner + c * (right_corner - left_corner)
     else  # from rectangle to trapezoid 
-        dac_da = (right_edge - left_edge) / (maximum(base_corners) - minimum(base_corners))
-        return @. (p - minimum(base_corners)) * dac_da + left_edge
+        dac_da = (right_edge - left_edge) / (right_corner - left_corner)
+        @debug "dac_da: length: $(length(dac_da)), extrema: $(extrema(dac_da))"
+        return @. (p - left_corner) * dac_da + left_edge
     end
 end
-

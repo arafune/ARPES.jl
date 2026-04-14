@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/arafune/ARPES.jl/branch/dev/graph/badge.svg)](https://codecov.io/gh/arafune/ARPES.jl)
 
 ARPES.jl is a Julia package for working with
-**Angle-Resolved Photoemission Spectroscopy (ARPES)** data.
+**Angle Resolved Photoemission Spectroscopy (ARPES)** data.
 It provides a dimension-aware `ARPESData` container built
 on top of [DimensionalData.jl](https://rafaqz.github.io/DimensionalData.jl),
 together with utilities for loading, transforming axes, filtering,

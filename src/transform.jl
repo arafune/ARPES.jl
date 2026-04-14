@@ -1,10 +1,8 @@
 using Interpolations
-using DimensionalData: Dimension, Bins
+using DimensionalData: Bins
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 export rebin, shift, rebuild_with_slice
-
-
 
 """
     rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Int)
@@ -50,30 +48,38 @@ function rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Bins)
 end
 
 """
-    shift(
-        data::AbstractDimArray,
-        shift_dim::Union{Symbol, Dimension},
-        other_dim::Union{Symbol, Dimension},
-        values::AbstractVector{<:Real},
-    )
+    shift(data::AbstractDimArray, shift_dim::Union{Symbol, Dimension}, other_dim::Union{Symbol, Dimension}, values::AbstractVector{<:Real})
+    shift(data::AbstractDimArray, shift_dim::Union{Symbol, Dimension}, values::AbstractDimArray)
+    shift(data::AbstractDimArray, shift_dim::Union{Symbol, Dimension}, value::Real)
 
-Shift the `data` array along `shift_dim` by an amount specified in `values`,
-for each position along `other_dim`.
+Shift `data` along `shift_dim` using linear interpolation.
 
-- `data`: An `AbstractDimArray` to be shifted.
-- `shift_dim`: The dimension along which to shift (as a `Symbol` or `Dimension`).
-- `other_dim`: The dimension whose index determines which value from `values` to use.
-- `values`: A vector of shift values, one for each index along `other_dim`.
+# Arguments
+- `data`: The input `AbstractDimArray` to be shifted.
+- `shift_dim`: The dimension (as a `Symbol` or `Dimension`) along which to shift.
 
-Returns a new `DimArray` with the same shape and metadata as `data`, shifted accordingly.
+- `value`: Apply a uniform scalar shift along `shift_dim`.
+- `other_dim`, `values`: Apply shifts that vary along `other_dim`, using one value for each index along that dimension.
+- `values::AbstractDimArray`: A one-dimensional shorthand where the dimension of `values` determines `other_dim`.
+- `dim_extend=false`: When `true`, rebuild `shift_dim` on an extended axis with the same step size.
 
-Throws `ArgumentError` if the dimensions or value lengths do not match requirements.
+For equally spaced coordinates, shifting is performed directly in index space.
+For monotonic irregular coordinates, the implementation falls back to irregular-grid handling.
+Dimension extension is supported only for equally spaced coordinates.
+
+# Returns
+A new `DimArray` with the shifted data. When `dim_extend=true`, the returned array is larger along `shift_dim`.
+
+# Throws
+- `ArgumentError`: If `values` is not one-dimensional, if a requested dimension is missing, if the length of `values` does not match the size of `other_dim`, or if `dim_extend=true` is used with a non-equally-spaced `shift_dim`.
 """
 function shift(
     data::AbstractDimArray,
     shift_dim::Union{Symbol,Dimension},
     other_dim::Union{Symbol,Dimension},
     values::AbstractVector{<:Real},
+    ;
+    dim_extend::Bool = false,
 )
 
     if ndims(data) < 2
@@ -97,6 +103,11 @@ function shift(
     odim = dimnum(data, other_dim)
 
     coords_vec = collect(dims(data, shift_dim))
+    if dim_extend
+        _is_equal_spacing(coords_vec) ||
+            throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
+        return _shift_with_dim_extend(data, shift_dim, other_dim, values)
+    end
     if !_is_equal_spacing(coords_vec)
         return _shift_irregular(data, shift_dim, other_dim, values)
     end
@@ -120,31 +131,21 @@ function shift(
     return DimArray(result; dims = dims(data))
 end
 
-"""
-    shift_optimized(data::AbstractDimArray,
-                    shift_dim::Union{Symbol, Dimension},
-                    value::Real)
-
-Shift `data` along `shift_dim` by a scalar `value`.
-
-- `shift_dim` must be equally spaced.
-- A single shift value is applied uniformly along `shift_dim`.
-- Subpixel shift is performed via linear interpolation.
-- Returns an array with the same shape and metadata.
-
-# Arguments
-- `data` : AbstractDimArray
-- `shift_dim` : Dimension to shift along
-- `value` : scalar shift amount
-
-# Returns
-- AbstractDimArray with the same size and metadata
-"""
-function shift(data::AbstractDimArray, shift_dim::Union{Symbol,Dimension}, value::Real)
+function shift(
+    data::AbstractDimArray,
+    shift_dim::Union{Symbol,Dimension},
+    value::Real;
+    dim_extend::Bool = false,
+)
 
     sdim = dimnum(data, shift_dim)
 
     coords_vec = collect(dims(data, shift_dim))
+    if dim_extend
+        _is_equal_spacing(coords_vec) ||
+            throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
+        return _shift_with_dim_extend(data, shift_dim, value)
+    end
     if !_is_equal_spacing(coords_vec)
         return _shift_irregular(data, shift_dim, value)
     end
@@ -166,36 +167,90 @@ function shift(data::AbstractDimArray, shift_dim::Union{Symbol,Dimension}, value
     return DimArray(result; dims = dims(data))
 end
 
-"""
-    shift(
-        data::AbstractDimArray,
-        shift_dim::Union{Symbol, Dimension},
-        values::AbstractDimArray,
-    )
-
-Shift an `AbstractDimArray` object along `shift_dim` by values provided in a one-dimensional `AbstractDimArray`.
-
-- `data`: An `AbstractDimArray` object to be shifted.
-- `shift_dim`: The dimension along which to shift (as a `Symbol` or `Dimension`).
-- `values`: A one-dimensional `AbstractDimArray` of shift values.
-
-Returns a new `DimArray` with the same shape and metadata as `data`, shifted accordingly.
-
-Throws `ArgumentError` if `values` is not one-dimensional.
-"""
 function shift(
     data::AbstractDimArray,
     shift_dim::Union{Symbol,Dimension},
     values::AbstractDimArray,
+    ;
+    dim_extend::Bool = false,
 )
     @debug "values are AbstractDimArray"
-    if ndims(values) != 1
-        error_msg = "Values must be a one-dimensional array."
-        throw(ArgumentError(error_msg))
-    end
-    other_dim = name(dims(values))[1]
+    other_dim = only(name(dims(values)))
     values = parent(values)
-    shift(data, shift_dim, other_dim, values)
+    shift(data, shift_dim, other_dim, values; dim_extend)
+end
+
+function _build_extended_shift_dim(dim::Dimension, shift_range::Tuple{<:Real,<:Real})
+    coords = collect(parent(lookup(dim)))
+    _is_equal_spacing(coords) ||
+        throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
+
+    Δ = coords[2] - coords[1]
+    min_shift, max_shift = shift_range
+    extension_steps = ceil(Int, (max_shift - min_shift) / abs(Δ))
+    start = coords[1] + (Δ > 0 ? min_shift : max_shift)
+    extended_lookup = range(start, step = Δ, length = length(coords) + extension_steps)
+    return rebuild(dim; val = extended_lookup)
+end
+
+function _shift_with_dim_extend(
+    data::AbstractDimArray,
+    shift_dim::Union{Symbol,Dimension},
+    other_dim::Union{Symbol,Dimension},
+    values::AbstractVector{<:Real},
+)
+    sdim = dimnum(data, shift_dim)
+    odim = dimnum(data, other_dim)
+    shift_axis = dims(data, shift_dim)
+    coords_vec = collect(parent(lookup(shift_axis)))
+    c1 = coords_vec[1]
+    Δ = coords_vec[2] - c1
+
+    extended_dim = _build_extended_shift_dim(shift_axis, (minimum(values), maximum(values)))
+    extended_coords = collect(parent(lookup(extended_dim)))
+    out_size = ntuple(d -> d == sdim ? length(extended_coords) : size(data, d), ndims(data))
+    result = similar(parent(data), out_size)
+    itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
+
+    result .= (i -> begin
+        target_idx = (extended_coords[i[sdim]] - values[i[odim]] - c1) / Δ + 1
+        idx_tuple = Tuple(i)
+        return itp(Base.setindex(idx_tuple, target_idx, sdim)...)
+    end).(
+        CartesianIndices(result),
+    )
+
+    new_dims = Base.setindex(dims(data), extended_dim, sdim)
+    return rebuild(data; data = result, dims = new_dims)
+end
+
+function _shift_with_dim_extend(
+    data::AbstractDimArray,
+    shift_dim::Union{Symbol,Dimension},
+    value::Real,
+)
+    sdim = dimnum(data, shift_dim)
+    shift_axis = dims(data, shift_dim)
+    coords_vec = collect(parent(lookup(shift_axis)))
+    c1 = coords_vec[1]
+    Δ = coords_vec[2] - c1
+
+    extended_dim = _build_extended_shift_dim(shift_axis, (value, value))
+    extended_coords = collect(parent(lookup(extended_dim)))
+    out_size = ntuple(d -> d == sdim ? length(extended_coords) : size(data, d), ndims(data))
+    result = similar(parent(data), out_size)
+    itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
+
+    result .= (i -> begin
+        target_idx = (extended_coords[i[sdim]] - value - c1) / Δ + 1
+        idx_tuple = Tuple(i)
+        return itp(Base.setindex(idx_tuple, target_idx, sdim)...)
+    end).(
+        CartesianIndices(result),
+    )
+
+    new_dims = Base.setindex(dims(data), extended_dim, sdim)
+    return rebuild(data; data = result, dims = new_dims)
 end
 
 function _shift_irregular(
@@ -370,5 +425,3 @@ function rebuild_with_slice(A::AbstractDimArray, dimsel, X::AbstractDimArray)
     B[dimsel] = parent(X)
     return B
 end
-
-

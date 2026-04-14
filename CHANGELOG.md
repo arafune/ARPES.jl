@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] — 2026-XX-XX
+
+### Added
+
+- `dim_extend` keyword argument for `shift`
+  - Supports scalar, vector, and one-dimensional `AbstractDimArray` shift inputs.
+  - Extends equally spaced shift dimensions so shifted data is preserved on a larger output axis.
+
+### Changed
+
+- Consolidated and expanded the `shift` docstrings to document scalar shifts, per-dimension shifts, irregular-grid behavior, and `dim_extend`.
+
 ## [0.2.1] — 2026-04-13
 
 ### Added
