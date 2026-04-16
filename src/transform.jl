@@ -1,10 +1,8 @@
 using Interpolations
-using DimensionalData: Dimension, Bins
+using DimensionalData: Bins
 using DimensionalData.Lookups
 using DimensionalData.Dimensions: label
 export rebin, shift, rebuild_with_slice
-
-
 
 """
     rebin(data::AbstractDimArray, dim::Union{Symbol,Dimension}, bins::Int)
