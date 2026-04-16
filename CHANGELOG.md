@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.2] — 2026-XX-XX
+## [0.2.2] — 2026-04-16
 
 ### Added
 
 - `dim_extend` keyword argument for `shift`
   - Supports scalar, vector, and one-dimensional `AbstractDimArray` shift inputs.
   - Extends equally spaced shift dimensions so shifted data is preserved on a larger output axis.
+- `trapezoid` for 2D `ARPESData` with `:phi` and `:eV` dimensions ([#66]).
+  - Supports both rectangle → trapezoid and trapezoid → rectangle coordinate correction.
+  - Uses linear interpolation on angular slices and preserves the `:eV` axis.
+  - Added unit tests for coordinate mapping, both conversion directions, and invalid geometry handling.
 
 ### Changed
 
@@ -110,3 +114,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#50]: https://github.com/arafune/ARPES.jl/pull/50
 [#52]: https://github.com/arafune/ARPES.jl/pull/52
 [#54]: https://github.com/arafune/ARPES.jl/pull/54
+[#66]: https://github.com/arafune/ARPES.jl/pull/66
