@@ -173,3 +173,12 @@ end
     @test_throws ArgumentError shift(test_dim3D_3, :Z, -0.5)
 end
 
+@testset "Test for shift (3): invalid uniform axes" begin
+    single_point = DimArray(reshape(collect(1.0:3.0), 3, 1), (X = 1.0:3.0, Y = [7.0]))
+    zero_step = DimArray(reshape(collect(1.0:6.0), 3, 2), (X = 1.0:3.0, Y = [7.0, 7.0]))
+
+    @test_throws ArgumentError shift(single_point, :Y, 0.5)
+    @test_throws ArgumentError shift(single_point, :Y, 0.5; dim_extend = true)
+    @test_throws ArgumentError shift(zero_step, :Y, 0.5)
+    @test_throws ArgumentError shift(zero_step, :Y, 0.5; dim_extend = true)
+end

@@ -104,15 +104,13 @@ function shift(
 
     coords_vec = collect(dims(data, shift_dim))
     if dim_extend
-        _is_equal_spacing(coords_vec) ||
-            throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
+        _validate_uniform_shift_coords(coords_vec)
         return _shift_with_dim_extend(data, shift_dim, other_dim, values)
     end
     if !_is_equal_spacing(coords_vec)
         return _shift_irregular(data, shift_dim, other_dim, values)
     end
-    c1 = coords_vec[1]
-    Δ = coords_vec[2] - c1
+    c1, Δ = _validate_uniform_shift_coords(coords_vec)
     itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
 
     result = similar(data)
@@ -142,15 +140,13 @@ function shift(
 
     coords_vec = collect(dims(data, shift_dim))
     if dim_extend
-        _is_equal_spacing(coords_vec) ||
-            throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
+        _validate_uniform_shift_coords(coords_vec)
         return _shift_with_dim_extend(data, shift_dim, value)
     end
     if !_is_equal_spacing(coords_vec)
         return _shift_irregular(data, shift_dim, value)
     end
-    c1 = coords_vec[1]
-    Δ = coords_vec[2] - c1
+    c1, Δ = _validate_uniform_shift_coords(coords_vec)
 
     itp = extrapolate(interpolate(data, BSpline(Linear())), NaN)
 
@@ -182,13 +178,10 @@ end
 
 function _build_extended_shift_dim(dim::Dimension, shift_range::Tuple{<:Real,<:Real})
     coords = collect(parent(lookup(dim)))
-    _is_equal_spacing(coords) ||
-        throw(ArgumentError("dim_extend=true requires shift_dim to be equally spaced."))
-
-    Δ = coords[2] - coords[1]
+    c1, Δ = _validate_uniform_shift_coords(coords)
     min_shift, max_shift = shift_range
     extension_steps = ceil(Int, (max_shift - min_shift) / abs(Δ))
-    start = coords[1] + (Δ > 0 ? min_shift : max_shift)
+    start = c1 + (Δ > 0 ? min_shift : max_shift)
     extended_lookup = range(start, step = Δ, length = length(coords) + extension_steps)
     return rebuild(dim; val = extended_lookup)
 end
@@ -203,8 +196,7 @@ function _shift_with_dim_extend(
     odim = dimnum(data, other_dim)
     shift_axis = dims(data, shift_dim)
     coords_vec = collect(parent(lookup(shift_axis)))
-    c1 = coords_vec[1]
-    Δ = coords_vec[2] - c1
+    c1, Δ = _validate_uniform_shift_coords(coords_vec)
 
     extended_dim = _build_extended_shift_dim(shift_axis, (minimum(values), maximum(values)))
     extended_coords = collect(parent(lookup(extended_dim)))
@@ -232,8 +224,7 @@ function _shift_with_dim_extend(
     sdim = dimnum(data, shift_dim)
     shift_axis = dims(data, shift_dim)
     coords_vec = collect(parent(lookup(shift_axis)))
-    c1 = coords_vec[1]
-    Δ = coords_vec[2] - c1
+    c1, Δ = _validate_uniform_shift_coords(coords_vec)
 
     extended_dim = _build_extended_shift_dim(shift_axis, (value, value))
     extended_coords = collect(parent(lookup(extended_dim)))
@@ -353,6 +344,17 @@ function _shift_irregular(
     end).(inds)
 
     return DimArray(result; dims = dims(data))
+end
+
+function _validate_uniform_shift_coords(coords_vec::AbstractVector)
+    length(coords_vec) >= 2 ||
+        throw(ArgumentError("shift_dim must contain at least two coordinate values."))
+    _is_equal_spacing(coords_vec) ||
+        throw(ArgumentError("shift_dim must be equally spaced for this operation."))
+    Δ = coords_vec[2] - coords_vec[1]
+    iszero(Δ) &&
+        throw(ArgumentError("shift_dim must have non-zero spacing for this operation."))
+    return coords_vec[1], Δ
 end
 
 # --------------------------------------------

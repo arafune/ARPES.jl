@@ -66,7 +66,8 @@ kdata = k_conversion(data)
 
 The current I/O implementation is centered on the `SPDLoader`.
 
-- Supported file types: `.itx`, `.sp2`
+- Supported file types: `.itx`
+- `.sp2` loader selection exists, but parsing is not implemented yet
 - Loader selection:
   - pass `loc = "SPD"` explicitly, or
   - omit `loc` and let the registry detect the loader from the file extension
@@ -121,10 +122,12 @@ Some important conventions used across the package:
   - `transform.jl` — shift and slice-based data transforms
   - `filter.jl` — smoothing utilities along selected dimensions
   - `derivative.jl` — numerical derivatives and 2D feature-enhancement helpers
+  - `trapezoid.jl` -- trapezoidal correction in angular units by linearly interpolating slices.
   - `io/` — loaders (`load`)
     - `formats/` — raw file parsing
     - `location/` — location-specific standardization into canonical ARPES conventions
   - `k_conv/` — k-space conversion (`k_conversion`)
+
 - `docs/` — documentation (Documenter.jl)
 - `test/` — tests
 

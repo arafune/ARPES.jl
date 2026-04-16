@@ -51,7 +51,7 @@ The loading pipeline is:
 The current source tree includes:
 
 - ITX parsing through `read_itx`,
-- SP2 support in the SPD loader path, and
+- loader detection for `.sp2` files (parsing not yet implemented), and
 - an `SPDLoader` that standardizes dimensions and metadata into canonical ARPES names.
 
 In other words, SPD is the current concrete location-specific loader in the repository, and

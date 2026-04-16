@@ -14,6 +14,12 @@ const TEST_TRAPEZOID_CORNERS = (
     (eV = 8.0, phi = -3.0),
     (eV = 8.0, phi = 7.0),
 )
+const TEST_TRAPEZOID_CORNERS_SHUFFLED = (
+    TEST_TRAPEZOID_CORNERS[4],
+    TEST_TRAPEZOID_CORNERS[2],
+    TEST_TRAPEZOID_CORNERS[1],
+    TEST_TRAPEZOID_CORNERS[3],
+)
 const TEST_BASE_CORNERS = (-5.0, 9.0)
 
 function trapezoid_test_slice()
@@ -102,6 +108,13 @@ end
         TEST_TRAPEZOID_CORNERS,
         TEST_BASE_CORNERS,
     ) ≈ rect_phi
+    @test ARPES._phi_to_phi(rect_phi, Ek, TEST_BASE_CORNERS, TEST_TRAPEZOID_CORNERS_SHUFFLED) ≈ trap_phi
+    @test ARPES._phi_to_phi(
+        trap_phi,
+        Ek,
+        TEST_TRAPEZOID_CORNERS_SHUFFLED,
+        TEST_BASE_CORNERS,
+    ) ≈ rect_phi
 end
 
 @testset "trapezoid converts rectangle data to trapezoid coordinates" begin
@@ -118,6 +131,34 @@ end
     @test metadata(dims(converted, :phi)) == metadata(dims(A_rect, :phi))
     @test metadata(dims(converted, :eV)) == metadata(dims(A_rect, :eV))
     test_matrix_equal_or_nan(parent(converted), expected)
+end
+
+@testset "trapezoid accepts trapezoid corners in arbitrary order" begin
+    A = trapezoid_test_slice()
+    rect_data = rectangle_reference_data(A)
+    A_rect = rebuild(A; data = rect_data)
+    trap_data = trapezoid_full_reference_data(A, TEST_TRAPEZOID_CORNERS, TEST_BASE_CORNERS)
+    A_trapezoid = rebuild(A; data = trap_data)
+
+    converted_to_trapezoid = trapezoid(A_rect, TEST_BASE_CORNERS, TEST_TRAPEZOID_CORNERS_SHUFFLED)
+    converted_to_rectangle = trapezoid(
+        A_trapezoid,
+        TEST_TRAPEZOID_CORNERS_SHUFFLED,
+        TEST_BASE_CORNERS,
+    )
+
+    test_matrix_equal_or_nan(
+        parent(converted_to_trapezoid),
+        parent(trapezoid(A_rect, TEST_BASE_CORNERS, TEST_TRAPEZOID_CORNERS)),
+    )
+    test_matrix_equal_or_nan(
+        parent(converted_to_rectangle),
+        parent(trapezoid(A_trapezoid, TEST_TRAPEZOID_CORNERS, TEST_BASE_CORNERS)),
+    )
+    @test collect(lookup(converted_to_trapezoid, :phi)) ==
+          collect(lookup(trapezoid(A_rect, TEST_BASE_CORNERS, TEST_TRAPEZOID_CORNERS), :phi))
+    @test collect(lookup(converted_to_rectangle, :phi)) ≈
+          collect(lookup(trapezoid(A_trapezoid, TEST_TRAPEZOID_CORNERS, TEST_BASE_CORNERS), :phi))
 end
 
 @testset "trapezoid converts trapezoid data back to rectangle coordinates" begin

@@ -72,10 +72,11 @@ Load and parse an SPD file from the given file path.
 - `fpath::String`: Path to the SPD file.
 
 # Returns
-A standardized DimArray parsed from the file.
+    A standardized `ARPESData` parsed from the file.
 
 # Notes
-Supports `.itx` and `.sp2` file extensions.
+    Supports `.itx` files. `.sp2` detection exists in the registry, but parsing is not
+    implemented yet and currently raises an `ArgumentError`.
 """
 function load_data(
     ::Type{SPDLoader},
@@ -87,7 +88,9 @@ function load_data(
     if ext == ".itx"
         raw_dimarray = read_itx(fpath)
     elseif ext == ".sp2"
-        raw_dimarray = read_sp2(fpath)
+        throw(ArgumentError("SPD loading for '.sp2' files is not implemented yet."))
+    else
+        throw(ArgumentError("SPDLoader does not support file extension '$ext'."))
     end
     if extra_metadata !== nothing
         new_metadata = merge(Dict(metadata(raw_dimarray)), extra_metadata)
@@ -145,4 +148,3 @@ function _spd_to_standard(raw::DimArray)::ARPESData
         additional_metadata = additional_metadata,
     )
 end
-
