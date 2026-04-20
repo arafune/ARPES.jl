@@ -408,30 +408,23 @@ function _parse_itx_setscale(line::AbstractString)
         axis_part = strip(split(parts[1], " ")[end])  # "x"
         axis_key = Symbol("$(axis_part)_scale")
 
-        unit, label = "", ""
+        unit = ""
+        label = nothing
         if length(parts) >= 4
             unit_part = strip(parts[4])
             if occursin("(", unit_part) && occursin(")", unit_part)
                 unit_match = match(r"\"([^(]+)\s*\(([^)]+)\)\"", unit_part)
                 if !isnothing(unit_match)
-                    unit = strip(unit_match.captures[1])
-                    label = replace(
-                        lowercase(strip(unit_match.captures[2])),
-                        "-" => "_",
-                        " " => "_",
-                    )
+                    unit_capture, label_capture = unit_match.captures
+                    if !isnothing(unit_capture) && !isnothing(label_capture)
+                        unit = strip(unit_capture)
+                        label = replace(lowercase(strip(label_capture)), "-" => "_", " " => "_")
+                    end
                 end
             else
                 unit = replace(unit_part, "\"" => "")
                 label = nothing
             end
-        end
-
-        name = ""
-        if length(parts) >= 5
-            name = strip(parts[5])
-            name = replace(name, "\"" => "")
-            name = replace(name, "'" => "")
         end
 
         if mode == :inclusive
