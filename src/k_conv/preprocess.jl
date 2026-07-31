@@ -78,17 +78,9 @@ function _ek_range(
     hv::Real,
 )
     if energy_def == FinalStateEnergy
-        return range(
-            first(ek) - workfunction;
-            step = step(ek),
-            stop = last(ek) - workfunction,
-        )
+        return range(first(ek) - workfunction; step = step(ek), length = length(ek))
     elseif energy_def == BindingEnergy
-        return range(
-            first(ek) + hv - workfunction;
-            step = step(ek),
-            stop = last(ek) + hv - workfunction,
-        )
+        return range(first(ek) + hv - workfunction; step = step(ek), length = length(ek))
     end
 end
 
@@ -151,6 +143,7 @@ function _kx_range(
     ek_min = minimum(ek)
 
     kx_ = mapped_kx(analyzer_conf, prepare_for_broadcast(α, β_, ek_min)..., χ_, ξ_, δ_)
+
     d_kx = abs.(diff(kx_, dims = 1))
     step_kx = isempty(d_kx) ? nothing : minimum(d_kx)
     @debug "min_kx, max_kx, step_kx @ minimum ek" minimum(kx_) maximum(kx_) step_kx ek_min
@@ -161,7 +154,9 @@ function _kx_range(
     if step_kx === nothing || step_kx == 0.0
         return min_kx
     end
-    return range(start = min_kx, stop = max_kx, step = step_kx)
+    kx_range = range(start = min_kx, stop = max_kx, step = step_kx)
+    @debug "kx_range length" length(kx_range)
+    return kx_range
 end
 
 """
@@ -238,7 +233,7 @@ Check if the given `ARPESData` object contains the required dimensions and metad
 function _check_arpesdata(data::ARPESData)
     # check if the required dimensions and metadata are present
     #
-    for dim in [phi, eV]
+    for dim in [:phi, :eV]
         if !hasdim(data, dim)
             throw(ArgumentError("Missing required dimension: $(name(dim))"))
         end

@@ -92,10 +92,16 @@ function k_conversion(  # kp version
     @debug "Kinetic energy ref to analyzer" ek
     # 1.2. angles  * α, β_, χ_, δ_, ξ_
     #  * apply offset & and convert degree to radian.
+    #
+    @debug "negate_alpha check" get(md, :negate_alpha, false)
     α =
         get(md, :negate_alpha, false) == true ?
         _deg2rad(parent(negate_dim(dims(data, :phi)))) :
         _deg2rad(parent(lookup(data, :phi)))
+
+    @debug "alpha check" length(α) size(parent(data)) length(parent(ek_original))
+    @debug "phi check" length(parent(lookup(data, :phi))) lookup(data, :phi)
+
     β = md[:β]
     β_ = _deg2rad(β, β0)
     ξ_ = _deg2rad(md[:ξ], ξ0)
@@ -472,7 +478,7 @@ function _deg2rad(angle_deg::AbstractRange, offset_deg::Real = 0.0)
     return range(
         (first(angle_deg) - offset_deg) * (π/180);
         step = step(angle_deg) * (π/180),
-        stop = (last(angle_deg) - offset_deg) * (π/180),
+        length = length(angle_deg),
     )
 end
 

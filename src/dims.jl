@@ -269,8 +269,15 @@ end
 Negate the lookup values of a dimension.
 """
 function negate_dim(dim::DimensionalData.Dimension)
+    old_lookup = lookup(dim)
     new_lookup = _negate_lookup(lookup(dim))
-    return rebuild(dim; val = new_lookup)
+
+    @debug "negate_dim_check" length(parent(old_lookup)) length(new_lookup)
+
+    negated_dim = rebuild(dim; val = new_lookup)
+
+    @debug "negate_dim after rebuild" length(parent(lookup(negated_dim)))
+    return negated_dim
 end
 
 function negate_dim(data::AbstractDimArray, dim_label::Symbol)
