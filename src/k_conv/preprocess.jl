@@ -1,3 +1,4 @@
+using Statistics
 using DimensionalData: Dimension
 using ..ARPES: EnergyDefinition
 using ..ARPES: BindingEnergy, FinalStateEnergy, KineticEnergy, IntermediateEnergy
@@ -194,7 +195,7 @@ Determine the ky range for the given analyzer configuration and parameters.
 function _ky_range(
     analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
     α::AbstractVector{<:Real},
-    β_::Union{AbstractVector{<:Real},Real},
+    β_::AbstractVector{<:Real},
     ek::AbstractVector{<:Real},
     χ_::Real,
     ξ_::Real,
@@ -210,6 +211,20 @@ function _ky_range(
         return min_ky
     end
     return range(start = min_ky, stop = max_ky, step = step_ky)
+end
+
+function _ky_range(
+    analyzer_conf::Type{<:AbstractAnalyzerConfiguration},
+    α::AbstractVector{<:Real},
+    β_::Real,
+    ek::AbstractVector{<:Real},
+    χ_::Real,
+    ξ_::Real,
+    δ_::Real,
+)
+    ek_min = minimum(ek)
+    ky_ = mapped_ky(analyzer_conf, prepare_for_broadcast(α, β_, ek_min)..., χ_, ξ_, δ_)
+    return mean(filter(!isnan, ky_))
 end
 
 """
