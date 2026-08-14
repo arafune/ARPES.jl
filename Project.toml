@@ -6,6 +6,7 @@ authors = ["Ryuichi Arafune"]
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Interfaces = "85a1e053-f937-4924-92a5-1367d23b7b87"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -16,6 +17,7 @@ StringEncodings = "69024149-9ee7-55f6-a4c4-859efe599b68"
 [compat]
 Coverage = "1.8.1"
 DimensionalData = "0.29, 0.30"
+Documenter = "1.17.0"
 Interfaces = "0.3"
 Interpolations = "0.16"
 LocalCoverage = "0.8"
