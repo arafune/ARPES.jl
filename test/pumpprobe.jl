@@ -4,7 +4,7 @@ using DimensionalData: @dim, Dim
 using ARPES
 using ARPES: ARPESData, kx, ky, kz, phi, psi, eV, delay
 
-@testset "ARPESPlots tarpes Heatmap Tests" begin
+@testset "ARPESPlots tarpes_evolution Tests" begin
     data = rand(Float64, 40, 60, 30)
     data[3, 3, 3] = NaN
     data[1, 1, 1] = NaN
