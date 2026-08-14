@@ -67,3 +67,10 @@ if isdir(testdata_dir)
         include("io/registry_testdata.jl")
     end
 end
+
+if Base.JLOptions().code_coverage > 0 && !haskey(ENV, "GITHUB_ACTIONS")
+    coverage = process_folder()
+    LCOV.writefile("lcov.info", coverage)
+    clean_folder(".")
+end
+

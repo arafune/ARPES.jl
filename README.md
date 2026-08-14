@@ -147,6 +147,12 @@ Run the full test suite:
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
+Run the full test suite with code coverage and then generage HTML coverage reepot:
+
+```bash
+julia --project=. --code-coverage=user -e 'using Pkg; Pkg.test(); Pkg.activate("test"; shared=false); using Coverage; c = process_folder(); LCOV.writefile("lcov.info", c); clean_folder(".")' && genhtml lcov.info -o coverage_html
+```
+
 Run a single test file directly from the repository root:
 
 ```bash
