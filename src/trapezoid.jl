@@ -35,7 +35,7 @@ angles.
 # Argumetns
 
 - `A`: The input `ARPESData` to be transformed.
-- `trapezoid_corners`: The coordinate of the trapezoid corners.
+   - `trapezoid_corners`: The coordinate of the trapezoid corners (UL, UR, LL, LR).
    The tuple of four Named tuple that specifies corners of the trapezoid, the key must be both `:eV` and `:phi`.
    The corner order is inferred automatically from the `(eV, phi)` values, so the input does not need to
    already be ordered as `(UL, UR, LL, LR)`.
@@ -166,11 +166,40 @@ _source_phi_grid(
 ) = _phi_to_phi(to_phi_grid, ek_grid, trapezoid_corners, base_corners)
 
 function _rebuild_with_phi(A, to_phi_range, data_transposed)
+    @debug "trapezoid output check" size(data_transposed) length(to_phi_range)
     new_phi_dim = Dim{:phi}(to_phi_range; metadata = metadata(dims(A, :phi)))
     new_dims = Base.setindex(dims(A), new_phi_dim, dimnum(A, :phi))
+
     return rebuild(A; data = data_transposed, dims = new_dims)
 end
 
+function trapezoid(
+    A::ARPESData{T,2} where {T},
+    base_corners::Tuple{Real,Real},
+    trapezoid_corners::NTuple{4,NamedTuple{(:phi, :eV),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+)
+    reorddered_corners = (
+        (eV = trapezoid_corners[1].eV, phi = trapezoid_corners[1].phi),
+        (eV = trapezoid_corners[2].eV, phi = trapezoid_corners[2].phi),
+        (eV = trapezoid_corners[3].eV, phi = trapezoid_corners[3].phi),
+        (eV = trapezoid_corners[4].eV, phi = trapezoid_corners[4].phi),
+    )
+    return trapezoid(A, base_corners, reorddered_corners)
+end
+
+function trapezoid(
+    A::ARPESData{T,2} where {T},
+    trapezoid_corners::NTuple{4,NamedTuple{(:phi, :eV),Tuple{Float64,Float64}}},  # (UL, UR, LL, LR)
+    base_corners::Tuple{Real,Real},
+)
+    reorddered_corners = (
+        (eV = trapezoid_corners[1].eV, phi = trapezoid_corners[1].phi),
+        (eV = trapezoid_corners[2].eV, phi = trapezoid_corners[2].phi),
+        (eV = trapezoid_corners[3].eV, phi = trapezoid_corners[3].phi),
+        (eV = trapezoid_corners[4].eV, phi = trapezoid_corners[4].phi),
+    )
+    return trapezoid(A, reorddered_corners, base_corners)
+end
 
 """
     _phi_to_phi(p, Ek, trapezoid_corners, base_corners)   # rectangle => trapezoid

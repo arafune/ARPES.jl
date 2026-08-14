@@ -16,6 +16,7 @@ include("./fixture.jl")
         include("derivative.jl")
         include("stitch.jl")
         include("trapezoid.jl")
+        include("pumpprobe.jl")
     end
     @testset "k_conv" begin
         include("k_conv/preprocess.jl")

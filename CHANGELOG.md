@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] — Unreleased
+
+### Added
+
+- `tarpes_evolution` (src/pumpprobe.jl): helper to extract a 2D snapshot and the temporal evolution from 3D time-resolved ARPES datasets. Supports selection by delay time or delay index, scalar or (center, width) averaging along the non-dispersion axis, and a `full_temporal` flag to include the full time range. Unit tests added in `test/pumpprobe.jl`.
+
+### Changed
+
+- Update dimensions, preprocessing, and trapezoid calculations (updates in src/dims.jl, src/k_conv/preprocess.jl, and src/trapezoid.jl) (#71).
+- CI: bump actions and workflows (setup-julia → v3, codecov action → v7, actions/checkout → v7) (#68, #69, #70).
+
+### Fixed
+
+- src/trapezoid.jl: refactored implementation — extracted input validation (_validate_trapezoid_input, _validate_base_corners), added corner normalization (_normalize_trapezoid_corners), and reorganized rectangle⇄trapezoid coordinate mapping into _phi_to_phi_impl and _source_phi_grid. Improved output-phi range calculation (_output_phi_bounds) and interpolation-grid generation using prepare_for_broadcast. Conversion now performs linear interpolation on angular slices while preserving the eV axis. Added/updated unit tests.
+
+- Refactored src/io/formats/itx.jl and src/k_conv/preprocess.jl: reorganized ITX parsing into clearer helper functions and improved robustness of scale/waves parsing and DimArray construction; added helpers in k_conv/preprocess.jl (prepare_for_broadcast, _ek_range, _kx_range, _ky_range) and stricter ARPESData validation (_check_arpesdata) to make k-conversion preprocessing more deterministic. Corresponding tests added/updated in test/io/formats/itx.jl to cover WAVES/SetScale/comment parsing and wave data assembly (commit 36aa831).
+
 ## [0.2.2] — 2026-04-16
 
 ### Added
