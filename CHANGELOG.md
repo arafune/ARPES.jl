@@ -18,8 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- 
-
+- Refactored src/io/formats/itx.jl and src/k_conv/preprocess.jl: reorganized ITX parsing into clearer helper functions and improved robustness of scale/waves parsing and DimArray construction; added helpers in k_conv/preprocess.jl (prepare_for_broadcast, _ek_range, _kx_range, _ky_range) and stricter ARPESData validation (_check_arpesdata) to make k-conversion preprocessing more deterministic. Corresponding tests added/updated in test/io/formats/itx.jl to cover WAVES/SetScale/comment parsing and wave data assembly (commit 36aa831).
 
 ## [0.2.2] — 2026-04-16
 

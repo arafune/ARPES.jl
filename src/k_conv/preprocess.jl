@@ -28,18 +28,21 @@ prepare_for_broadcast(a, b)
 function prepare_for_broadcast(arrs::Union{AbstractArray,Real}...)
 
     arrays_count = count(a -> a isa AbstractArray, arrs)
+    result = Vector{Any}(undef, length(arrs))
+    array_index = 0
 
-    i = 0
-    map(arrs) do a
+    for (idx, a) in pairs(arrs)
         if a isa AbstractArray
-            i += 1
+            array_index += 1
             v = vec(a)
-            shape = ntuple(j -> j == i ? length(v) : 1, arrays_count)
-            reshape(v, shape)
+            shape = ntuple(j -> j == array_index ? length(v) : 1, arrays_count)
+            result[idx] = reshape(v, shape)
         else
-            a
+            result[idx] = a
         end
     end
+
+    return Tuple(result)
 end
 
 """

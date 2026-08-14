@@ -51,6 +51,14 @@ end
     @test isnothing(yscale[:label])
 end
 
+@testset "_parse_itx_setscale! parenthesized unit without spaces still parses" begin
+    line = "X SetScale/I y, 0, 100, \"counts(s-1)\", 'wave1'"
+    waves_info = ARPES.IO.Format._parse_itx_setscale(line)
+    yscale = waves_info[:y_scale]
+    @test yscale[:unit] == "counts"
+    @test yscale[:label] == "s_1"
+end
+
 @testset "_parse_itx_setscale! " begin
     line = "X SetScale/I x, -10.6875, 10.6875, \"deg (Non-Energy Channel)\", 'Region1_1'"
     waves_info = ARPES.IO.Format._parse_itx_setscale(line)
@@ -161,4 +169,3 @@ end
     @test length(result) == 19
     @test result[19] ≈ 71.1968
 end
-
