@@ -3,6 +3,7 @@ using DimensionalData
 using DimensionalData: @dim, Dim
 using ARPES
 using ARPES: ARPESData, kx, ky, kz, phi, psi, eV, delay
+using Statistics: mean
 
 @testset "ARPESPlots tarpes_evolution Tests" begin
     data = rand(Float64, 40, 60, 30)
@@ -23,8 +24,10 @@ using ARPES: ARPESData, kx, ky, kz, phi, psi, eV, delay
     @test size(temporal, 2) == size(arpes_snapshot, 2)
 
     # delay-index variant should match the delay_time variant at the nearest index
-    nearest_idx = argmin(abs.(dims(A, :delay) .- 0.0))
+    nearest_idx = findlast(dims(A, :delay) .<= 0.0)
     arpes_snapshot_idx, temporal_idx = tarpes_evolution(A, nearest_idx, 0.0)
+    nearest_delay = dims(A, :delay)[nearest_idx] # 👈 Use actual value of delay
+    arpes_snapshot, temporal = tarpes_evolution(A, nearest_delay, 0.0)
     @test isequal(arpes_snapshot, arpes_snapshot_idx)
     @test isequal(temporal, temporal_idx)
 
@@ -37,12 +40,14 @@ using ARPES: ARPESData, kx, ky, kz, phi, psi, eV, delay
     expected =
         A[Dim{:phi}(Between(center - width/2, center + width/2))] |>
         x ->
-            dropdims(x, dims = :phi) |>
+            mean(x, dims = :phi) |>
             x ->
-                mean(x, dims = :phi) |>
-                x -> permutedims(x, (:delay, :eV)) |> x[Dim{:delay}(Between(-Inf, 0.0))]
+                dropdims(x, dims = :phi) |>
+                x ->
+                    permutedims(x, (:delay, :eV)) |> x -> x[Dim{:delay}(Between(-Inf, 0.0))]
 
     @test size(temporal_avg) == size(expected)
     @test isapprox(temporal_avg, expected; atol = 1e-12, rtol = 1e-8)
 
 end
+
