@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] — Unreleased
+
+### Added
+
+- `tarpes_evolution` (src/pumpprobe.jl): helper to extract a 2D snapshot and the temporal evolution from 3D time-resolved ARPES datasets. Supports selection by delay time or delay index, scalar or (center, width) averaging along the non-dispersion axis, and a `full_temporal` flag to include the full time range. Unit tests added in `test/pumpprobe.jl`.
+
+### Changed
+
+- 
+
+### Fixed
+
+- 
+
+
 ## [0.2.2] — 2026-04-16
 
 ### Added
