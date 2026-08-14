@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 
+- Update dimensions, preprocessing, and trapezoid calculations (updates in src/dims.jl, src/k_conv/preprocess.jl, and src/trapezoid.jl) (#71).
+- CI: bump actions and workflows (setup-julia → v3, codecov action → v7, actions/checkout → v7) (#68, #69, #70).
 
 ### Fixed
 
