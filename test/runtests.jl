@@ -24,6 +24,9 @@ include("./fixture.jl")
         include("k_conv/k_conversion.jl")
     end
     @testset "IO" begin
+        @testset "load" begin
+            include("io/io.jl")
+        end
         @testset "Location" begin
             include("io/location/location.jl")
         end

@@ -25,7 +25,7 @@ The package is built around three ideas:
 
 ## What the package does _not_ provide
 
-- plotting utilities, which are best left to dedicated packages such as
+- Plotting utilities, which are best left to dedicated packages such as
   [Makie.jl](https://makie.juliaplots.org/stable/). See [ARPESPlots.jl](https://arafune.github.io/ARPESPlots.jl).
 
 ## Quick start
@@ -70,7 +70,7 @@ The source tree is intentionally layered:
 
 - `src/ARPESData.jl` defines the main container and its metadata conventions.
 - `src/io/` parses raw file formats and standardizes beamline-specific metadata.
-- `src/dims.jl`, `src/transform.jl`, `src/filter.jl`, and `src/derivative.jl`
+- `src/dims.jl`, `src/transform.jl`, `src/filter.jl`, `src/derivative.jl` and `src/trapezoid.jl`
   provide dimension-aware processing utilities.
 - `src/k_conv/` implements the k-space conversion pipeline.
 

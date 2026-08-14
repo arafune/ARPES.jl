@@ -58,7 +58,7 @@
   - `src/io/registry.jl` selects a loader either from `loc=` or by sniffing file content / extension.
   - The standardized result is finally wrapped as `ARPESData`.
 
-- `SPDLoader` is the concrete example of that pipeline today. It reads raw ITX/SP2 data, maps aliases like `:theta_y` or `:energy_channel` onto canonical dimensions such as `phi`, `eV`, and `detector_ch`, normalizes metadata, and then constructs `ARPESData`.
+- `SPDLoader` is the concrete example of that pipeline today. It reads raw ITX data, maps aliases like `:theta_y` or `:energy_channel` onto canonical dimensions such as `phi`, `eV`, and `detector_ch`, normalizes metadata, and then constructs `ARPESData`. `.sp2` loader selection exists in the registry, but parsing is not implemented yet.
 
 - `src/k_conv/` assumes the data is already standardized. `k_conversion` reads canonical dimensions and metadata from `ARPESData`, performs preprocessing + interpolation + postprocessing, and returns a new `ARPESData` on momentum-space axes (`kx`, `ky`, `kz` as available).
 

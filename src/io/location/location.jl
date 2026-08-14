@@ -26,7 +26,9 @@ implemented to provide the necessary mappings and conversion rules for that load
 module Location
 using DimensionalData
 using DimensionalData.Dimensions.Lookups: NoMetadata
+using ..Format: read_itx
 using ARPES.IO: LocationLoader, SPDLoader, GenericLoader
+using ARPES: ARPESData
 export canonical_dim, dim_alias, default_dim_map
 
 """
@@ -90,6 +92,35 @@ function to_standardize(loader::Type{<:LocationLoader}, raw::DimArray)
     new_metadata = merge(metadata_dict, converted_metadata)
 
     return rebuild(raw; dims = new_dims, metadata = new_metadata)
+end
+
+"""
+    load_data(::Type{GenericLoader}, fpath::String; extra_metadata = nothing)
+
+Load a file without location-specific standardization.
+
+At the moment, the generic path supports raw ITX parsing and returns the parsed data
+wrapped as `ARPESData`. Unknown extensions raise an `ArgumentError` with a clear
+message instead of failing later with a `MethodError`.
+"""
+function load_data(
+    ::Type{GenericLoader},
+    fpath::String;
+    extra_metadata::Union{AbstractDict{Symbol,<:Any},Nothing} = nothing,
+)
+    ext = lowercase(splitext(fpath)[2])
+    raw_dimarray = if ext == ".itx"
+        read_itx(fpath)
+    else
+        throw(ArgumentError("No generic parser is available for file extension '$ext'."))
+    end
+
+    if extra_metadata !== nothing
+        new_metadata = merge(Dict(metadata(raw_dimarray)), extra_metadata)
+        raw_dimarray = rebuild(raw_dimarray; metadata = new_metadata)
+    end
+
+    return ARPESData(raw_dimarray)
 end
 
 """
