@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - tarpes_evolution: new kwarg: fill_nan
+  - Added keyword argument `fill_nan::Bool` (default `true`) to `tarpes_evolution` (src/pumpprobe.jl).
+  - When `full_temporal=false`: if `fill_nan=true`, the temporal-evolution output keeps times > `delay_time` but fills them with `NaN`; if `fill_nan=false`, the temporal-evolution output is truncated to only include times ≤ `delay_time`.
+  - `tarpes_evolution` still supports `delay_time` (Real) or `delay_index` (Integer) overloads and the `evolution_at` scalar / `(center, width)` averaging behavior.
 
 ## [0.2.3] — 2026-08-15
 
