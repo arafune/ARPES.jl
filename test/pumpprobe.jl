@@ -20,8 +20,12 @@ using Statistics: mean
 
     delays = dims(A, :delay)
     expected_rows = sum(delays .<= 0.0)
-    @test size(temporal, 1) == expected_rows
+    @test size(temporal, 1) == size(A, 3)
     @test size(temporal, 2) == size(arpes_snapshot, 2)
+
+    # verify times after the snapshot are NaN (fill_nan behavior)
+    idxs_after = findall(delays .> 0.0)
+    @test all(isnan.(parent(temporal)[idxs_after, :]))
 
     # delay-index variant should match the delay_time variant at the nearest index
     nearest_idx = findlast(dims(A, :delay) .<= 0.0)
@@ -36,8 +40,8 @@ using Statistics: mean
     width = 2.0
     _, temporal_avg = tarpes_evolution(A, 0.0, (center, width))
 
-    # Build expected temporal evolution manually
-    expected =
+    # Build expected temporal evolution manually and pad with NaN for times > 0.0
+    expected_short =
         A[Dim{:phi}(Between(center - width/2, center + width/2))] |>
         x ->
             mean(x, dims = :phi) |>
@@ -46,8 +50,15 @@ using Statistics: mean
                 x ->
                     permutedims(x, (:delay, :eV)) |> x -> x[Dim{:delay}(Between(-Inf, 0.0))]
 
-    @test size(temporal_avg) == size(expected)
-    @test isapprox(temporal_avg, expected; atol = 1e-12, rtol = 1e-8)
+    delays = dims(A, :delay)
+    full_expected = fill(NaN, size(A, 3), size(A, 2))
+    idxs = findall(delays .<= 0.0)
+    full_expected[idxs, :] .= Array(expected_short)
+
+    @test size(temporal_avg) == size(full_expected)
+    finite_mask = .!isnan.(full_expected)
+    @test isapprox(parent(temporal_avg)[finite_mask], full_expected[finite_mask]; atol = 1e-12, rtol = 1e-8)
+    @test all(isnan.(parent(temporal_avg)[.!finite_mask]) .== isnan.(full_expected[.!finite_mask]))
 
 end
 

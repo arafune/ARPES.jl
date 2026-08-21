@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.4 - Unreleased
+
+### Added
+
+- tarpes_evolution:
+  - Added keyword argument `fill_nan::Bool` (default `true`) to `tarpes_evolution` (src/pumpprobe.jl).
+  - When `full_temporal=false`: if `fill_nan=true`, the temporal-evolution output keeps times > `delay_time` but fills them with `NaN`; if `fill_nan=false`, the temporal-evolution output is truncated to only include times ≤ `delay_time`.
+
 ## [0.2.3] — 2026-08-15
 
 ### Added

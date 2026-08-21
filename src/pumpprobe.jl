@@ -8,7 +8,7 @@ delaytime_fs(mirror_move_μm::Real) = 3.335640951981521 * mirror_move_μm
 position_mm_to_delaytime_fs(position_mm::Real) = delaytime_fs(2 * position_mm * 1e3)
 
 """
-    tarpes_evolution(A, delay_time=0.0, evolution_at=0.0; stack_dim=:delay, vertical_dim=:eV)
+    tarpes_evolution(A, delay_time=0.0, evolution_at=0.0; stack_dim=:delay, vertical_dim=:eV, ...)
     tarpes_evolution(A, delay_index::Integer, evolution_at=0.0; ...)
 
 Return a snapshot and the temporal evolution extracted from a 3D time-resolved ARPES dataset.
@@ -20,6 +20,7 @@ Arguments
 - stack_dim::Symbol: Name of the time/delay dimension (default :delay).
 - vertical_dim::Symbol: Name of the vertical (energy) dimension (default :eV).
 - full_temporal::Bool: If true, include the full time range for the temporal evolution; otherwise include only times <= `delay_time`.
+- fill_nan::Bool: If true, fill the temporal evolution data after `delay_time` with NaN; otherwise, truncate the data to only include times <= `delay_time`.
 
 Returns
 - arpes_data_at_delay::AbstractDimArray{T,2}: 2D slice (non-dispersion × vertical) at the chosen delay.
@@ -29,12 +30,13 @@ Notes
 - Selection uses DimensionalData indexing (Dim{...}(Near/Between)).
 """
 function tarpes_evolution(
-    A::AbstractDimArray{T,3} where {T},
+    A::AbstractDimArray{T,3} where {T<:AbstractFloat},
     delay_time::Real = 0.0,
     evolution_at::Union{Real,Tuple{<:Real,<:Real}} = 0.0;
     stack_dim::Symbol = :delay,
     vertical_dim::Symbol = :eV,
     full_temporal::Bool = false,
+    fill_nan::Bool = true,
 )
 
     non_dispersion_axis = otherdims(A, (vertical_dim, stack_dim)) |> first |> name
@@ -42,19 +44,28 @@ function tarpes_evolution(
 
     temporal_evolution_data =
         _build_slice_data(A, non_dispersion_axis, evolution_at) |>
-        x->permutedims(x, (stack_dim, vertical_dim)) |>
-           x -> x[Dim{stack_dim}(Between(-Inf, full_temporal ? Inf : delay_time))]
+        x->permutedims(x, (stack_dim, vertical_dim))
+
+    if !full_temporal
+        if fill_nan
+            temporal_evolution_data[Dim{stack_dim}(Where(>(delay_time)))] .= NaN
+        else
+            temporal_evolution_data =
+                temporal_evolution_data[Dim{stack_dim}(Between(-Inf, delay_time))]
+        end
+    end
 
     return arpes_data_at_delay, temporal_evolution_data
 end
 
 function tarpes_evolution(
-    A::AbstractDimArray{T,3} where {T},
+    A::AbstractDimArray{T,3} where {T<:AbstractFloat},
     delay_index::Integer,
     evolution_at::Union{Real,Tuple{<:Real,<:Real}} = 0.0;
     stack_dim::Symbol = :delay,
     vertical_dim::Symbol = :eV,
     full_temporal::Bool = false,
+    fill_nan::Bool = true,
 )
     delay_time = dims(A, stack_dim)[delay_index] |> float
     return tarpes_evolution(
@@ -76,7 +87,7 @@ Internal helper. For a scalar `evolution_at`, select the nearest coordinate alon
 [center - width/2, center + width/2] along `non_dispersion_axis` and drop that dimension.
 """
 function _build_slice_data(
-    A::AbstractDimArray{T,3} where {T},
+    A::AbstractDimArray{T,3} where {T<:AbstractFloat},
     non_dispersion_axis::Symbol,
     evolution_at::Real,
 )
@@ -84,7 +95,7 @@ function _build_slice_data(
 end
 
 function _build_slice_data(
-    A::AbstractDimArray{T,3} where {T},
+    A::AbstractDimArray{T,3} where {T<:AbstractFloat},
     non_dispersion_axis::Symbol,
     evolution_at::Tuple{<:Real,<:Real},
 )
