@@ -3,7 +3,7 @@ using ARPES
 using ARPES: ARPESData, phi, eV, detector_ch, ch2, CPS, Counts, TypeI, FinalStateEnergy
 using ARPES: _apply_along_dim, _is_equal_spacing, _apply_along_dims, _step
 using DimensionalData
-using DimensionalData: Dim, hasdim, lookup
+using DimensionalData: hasdim, lookup
 using Random
 using Statistics
 
