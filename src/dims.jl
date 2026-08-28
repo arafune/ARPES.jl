@@ -135,7 +135,7 @@ function convert_dim(
         throw(ArgumentError("Dimension with name $dim not found in AbstractDimArray."))
     end
     dim = dims(data, dim)
-    idx = findfirst(d -> name(d) == name(dim), dims(data))
+    idx = dimnum(data, dim)
 
     converted = convert_dim(dim, f)
     new_dims = Base.setindex(dims(data), converted, idx)
@@ -172,7 +172,7 @@ function rename_dim(data, old::Symbol, new::Symbol)
     hasdim(data, old) || throw(ArgumentError("Dimension $old not found."))
     hasdim(data, new) && throw(ArgumentError("Dimension $new already exists."))
     ds = dims(data)
-    i = findfirst(d -> name(d) == old, ds)
+    i = dimnum(ds, old)
 
     d = ds[i]
     d2 = Dim{new}(lookup(d); metadata = metadata(d))
@@ -215,13 +215,14 @@ function shift_dim(dim::DimensionalData.Dimension, shift_value::Real)
 end
 
 function shift_dim(arpes_data::AbstractDimArray, dim_label::Symbol, shift_value::Real)
-    idx = findfirst(d -> name(d) == dim_label, dims(arpes_data))
-
-    if isnothing(idx)
+    if !hasdim(arpes_data, dim_label)
         throw(
             ArgumentError("Dimension with name $dim_label not found in AbstractDimArray."),
         )
     end
+
+    idx = dimnum(arpes_data, dim_label)
+
     target_dim = dims(arpes_data)[idx]
     new_lookup = _shift_lookup(lookup(target_dim), shift_value)
     shifted_dim = rebuild(target_dim; val = new_lookup)
@@ -281,12 +282,13 @@ function negate_dim(dim::DimensionalData.Dimension)
 end
 
 function negate_dim(data::AbstractDimArray, dim_label::Symbol)
-    idx = findfirst(d -> name(d) == dim_label, dims(data))
-    if isnothing(idx)
+    if !hasdim(data, dim_label)
         throw(
             ArgumentError("Dimension with name $dim_label not found in AbstractDimArray."),
         )
     end
+
+    idx = dimnum(data, dim_label)
     negated = negate_dim(dims(data)[idx])
     return rebuild(data; dims = Base.setindex(dims(data), negated, idx))
 end
