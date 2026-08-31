@@ -30,7 +30,7 @@ coordinate order.
 
 # Notes
 
-- ARPESPlots.jl provides a convenient interactive interface for this function,
+- ARPESMakie.jl provides a convenient interactive interface for this function,
   as `stitch_ui`.
 """
 function stitch_along(
