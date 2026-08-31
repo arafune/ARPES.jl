@@ -26,7 +26,7 @@ The package is built around three ideas:
 ## What the package does _not_ provide
 
 - Plotting utilities, which are best left to dedicated packages such as
-  [Makie.jl](https://makie.juliaplots.org/stable/). See [ARPESPlots.jl](https://arafune.github.io/ARPESPlots.jl).
+  [Makie.jl](https://makie.juliaplots.org/stable/). See [ARPESMakie.jl](https://arafune.github.io/ARPESMakie.jl).
 
 ## Quick start
 

@@ -5,7 +5,7 @@ using ARPES
 using ARPES: ARPESData, kx, ky, kz, phi, psi, eV, delay
 using Statistics: mean
 
-@testset "ARPESPlots tarpes_evolution Tests" begin
+@testset "tarpes_evolution Tests" begin
     data = rand(Float64, 40, 60, 30)
     data[3, 3, 3] = NaN
     data[1, 1, 1] = NaN
@@ -57,8 +57,15 @@ using Statistics: mean
 
     @test size(temporal_avg) == size(full_expected)
     finite_mask = .!isnan.(full_expected)
-    @test isapprox(parent(temporal_avg)[finite_mask], full_expected[finite_mask]; atol = 1e-12, rtol = 1e-8)
-    @test all(isnan.(parent(temporal_avg)[.!finite_mask]) .== isnan.(full_expected[.!finite_mask]))
+    @test isapprox(
+        parent(temporal_avg)[finite_mask],
+        full_expected[finite_mask];
+        atol = 1e-12,
+        rtol = 1e-8,
+    )
+    @test all(
+        isnan.(parent(temporal_avg)[.!finite_mask]) .== isnan.(full_expected[.!finite_mask]),
+    )
 
 end
 
