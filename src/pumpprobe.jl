@@ -75,6 +75,7 @@ function tarpes_evolution(
         stack_dim = stack_dim,
         vertical_dim = vertical_dim,
         full_temporal = full_temporal,
+        fill_nan = fill_nan,
     )
 end
 
